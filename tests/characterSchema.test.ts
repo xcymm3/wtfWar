@@ -1,0 +1,123 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { characterSchema } from "../lib/schemas/character";
+import type { Character } from "../types/character";
+
+const TIMESTAMP = "2026-07-23T00:00:00.000Z";
+
+function createCharacter(): Character {
+  return {
+    id: "manual-warrior",
+    name: "Manual Warrior",
+    originalPrompt: "A manually created legal role card.",
+    profession: "warrior",
+    attack: 18,
+    maxHealth: 140,
+    skills: [
+      {
+        id: "manual-warrior-slash",
+        name: "Slash",
+        description: "A legal damage skill.",
+        type: "damage",
+        cooldown: 2,
+        damageMultiplier: 1.3,
+      },
+      {
+        id: "manual-warrior-shield",
+        name: "Shield",
+        description: "A legal shield skill.",
+        type: "shield",
+        cooldown: 3,
+        shieldAmount: 25,
+      },
+    ],
+    createdAt: TIMESTAMP,
+    updatedAt: TIMESTAMP,
+  };
+}
+
+test("accepts manual roles only when profession and skill rules are satisfied", () => {
+  const migratedLegacyCharacter = characterSchema.parse(createCharacter());
+  assert.equal(migratedLegacyCharacter.realm, "mortal");
+  assert.equal(migratedLegacyCharacter.skills[0].activation, "active");
+  assert.equal(migratedLegacyCharacter.skills[0].target, "enemy_front");
+
+  const outOfProfessionRange = {
+    ...createCharacter(),
+    attack: 25,
+  };
+  assert.equal(characterSchema.safeParse(outOfProfessionRange).success, false);
+
+  const duplicateSkillType = {
+    ...createCharacter(),
+    skills: [
+      createCharacter().skills[0],
+      {
+        ...createCharacter().skills[1],
+        id: "manual-warrior-second-damage",
+        name: "Second Slash",
+        type: "damage" as const,
+        damageMultiplier: 1.2,
+        shieldAmount: undefined,
+      },
+    ] as Character["skills"],
+  };
+  assert.equal(characterSchema.safeParse(duplicateSkillType).success, false);
+
+  const missingDamageEffect = {
+    ...createCharacter(),
+    skills: [
+      {
+        ...createCharacter().skills[0],
+        damageMultiplier: undefined,
+      },
+      createCharacter().skills[1],
+    ] as Character["skills"],
+  };
+  assert.equal(characterSchema.safeParse(missingDamageEffect).success, false);
+});
+
+test("accepts v2 group and passive skills while rejecting two passive slots", () => {
+  const teamCharacter = {
+    ...createCharacter(),
+    realm: "deity" as const,
+    skills: [
+      {
+        id: "manual-warrior-rally",
+        name: "星辉复苏",
+        description: "恢复己方全体生命。",
+        type: "area_heal" as const,
+        activation: "active" as const,
+        target: "allies_all" as const,
+        cooldown: 3,
+        healAmount: 20,
+      },
+      {
+        id: "manual-warrior-charge",
+        name: "蓄力一击",
+        description: "积蓄力量后攻击前排。",
+        type: "charge_strike_passive" as const,
+        activation: "passive" as const,
+        target: "self" as const,
+        cooldown: 0,
+        chargeTurns: 3,
+      },
+    ],
+  };
+
+  assert.equal(characterSchema.safeParse(teamCharacter).success, true);
+  const twoPassives = {
+    ...teamCharacter,
+    skills: [
+      teamCharacter.skills[1],
+      {
+        ...teamCharacter.skills[1],
+        id: "manual-warrior-cleave",
+        name: "横扫",
+        type: "cleave_passive" as const,
+      },
+    ],
+  };
+  assert.equal(characterSchema.safeParse(twoPassives).success, false);
+});
