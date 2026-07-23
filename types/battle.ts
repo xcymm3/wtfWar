@@ -95,3 +95,16 @@ export type BattleRecord = {
   events: BattleEvent[];
   createdAt: string;
 };
+
+/** A replayable v2 report with frozen teams, positions, and resolved events. */
+export type TeamBattleRecord = {
+  rulesVersion: 2;
+  id: string;
+  seed: string;
+  leftTeam: TeamFormation;
+  rightTeam: TeamFormation;
+  winner: BattleSide | "draw";
+  rounds: number;
+  events: TeamBattleEvent[];
+  createdAt: string;
+};

@@ -13,6 +13,7 @@ import type {
   BattlePreparation,
   BattleRecord,
   BattleSide,
+  TeamBattleRecord,
   TeamBattlePreparation,
   TeamFormation,
 } from "@/types/battle";
@@ -32,6 +33,7 @@ export type GameStoreState = GameStore & {
   teamCharacterIds: TeamCharacterIds;
   preparedTeamBattle: TeamBattlePreparation | null;
   activeReplayBattleId: string | null;
+  activeReplayTeamBattleId: string | null;
   hydrate: () => void;
   addCharacter: (character: Character) => void;
   updateCharacter: (characterId: string, updates: CharacterUpdate) => void;
@@ -53,12 +55,20 @@ export type GameStoreState = GameStore & {
     leftCharacter: Character,
     rightCharacter: Character,
   ) => void;
+  rematchTeamBattle: (
+    seed: string,
+    leftTeam: TeamFormation,
+    rightTeam: TeamFormation,
+  ) => void;
   clearPreparedBattle: () => void;
   clearPreparedTeamBattle: () => void;
   saveBattleRecord: (record: BattleRecord) => void;
+  saveTeamBattleRecord: (record: TeamBattleRecord) => void;
   openBattleReplay: (recordId: string) => void;
+  openTeamBattleReplay: (recordId: string) => void;
   closeBattleReplay: () => void;
   startHistoricalRematch: (recordId: string) => void;
+  startHistoricalTeamRematch: (recordId: string) => void;
   importCharacters: (characters: Character[]) => void;
   addPresetCharacters: () => number;
   setSoundEnabled: (soundEnabled: boolean) => void;
@@ -81,6 +91,7 @@ function createPersistedStore(state: GameStoreState): GameStore {
     version: state.version,
     characters: state.characters,
     battles: state.battles,
+    teamBattles: state.teamBattles,
     settings: state.settings,
   };
 }
@@ -183,6 +194,29 @@ function getBattleRecord(
   return record;
 }
 
+function getTeamBattleRecord(
+  battles: TeamBattleRecord[],
+  recordId: string,
+): TeamBattleRecord {
+  const record = battles.find((battle) => battle.id === recordId);
+  if (!record) throw new Error(`Team battle record ${recordId} does not exist.`);
+  return record;
+}
+
+function createHistoricalTeamPreparation(
+  seed: string,
+  leftTeam: TeamFormation,
+  rightTeam: TeamFormation,
+): TeamBattlePreparation {
+  const members = [...leftTeam.members, ...rightTeam.members];
+  return createTeamBattlePreparation(
+    seed,
+    members,
+    leftTeam.members.map((member) => member.id),
+    rightTeam.members.map((member) => member.id),
+  );
+}
+
 export function createGameStore() {
   const defaultStore = createDefaultGameStore();
 
@@ -194,6 +228,7 @@ export function createGameStore() {
     teamCharacterIds: { ...EMPTY_TEAM_SELECTION },
     preparedTeamBattle: null,
     activeReplayBattleId: null,
+    activeReplayTeamBattleId: null,
 
     hydrate: () => {
       const storedState = loadGameStore();
@@ -246,6 +281,7 @@ export function createGameStore() {
           preparedBattle: null,
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
         saveState(nextState);
         return nextState;
@@ -275,6 +311,7 @@ export function createGameStore() {
           },
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
         saveState(nextState);
         return nextState;
@@ -294,6 +331,7 @@ export function createGameStore() {
           preparedBattle: null,
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
       });
     },
@@ -305,6 +343,7 @@ export function createGameStore() {
         preparedBattle: null,
         preparedTeamBattle: null,
         activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
       }));
     },
 
@@ -332,6 +371,7 @@ export function createGameStore() {
           preparedBattle: createBattlePreparation(seed, leftCharacter, rightCharacter),
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
       });
     },
@@ -358,6 +398,7 @@ export function createGameStore() {
           },
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
       });
     },
@@ -371,6 +412,7 @@ export function createGameStore() {
         },
         preparedTeamBattle: null,
         activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
       }));
     },
 
@@ -397,6 +439,7 @@ export function createGameStore() {
           },
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
       });
     },
@@ -410,6 +453,7 @@ export function createGameStore() {
         },
         preparedTeamBattle: null,
         activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
       }));
     },
 
@@ -424,6 +468,7 @@ export function createGameStore() {
         ),
         preparedBattle: null,
         activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
       }));
     },
 
@@ -440,6 +485,17 @@ export function createGameStore() {
         ),
         preparedTeamBattle: null,
         activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
+      }));
+    },
+
+    rematchTeamBattle: (seed, leftTeam, rightTeam) => {
+      set((state) => ({
+        ...state,
+        preparedTeamBattle: createHistoricalTeamPreparation(seed, leftTeam, rightTeam),
+        preparedBattle: null,
+        activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
       }));
     },
 
@@ -465,12 +521,40 @@ export function createGameStore() {
       });
     },
 
+    saveTeamBattleRecord: (record) => {
+      set((state) => {
+        const nextState = {
+          ...state,
+          teamBattles: [
+            ...state.teamBattles.filter((battle) => battle.id !== record.id),
+            record,
+          ],
+        };
+        saveState(nextState);
+        return nextState;
+      });
+    },
+
     openBattleReplay: (recordId) => {
       set((state) => {
         getBattleRecord(state.battles, recordId);
         return {
           ...state,
           activeReplayBattleId: recordId,
+          activeReplayTeamBattleId: null,
+          preparedBattle: null,
+          preparedTeamBattle: null,
+        };
+      });
+    },
+
+    openTeamBattleReplay: (recordId) => {
+      set((state) => {
+        getTeamBattleRecord(state.teamBattles, recordId);
+        return {
+          ...state,
+          activeReplayTeamBattleId: recordId,
+          activeReplayBattleId: null,
           preparedBattle: null,
           preparedTeamBattle: null,
         };
@@ -478,7 +562,11 @@ export function createGameStore() {
     },
 
     closeBattleReplay: () => {
-      set((state) => ({ ...state, activeReplayBattleId: null }));
+      set((state) => ({
+        ...state,
+        activeReplayBattleId: null,
+        activeReplayTeamBattleId: null,
+      }));
     },
 
     startHistoricalRematch: (recordId) => {
@@ -494,6 +582,25 @@ export function createGameStore() {
           ),
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
+        };
+      });
+    },
+
+    startHistoricalTeamRematch: (recordId) => {
+      set((state) => {
+        const record = getTeamBattleRecord(state.teamBattles, recordId);
+
+        return {
+          ...state,
+          preparedTeamBattle: createHistoricalTeamPreparation(
+            record.seed,
+            record.leftTeam,
+            record.rightTeam,
+          ),
+          preparedBattle: null,
+          activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
       });
     },
@@ -517,6 +624,7 @@ export function createGameStore() {
           preparedBattle: null,
           preparedTeamBattle: null,
           activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
         };
         saveState(nextState);
         return nextState;
@@ -538,6 +646,7 @@ export function createGameStore() {
           ...state,
           characters: [...state.characters, ...missingPresets],
           preparedTeamBattle: null,
+          activeReplayTeamBattleId: null,
         };
         saveState(nextState);
         return nextState;

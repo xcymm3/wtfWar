@@ -1,4 +1,4 @@
-import type { BattleRecord } from "@/types/battle";
+import type { BattleRecord, TeamBattleRecord } from "@/types/battle";
 import type { Character } from "@/types/character";
 
 import { gameStoreSchema } from "@/lib/schemas/gameStore";
@@ -10,6 +10,7 @@ export type GameStore = {
   version: 1;
   characters: Character[];
   battles: BattleRecord[];
+  teamBattles: TeamBattleRecord[];
   settings: {
     soundEnabled: boolean;
   };
@@ -20,6 +21,7 @@ export function createDefaultGameStore(): GameStore {
     version: 1,
     characters: [],
     battles: [],
+    teamBattles: [],
     settings: { soundEnabled: true },
   };
 }
@@ -157,9 +159,15 @@ function migrateLegacyGameStore(parsedStore: unknown): {
       };
     })
     : parsedStore.battles;
+  const teamBattles = Array.isArray(parsedStore.teamBattles)
+    ? parsedStore.teamBattles
+    : [];
+  if (!Array.isArray(parsedStore.teamBattles)) didMigrate = true;
 
   return {
-    store: didMigrate ? { ...parsedStore, characters, battles } : parsedStore,
+    store: didMigrate
+      ? { ...parsedStore, characters, battles, teamBattles }
+      : parsedStore,
     didMigrate,
   };
 }
@@ -189,6 +197,7 @@ export function saveGameStore(store: GameStore): void {
   const parsedStore = gameStoreSchema.safeParse({
     ...store,
     battles: store.battles.slice(-MAX_STORED_BATTLES),
+    teamBattles: (store.teamBattles ?? []).slice(-MAX_STORED_BATTLES),
   });
 
   if (!parsedStore.success) {

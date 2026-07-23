@@ -415,7 +415,7 @@ export function BattlePreparation() {
         <footer className="preparation-actions team-preparation-actions">
           <div>
             <strong>{teamSizeMatches ? `阵容合法：${teamMembers.left.length} v ${teamMembers.right.length}` : "双方需各有 1–5 名角色，且人数相同。"}</strong>
-            <span>保存后会冻结当前队伍顺序和角色快照；团队引擎已可结算，团队观战界面将在后续步骤接入。</span>
+            <span>保存后会冻结当前队伍顺序和角色快照，可立即进入团队观战并生成完整战报。</span>
           </div>
           <button type="button" onClick={handleTeamPrepare} disabled={!teamSizeMatches}>
             保存团队阵容
@@ -424,7 +424,8 @@ export function BattlePreparation() {
 
         {isPreparedForCurrentTeam && preparedTeamBattle ? (
           <section className="prepared-notice" aria-live="polite">
-            团队阵容已保存：红方 {preparedTeamBattle.leftTeam.members.length} 人，对阵蓝方 {preparedTeamBattle.rightTeam.members.length} 人，种子为 <code>{preparedTeamBattle.seed}</code>。团队观战与完整战报将在后续步骤接入。
+            团队阵容已保存：红方 {preparedTeamBattle.leftTeam.members.length} 人，对阵蓝方 {preparedTeamBattle.rightTeam.members.length} 人，种子为 <code>{preparedTeamBattle.seed}</code>。
+            <Link href="/battle" className="watch-battle-link">进入团队观战</Link>
           </section>
         ) : null}
 

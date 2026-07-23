@@ -9,7 +9,11 @@ import {
   parseImportedCharacterLibrary,
 } from "@/lib/storage/characterLibraryTransfer";
 import { useGameStore } from "@/lib/store/gameStore";
-import type { BattleRecord } from "@/types/battle";
+import type { BattleRecord, TeamBattleRecord } from "@/types/battle";
+
+type HistoryItem =
+  | { kind: "duel"; record: BattleRecord }
+  | { kind: "team"; record: TeamBattleRecord };
 
 function formatBattleTime(value: string): string {
   return new Intl.DateTimeFormat("zh-CN", {
@@ -18,10 +22,36 @@ function formatBattleTime(value: string): string {
   }).format(new Date(value));
 }
 
-function getWinnerLabel(record: BattleRecord): string {
-  if (record.winner === "left") return `红方胜 · ${record.leftCharacter.name}`;
-  if (record.winner === "right") return `蓝方胜 · ${record.rightCharacter.name}`;
-  return "平局";
+function getWinnerLabel(item: HistoryItem): string {
+  const { record } = item;
+  if (record.winner === "draw") return "平局";
+  if (item.kind === "duel") {
+    const winner = record.winner === "left"
+      ? record.leftCharacter.name
+      : record.rightCharacter.name;
+    return `${record.winner === "left" ? "红方" : "蓝方"}胜 · ${winner}`;
+  }
+
+  const count = record.winner === "left"
+    ? record.leftTeam.members.length
+    : record.rightTeam.members.length;
+  return `${record.winner === "left" ? "红方" : "蓝方"}胜 · ${count} 人团队`;
+}
+
+function getMatchTitle(item: HistoryItem): string {
+  if (item.kind === "duel") {
+    return `${item.record.leftCharacter.name} VS ${item.record.rightCharacter.name}`;
+  }
+
+  const leftNames = item.record.leftTeam.members.map((member) => member.name).join("、");
+  const rightNames = item.record.rightTeam.members.map((member) => member.name).join("、");
+  return `${leftNames} VS ${rightNames}`;
+}
+
+function getBattleModeLabel(item: HistoryItem): string {
+  return item.kind === "team"
+    ? `${item.record.leftTeam.members.length}v${item.record.rightTeam.members.length} 团队战`
+    : "1v1 单挑";
 }
 
 export function BattleHistory() {
@@ -30,8 +60,13 @@ export function BattleHistory() {
   const hydrate = useGameStore((state) => state.hydrate);
   const characters = useGameStore((state) => state.characters);
   const battles = useGameStore((state) => state.battles);
+  const teamBattles = useGameStore((state) => state.teamBattles);
   const openBattleReplay = useGameStore((state) => state.openBattleReplay);
+  const openTeamBattleReplay = useGameStore((state) => state.openTeamBattleReplay);
   const startHistoricalRematch = useGameStore((state) => state.startHistoricalRematch);
+  const startHistoricalTeamRematch = useGameStore(
+    (state) => state.startHistoricalTeamRematch,
+  );
   const importCharacters = useGameStore((state) => state.importCharacters);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,17 +76,28 @@ export function BattleHistory() {
   }, [hydrate]);
 
   const history = useMemo(
-    () => [...battles].sort((first, second) => second.createdAt.localeCompare(first.createdAt)),
-    [battles],
+    () => [
+      ...battles.map((record): HistoryItem => ({ kind: "duel", record })),
+      ...teamBattles.map((record): HistoryItem => ({ kind: "team", record })),
+    ].sort((first, second) => second.record.createdAt.localeCompare(first.record.createdAt)),
+    [battles, teamBattles],
   );
 
-  function handleReplay(recordId: string): void {
-    openBattleReplay(recordId);
+  function handleReplay(item: HistoryItem): void {
+    if (item.kind === "team") {
+      openTeamBattleReplay(item.record.id);
+    } else {
+      openBattleReplay(item.record.id);
+    }
     router.push("/battle");
   }
 
-  function handleHistoricalRematch(recordId: string): void {
-    startHistoricalRematch(recordId);
+  function handleHistoricalRematch(item: HistoryItem): void {
+    if (item.kind === "team") {
+      startHistoricalTeamRematch(item.record.id);
+    } else {
+      startHistoricalRematch(item.record.id);
+    }
     router.push("/battle");
   }
 
@@ -109,7 +155,7 @@ export function BattleHistory() {
             <p className="library-kicker">斗蛐蛐 AI · 战斗历史</p>
             <h1>每一场较量，都能重看。</h1>
             <p>
-              战报保存了当时的角色快照和行动记录。即使后来编辑或删除角色，历史回放也不会改变。
+              战报保存了当时的角色快照、队伍站位和行动记录。即使后来编辑或删除角色，历史回放也不会改变。
             </p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>
@@ -138,29 +184,31 @@ export function BattleHistory() {
               <p className="library-kicker">已保存战报</p>
               <h2>{history.length} 场可回看对局</h2>
             </div>
-            <span>只保存最近 100 场</span>
+            <span>单挑与团队战各保存最近 100 场</span>
           </div>
 
           {history.length > 0 ? (
             <ol className="history-list">
-              {history.map((record) => (
-                <li key={record.id}>
-                  <article className="history-record">
+              {history.map((item) => (
+                <li key={`${item.kind}-${item.record.id}`}>
+                  <article className={`history-record history-record-${item.kind}`}>
                     <div className="history-record-summary">
-                      <span className={`history-winner history-winner-${record.winner}`}>
-                        {getWinnerLabel(record)}
+                      <span className={`history-winner history-winner-${item.record.winner}`}>
+                        {getWinnerLabel(item)}
                       </span>
-                      <h3>{record.leftCharacter.name} <em>VS</em> {record.rightCharacter.name}</h3>
+                      <h3>{getMatchTitle(item)}</h3>
                       <p>
-                        {record.rounds} 回合 · 种子 <code>{record.seed}</code> · {formatBattleTime(record.createdAt)}
+                        {getBattleModeLabel(item)} · {item.record.rounds} 回合 · 种子 <code>{item.record.seed}</code> · {formatBattleTime(item.record.createdAt)}
                       </p>
                     </div>
                     <div className="history-record-actions">
-                      <button type="button" onClick={() => handleReplay(record.id)}>回放</button>
+                      <button type="button" onClick={() => handleReplay(item)}>
+                        {item.kind === "team" ? "团队回放" : "回放"}
+                      </button>
                       <button
                         type="button"
                         className="history-rematch-button"
-                        onClick={() => handleHistoricalRematch(record.id)}
+                        onClick={() => handleHistoricalRematch(item)}
                       >
                         同种子复赛
                       </button>

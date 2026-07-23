@@ -3,6 +3,8 @@ import test from "node:test";
 
 import { simulateBattle } from "../lib/battle/battleEngine";
 import { createBattleRecord } from "../lib/battle/battleRecord";
+import { createTeamBattleRecord } from "../lib/battle/teamBattleRecord";
+import { simulateTeamBattle } from "../lib/battle/teamBattleEngine";
 import { createGameStore } from "../lib/store/gameStore";
 import { loadGameStore, saveGameStore } from "../lib/storage/gameStorage";
 import type { Character } from "../types/character";
@@ -207,6 +209,53 @@ test("builds equal teams in a mutable front-to-back order", () => {
   });
 });
 
+test("saves replayable team reports and prepares historical team rematches", () => {
+  withMemoryStorage(() => {
+    const store = createGameStore();
+    const leftFront = createCharacter("team-report-left-front");
+    const leftBack = createCharacter("team-report-left-back");
+    const rightFront = createCharacter("team-report-right-front");
+    const rightBack = createCharacter("team-report-right-back");
+    store.getState().hydrate();
+
+    [leftFront, leftBack, rightFront, rightBack].forEach(
+      (character) => store.getState().addCharacter(character),
+    );
+    store.getState().addCharacterToTeam("left", leftFront.id);
+    store.getState().addCharacterToTeam("left", leftBack.id);
+    store.getState().addCharacterToTeam("right", rightFront.id);
+    store.getState().addCharacterToTeam("right", rightBack.id);
+    store.getState().prepareTeamBattle("team-history-seed");
+
+    const preparation = store.getState().preparedTeamBattle;
+    assert.ok(preparation);
+    const result = simulateTeamBattle(preparation);
+    const record = createTeamBattleRecord({
+      seed: preparation.seed,
+      leftTeam: preparation.leftTeam,
+      rightTeam: preparation.rightTeam,
+      winner: result.winner ?? "draw",
+      rounds: result.round,
+      events: result.events,
+    });
+    store.getState().saveTeamBattleRecord(record);
+
+    assert.equal(store.getState().teamBattles.length, 1);
+    assert.equal(loadGameStore().teamBattles[0]?.id, record.id);
+    store.getState().openTeamBattleReplay(record.id);
+    assert.equal(store.getState().activeReplayTeamBattleId, record.id);
+    assert.equal(store.getState().activeReplayBattleId, null);
+
+    store.getState().startHistoricalTeamRematch(record.id);
+    assert.equal(store.getState().activeReplayTeamBattleId, null);
+    assert.equal(store.getState().preparedTeamBattle?.seed, "team-history-seed");
+    assert.deepEqual(
+      store.getState().preparedTeamBattle?.leftTeam.members.map((character) => character.id),
+      [leftFront.id, leftBack.id],
+    );
+  });
+});
+
 test("saves battle records, replays snapshots, and prepares historical rematches", () => {
   withMemoryStorage(() => {
     const store = createGameStore();
@@ -306,6 +355,7 @@ test("migrates legacy battle events without discarding the saved library", () =>
     assert.equal(migrated.characters[0]?.skills[0]?.activation, "active");
     assert.equal(migrated.characters[0]?.skills[0]?.target, "enemy_front");
     assert.equal(migrated.battles[0]?.rulesVersion, 1);
+    assert.deepEqual(migrated.teamBattles, []);
     assert.equal(migrated.battles[0]?.leftCharacter.realm, "mortal");
     assert.deepEqual(migrated.battles[0]?.events[0]?.actorCooldowns, {});
     assert.deepEqual(migrated.battles[0]?.events[0]?.targetCooldowns, {});

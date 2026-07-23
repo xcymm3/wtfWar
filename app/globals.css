@@ -1623,6 +1623,130 @@ body {
   margin-top: 40px;
 }
 
+.team-observer-arena {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 116px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.team-observer-panel {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(29, 27, 23, 0.91);
+  padding: 17px;
+}
+
+.team-observer-panel-left {
+  border-top: 3px solid #dc625c;
+}
+
+.team-observer-panel-right {
+  border-top: 3px solid #679ed8;
+}
+
+.team-observer-panel-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.team-observer-panel-heading span {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.team-observer-panel-heading strong {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.team-observer-list {
+  display: grid;
+  gap: 9px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-observer-list > li {
+  border: 1px solid rgba(189, 177, 160, 0.2);
+  border-left: 3px solid rgba(189, 177, 160, 0.28);
+  border-radius: 11px;
+  background: rgba(16, 16, 16, 0.25);
+  padding: 11px;
+  transition: opacity 220ms ease, border-color 220ms ease;
+}
+
+.team-observer-list > li.is-front {
+  border-left-color: var(--accent);
+  background: rgba(243, 175, 50, 0.08);
+}
+
+.team-observer-list > li.is-defeated {
+  opacity: 0.46;
+}
+
+.team-observer-member-heading {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.team-observer-member-heading > span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.team-observer-member-heading strong {
+  overflow: hidden;
+  font-size: 0.88rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-observer-member-heading small {
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.team-observer-list .health-block {
+  margin-top: 11px;
+}
+
+.team-observer-list .health-track {
+  height: 7px;
+}
+
+.team-observer-list .observer-status-row {
+  margin-top: 9px;
+}
+
+.team-observer-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.team-observer-skills span {
+  border-radius: 5px;
+  background: rgba(16, 16, 16, 0.45);
+  color: #9fd9b8;
+  padding: 4px 6px;
+  font-size: 0.66rem;
+}
+
+.team-observer-skills span.is-cooling {
+  color: #d2aca4;
+}
+
 .observer-fighter {
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -1947,6 +2071,20 @@ body {
   margin: 24px 0 4px;
   color: var(--muted);
   text-align: center;
+}
+
+.team-event-targets {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-event-targets li {
+  color: #c8c0b5;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .observer-empty,
@@ -2309,6 +2447,10 @@ body {
   .observer-arena {
     grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
   }
+
+  .team-observer-arena {
+    grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 620px) {
@@ -2379,6 +2521,20 @@ body {
     grid-template-columns: 1fr;
     gap: 8px;
     margin-top: 30px;
+  }
+
+  .team-observer-arena {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 30px;
+  }
+
+  .team-observer-member-heading {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .team-observer-member-heading small {
+    grid-column: 2;
   }
 
   .observer-center {
