@@ -92,7 +92,6 @@ export const generatedCharacterDraftSchema = z.object({
 
 export const characterGenerationRequestSchema = z.object({
   prompt: z.string().trim().min(8).max(500),
-  preferredProfession: z.enum(PROFESSIONS).optional(),
 });
 
 export type GeneratedCharacterDraft = z.infer<typeof generatedCharacterDraftSchema>;
@@ -315,8 +314,7 @@ export function generateLocalCharacter(
   request: CharacterGenerationRequest,
 ): Character {
   const parsedRequest = characterGenerationRequestSchema.parse(request);
-  const profession = parsedRequest.preferredProfession
-    ?? inferProfession(parsedRequest.prompt, parsedRequest.prompt);
+  const profession = inferProfession(parsedRequest.prompt, parsedRequest.prompt);
   const random = createSeededRandom(`${profession}\u0000${parsedRequest.prompt}`);
   const ranges = PROFESSION_STAT_RANGES[profession];
   const draft: GeneratedCharacterDraft = {

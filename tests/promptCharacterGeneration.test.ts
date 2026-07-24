@@ -20,10 +20,9 @@ test("generates a valid local character from a natural-language prompt", () => {
   assert.deepEqual(characterSchema.parse(character), character);
 });
 
-test("honors an explicit profession preference and rejects invalid model drafts", () => {
+test("infers profession from the description and rejects invalid model drafts", () => {
   const character = generateLocalCharacter({
-    prompt: "擅长近战但也会治疗同伴的冒险者。",
-    preferredProfession: "ranger",
+    prompt: "擅长远程弓箭狙击，也会治疗同伴的冒险者。",
   });
 
   assert.equal(character.profession, "ranger");

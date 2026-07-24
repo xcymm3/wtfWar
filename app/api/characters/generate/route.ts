@@ -25,7 +25,6 @@ function getModelConfiguration(): ModelConfiguration | null {
 
 async function generateWithModel(
   prompt: string,
-  preferredProfession: string | undefined,
   configuration: ModelConfiguration,
 ) {
   const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
@@ -42,7 +41,7 @@ async function generateWithModel(
         { role: "system", content: getCharacterGenerationSystemPrompt() },
         {
           role: "user",
-          content: `角色设想：${prompt}${preferredProfession ? `\n偏好职业：${preferredProfession}` : ""}`,
+          content: `角色设想：${prompt}`,
         },
       ],
     }),
@@ -90,7 +89,6 @@ export async function POST(request: Request) {
     const character = configuration
       ? await generateWithModel(
         parsedRequest.data.prompt,
-        parsedRequest.data.preferredProfession,
         configuration,
       )
       : generateLocalCharacter(parsedRequest.data);

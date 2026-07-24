@@ -259,7 +259,7 @@ function FighterPanel({
         </div>
       </div>
       <div className="observer-status-row">
-        <span>攻击 {effectiveStats.attack}（基础 {character.attack}）</span>
+        <span>攻击 {effectiveStats.attack}</span>
         <span>护盾 {visualState.shield}</span>
         {visualState.isStunned ? <span className="stunned-status">眩晕</span> : null}
       </div>

@@ -423,6 +423,37 @@ body {
   letter-spacing: 0.08em;
 }
 
+.profession-icon {
+  display: inline-grid;
+  width: 1.55rem;
+  height: 1.55rem;
+  flex: 0 0 auto;
+  place-items: center;
+  margin-right: 5px;
+  border: 1px solid currentColor;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.profession-icon.is-compact {
+  width: 1.18rem;
+  height: 1.18rem;
+  margin-right: 4px;
+  border-radius: 5px;
+  font-size: 0.64rem;
+}
+
+.profession-icon-tank { color: #8fc7a3; }
+.profession-icon-warrior { color: #ef9775; }
+.profession-icon-mage { color: #b5a9ff; }
+.profession-icon-assassin { color: #ef8297; }
+.profession-icon-ranger { color: #ead07c; }
+
 .character-card-topline time {
   font-variant-numeric: tabular-nums;
 }
@@ -952,6 +983,11 @@ body {
   margin-top: 5px;
   color: #c8c0b5;
   font-variant-numeric: tabular-nums;
+}
+
+.generated-profession > span {
+  display: flex;
+  align-items: center;
 }
 
 .generated-skill-grid {

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { useGameStore } from "@/lib/store/gameStore";
+import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
 import type { BattleSide } from "@/types/battle";
 import {
   PROFESSIONS,
@@ -59,7 +60,7 @@ function TeamLineup({
                 </span>
                 <div className="team-member-summary">
                   <strong>{character.name}</strong>
-                  <span>{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
+                  <span><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
                   <small>攻 {effectiveStats.attack} · 命 {effectiveStats.maxHealth}</small>
                 </div>
                 <div className="team-member-actions">
@@ -295,7 +296,7 @@ export function BattlePreparation() {
                   <article key={character.id} className="team-roster-card">
                     <div>
                       <strong>{character.name}</strong>
-                      <span>{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
+                      <span><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
                     </div>
                     <div>
                       <button

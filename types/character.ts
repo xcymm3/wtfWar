@@ -16,6 +16,14 @@ export const PROFESSION_LABELS: Record<Profession, string> = {
   ranger: "射手",
 };
 
+export const PROFESSION_ICON_MARKS: Record<Profession, string> = {
+  tank: "盾",
+  warrior: "刃",
+  mage: "星",
+  assassin: "影",
+  ranger: "弓",
+};
+
 export const REALMS = [
   "mortal",
   "martial_master",

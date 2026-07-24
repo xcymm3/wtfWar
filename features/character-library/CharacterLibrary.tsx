@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { useGameStore } from "@/lib/store/gameStore";
+import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
 import {
   PROFESSIONS,
   PROFESSION_LABELS,
@@ -173,17 +174,15 @@ export function CharacterLibrary() {
               return (
                 <article key={character.id} className={`character-card profession-${character.profession}`}>
                   <div className="character-card-topline">
-                    <span>{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
+                    <span><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
                     <time dateTime={character.updatedAt}>更新于 {formatUpdatedAt(character.updatedAt)}</time>
                   </div>
                   <h2>{character.name}</h2>
                   <p className="character-prompt">{character.originalPrompt}</p>
 
                   <dl className="character-stats">
-                    <div><dt>基础攻击</dt><dd>{character.attack}</dd></div>
-                    <div><dt>有效攻击</dt><dd>{effectiveStats.attack}</dd></div>
-                    <div><dt>基础生命</dt><dd>{character.maxHealth}</dd></div>
-                    <div><dt>有效生命</dt><dd>{effectiveStats.maxHealth}</dd></div>
+                    <div><dt>攻击</dt><dd>{effectiveStats.attack}</dd></div>
+                    <div><dt>生命</dt><dd>{effectiveStats.maxHealth}</dd></div>
                   </dl>
 
                   <div className="skill-list" aria-label={`${character.name} 的技能`}>

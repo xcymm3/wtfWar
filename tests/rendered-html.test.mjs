@@ -150,14 +150,17 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /disabled=\{!generatedSkills/);
   assert.match(creator, /api\/characters\/generate/);
   assert.match(creator, /战力阶位/);
-  assert.match(creator, /有效攻击/);
+  assert.match(creator, /AI 会判定职业/);
   assert.match(creator, /群体伤害/);
   assert.match(creator, /群体治疗/);
   assert.match(creator, /横扫被动/);
   assert.match(creator, /蓄力一击被动/);
   assert.doesNotMatch(creator, /SkillEditor/);
-  assert.match(library, /有效攻击/);
+  assert.match(library, /<dt>攻击<\/dt>/);
+  assert.match(library, /ProfessionIcon/);
+  assert.doesNotMatch(library, /基础攻击|有效攻击|基础生命|有效生命/);
   assert.match(generator, /generateLocalCharacter/);
+  assert.doesNotMatch(generator, /preferredProfession/);
   assert.match(generator, /realm/);
   assert.match(generator, /charge_strike_passive/);
   assert.match(generationRoute, /OPENAI_API_KEY/);
@@ -203,6 +206,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
   assert.match(styles, /\.generated-profile/);
+  assert.match(styles, /\.profession-icon/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);
   assert.doesNotMatch(library, /codex-preview|_sites-preview|SkeletonPreview/);
