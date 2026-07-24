@@ -142,14 +142,18 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /保存角色卡/);
   assert.match(creator, /手动创角/);
   assert.match(creator, /characterSchema/);
-  assert.match(creator, /AI 自动生成/);
+  assert.match(creator, /生成角色属性/);
+  assert.match(creator, /自动生成的战斗配置/);
+  assert.match(creator, /GeneratedSkillCard/);
+  assert.match(creator, /disabled=\{!generatedSkills/);
   assert.match(creator, /api\/characters\/generate/);
   assert.match(creator, /战力阶位/);
-  assert.match(creator, /有效属性/);
+  assert.match(creator, /有效攻击/);
   assert.match(creator, /群体伤害/);
   assert.match(creator, /群体治疗/);
   assert.match(creator, /横扫被动/);
   assert.match(creator, /蓄力一击被动/);
+  assert.doesNotMatch(creator, /SkillEditor/);
   assert.match(library, /有效攻击/);
   assert.match(generator, /generateLocalCharacter/);
   assert.match(generator, /realm/);
@@ -188,6 +192,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
   assert.match(styles, /\.team-observer-frame/);
+  assert.match(styles, /\.generated-profile/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);
   assert.doesNotMatch(library, /codex-preview|_sites-preview|SkeletonPreview/);

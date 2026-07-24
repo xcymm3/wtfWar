@@ -694,6 +694,18 @@ body {
   line-height: 1.55;
 }
 
+.creator-generation-action {
+  align-items: center;
+}
+
+.creator-generation-action p {
+  max-width: 31rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
 .section-heading {
   display: flex;
   align-items: start;
@@ -847,6 +859,67 @@ body {
 
 .effective-attribute-preview strong {
   font-variant-numeric: tabular-nums;
+}
+
+.generated-profile {
+  background: rgba(29, 27, 23, 0.62);
+}
+
+.generated-attribute-grid,
+.generated-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.generated-attribute-grid > div,
+.generated-skill-card {
+  min-width: 0;
+  border: 1px solid rgba(189, 177, 160, 0.24);
+  border-radius: 12px;
+  background: rgba(13, 13, 12, 0.3);
+  color: var(--muted);
+  padding: 14px;
+}
+
+.generated-attribute-grid span,
+.generated-skill-card > span,
+.generated-skill-card small {
+  color: #9f978a;
+  font-size: 0.74rem;
+}
+
+.generated-attribute-grid strong,
+.generated-skill-card strong {
+  display: block;
+  margin-top: 5px;
+  color: #c8c0b5;
+  font-variant-numeric: tabular-nums;
+}
+
+.generated-skill-grid {
+  margin-top: 12px;
+}
+
+.generated-skill-card p {
+  margin: 8px 0;
+  color: #aaa195;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.generated-skill-card small {
+  display: block;
+  line-height: 1.45;
+}
+
+.generated-profile-empty {
+  margin: 0;
+  border: 1px dashed rgba(189, 177, 160, 0.28);
+  border-radius: 12px;
+  color: var(--muted);
+  padding: 16px;
+  line-height: 1.6;
 }
 
 .attribute-fields label,
@@ -1657,8 +1730,7 @@ body {
 }
 
 .team-observer-list > li.is-front {
-  border-top-color: var(--accent);
-  background: rgba(243, 175, 50, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(247, 240, 223, 0.16);
 }
 
 .team-observer-list > li.is-defeated {
@@ -1673,8 +1745,14 @@ body {
   border-top-color: #679ed8;
 }
 
-.team-observer-list > li.is-front {
-  border-top-color: var(--accent);
+.team-observer-list-left > li.is-front {
+  border-top-color: #dc625c;
+  background: rgba(220, 98, 92, 0.12);
+}
+
+.team-observer-list-right > li.is-front {
+  border-top-color: #679ed8;
+  background: rgba(103, 158, 216, 0.12);
 }
 
 .team-observer-member-heading {
@@ -2542,6 +2620,16 @@ body {
 
   .effective-attribute-preview {
     align-items: start;
+    flex-direction: column;
+  }
+
+  .generated-attribute-grid,
+  .generated-skill-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .creator-generation-action {
+    align-items: stretch;
     flex-direction: column;
   }
 
