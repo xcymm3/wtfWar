@@ -133,6 +133,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(page, /CharacterLibrary/);
   assert.match(library, /useGameStore/);
   assert.match(library, /按职业筛选/);
+  assert.match(library, /aria-pressed/);
   assert.match(library, /已自动导入/);
   assert.match(library, /addPresetCharacters/);
   assert.doesNotMatch(library, /设为红方|设为蓝方/);
@@ -163,6 +164,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(preparation, /确认单挑配置/);
   assert.match(preparation, /选择两名角色立即对战/);
   assert.match(preparation, /classic-selector-grid/);
+  assert.match(preparation, /职业分类/);
+  assert.match(preparation, /filteredCharacters/);
   assert.match(preparation, /随机种子/);
   assert.match(preparation, /prepareBattle/);
   assert.match(preparation, /有效生命/);
@@ -200,6 +203,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
   assert.match(styles, /\.team-observer-frame/);
   assert.match(styles, /\.bottom-navigation/);
+  assert.match(styles, /\.battle-profession-filter/);
   assert.match(styles, /\.generated-profile/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);

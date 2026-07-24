@@ -8,9 +8,11 @@ import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { useGameStore } from "@/lib/store/gameStore";
 import type { BattleSide } from "@/types/battle";
 import {
+  PROFESSIONS,
   PROFESSION_LABELS,
   REALM_LABELS,
   type Character,
+  type Profession,
   type Skill,
 } from "@/types/character";
 
@@ -25,6 +27,8 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
   charge_strike_passive: "蓄力被动",
   buff: "增益",
 };
+
+type ProfessionFilter = Profession | "all";
 
 function CharacterPreview({
   side,
@@ -188,6 +192,7 @@ export function BattlePreparation() {
   const prepareTeamBattle = useGameStore((state) => state.prepareTeamBattle);
   const [seed, setSeed] = useState(createSeed);
   const [error, setError] = useState<string | null>(null);
+  const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>("all");
 
   useEffect(() => {
     hydrate();
@@ -231,6 +236,12 @@ export function BattlePreparation() {
   const teamSizeMatches =
     teamMembers.left.length > 0 &&
     teamMembers.left.length === teamMembers.right.length;
+  const filteredCharacters = useMemo(
+    () => characters.filter(
+      (character) => professionFilter === "all" || character.profession === professionFilter,
+    ),
+    [characters, professionFilter],
+  );
 
   function handleClassicPrepare(): void {
     setError(null);
@@ -351,8 +362,32 @@ export function BattlePreparation() {
                 <p>同一名角色只能出现一次。队伍满 5 人后不能继续加入。</p>
               </div>
             </header>
+            <div className="battle-profession-filter" aria-label="按职业查看角色">
+              <span>职业分类</span>
+              <div className="profession-filters" role="group" aria-label="选择职业">
+                <button
+                  type="button"
+                  className={professionFilter === "all" ? "is-active" : ""}
+                  onClick={() => setProfessionFilter("all")}
+                  aria-pressed={professionFilter === "all"}
+                >
+                  全部
+                </button>
+                {PROFESSIONS.map((profession) => (
+                  <button
+                    key={profession}
+                    type="button"
+                    className={professionFilter === profession ? "is-active" : ""}
+                    onClick={() => setProfessionFilter(profession)}
+                    aria-pressed={professionFilter === profession}
+                  >
+                    {PROFESSION_LABELS[profession]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="team-roster-grid">
-              {characters.map((character) => {
+              {filteredCharacters.map((character) => {
                 const realm = character.realm ?? "mortal";
                 const isOnLeft = teamCharacterIds.left.includes(character.id);
                 const isOnRight = teamCharacterIds.right.includes(character.id);
@@ -386,6 +421,9 @@ export function BattlePreparation() {
                 );
               })}
             </div>
+            {filteredCharacters.length === 0 ? (
+              <p className="team-roster-empty">该职业暂时没有角色，切换职业即可继续查看。</p>
+            ) : null}
           </section>
         </section>
 

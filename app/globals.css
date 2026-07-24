@@ -347,6 +347,20 @@ body {
   gap: 7px;
 }
 
+.library-profession-filter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.library-profession-filter > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .profession-filters button,
 .character-actions button {
   cursor: pointer;
@@ -1498,6 +1512,31 @@ body {
   line-height: 1.5;
 }
 
+.battle-profession-filter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.battle-profession-filter > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.battle-profession-filter .profession-filters {
+  justify-content: flex-start;
+}
+
+.team-roster-empty {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .team-roster-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2613,6 +2652,16 @@ body {
     justify-content: flex-start;
   }
 
+  .library-profession-filter {
+    justify-content: start;
+  }
+
+  .battle-profession-filter {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 8px;
+  }
+
   .character-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2687,6 +2736,11 @@ body {
 
   .library-controls {
     margin-top: 30px;
+  }
+
+  .library-profession-filter {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .character-grid {

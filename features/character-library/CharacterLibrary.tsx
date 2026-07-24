@@ -138,24 +138,29 @@ export function CharacterLibrary() {
               placeholder="搜索名字或角色描述"
             />
           </label>
-          <div className="profession-filters" aria-label="按职业筛选">
-            <button
-              type="button"
-              className={professionFilter === "all" ? "is-active" : ""}
-              onClick={() => setProfessionFilter("all")}
-            >
-              全部
-            </button>
-            {PROFESSIONS.map((profession) => (
+          <div className="library-profession-filter">
+            <span>职业分类</span>
+            <div className="profession-filters" aria-label="按职业筛选">
               <button
-                key={profession}
                 type="button"
-                className={professionFilter === profession ? "is-active" : ""}
-                onClick={() => setProfessionFilter(profession)}
+                className={professionFilter === "all" ? "is-active" : ""}
+                onClick={() => setProfessionFilter("all")}
+                aria-pressed={professionFilter === "all"}
               >
-                {PROFESSION_LABELS[profession]}
+                全部
               </button>
-            ))}
+              {PROFESSIONS.map((profession) => (
+                <button
+                  key={profession}
+                  type="button"
+                  className={professionFilter === profession ? "is-active" : ""}
+                  onClick={() => setProfessionFilter(profession)}
+                  aria-pressed={professionFilter === profession}
+                >
+                  {PROFESSION_LABELS[profession]}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
