@@ -91,6 +91,7 @@ export const generatedCharacterDraftSchema = z.object({
 }).strict();
 
 export const characterGenerationRequestSchema = z.object({
+  name: z.string().trim().min(1).max(24),
   prompt: z.string().trim().min(8).max(500),
 });
 
@@ -103,14 +104,6 @@ const PROFESSION_KEYWORDS: Record<Profession, string[]> = {
   mage: ["法师", "魔法", "法术", "元素", "火焰", "冰", "雷"],
   assassin: ["刺客", "暗影", "潜行", "匕首", "毒", "影"],
   ranger: ["射手", "弓", "箭", "游侠", "狙击", "远程"],
-};
-
-const CHARACTER_NAMES: Record<Profession, string[]> = {
-  tank: ["铁壁阿九", "玄甲守卫", "城垣"],
-  warrior: ["断风", "赤锋", "长刃"],
-  mage: ["星火", "霜语", "雷鸣"],
-  assassin: ["夜刃", "幽影", "无声"],
-  ranger: ["穿云", "远望", "逐风"],
 };
 
 const REALM_KEYWORDS: Record<Realm, string[]> = {
@@ -141,13 +134,26 @@ const HEAL_KEYWORDS = ["治疗", "恢复", "治愈", "医"];
 const CLEAVE_PASSIVE_KEYWORDS = ["横扫", "横斩", "全体普攻", "挥砍全体"];
 const CHARGE_PASSIVE_KEYWORDS = ["蓄力", "蓄能", "聚力", "蓄势"];
 
-function inferProfession(prompt: string, randomSeed: string): Profession {
+function inferProfession(
+  name: string,
+  prompt: string,
+  randomSeed: string,
+): Profession {
+  const normalizedName = name.toLocaleLowerCase("zh-CN");
   const normalizedPrompt = prompt.toLocaleLowerCase("zh-CN");
-  const match = PROFESSIONS.find((profession) =>
-    PROFESSION_KEYWORDS[profession].some((keyword) => normalizedPrompt.includes(keyword)),
-  );
+  const rankedProfessions = PROFESSIONS.map((profession) => ({
+    profession,
+    score: PROFESSION_KEYWORDS[profession].reduce(
+      (score, keyword) => score
+        + (normalizedName.includes(keyword) ? 2 : 0)
+        + (normalizedPrompt.includes(keyword) ? 1 : 0),
+      0,
+    ),
+  })).sort((first, second) => second.score - first.score);
 
-  return match ?? createSeededRandom(randomSeed).pick(PROFESSIONS);
+  return rankedProfessions[0]?.score
+    ? rankedProfessions[0].profession
+    : createSeededRandom(randomSeed).pick(PROFESSIONS);
 }
 
 function inferRealm(prompt: string): Realm {
@@ -314,18 +320,23 @@ export function generateLocalCharacter(
   request: CharacterGenerationRequest,
 ): Character {
   const parsedRequest = characterGenerationRequestSchema.parse(request);
-  const profession = inferProfession(parsedRequest.prompt, parsedRequest.prompt);
-  const random = createSeededRandom(`${profession}\u0000${parsedRequest.prompt}`);
+  const generationContext = `角色名称：${parsedRequest.name}\n角色描述：${parsedRequest.prompt}`;
+  const profession = inferProfession(
+    parsedRequest.name,
+    parsedRequest.prompt,
+    generationContext,
+  );
+  const random = createSeededRandom(`${profession}\u0000${generationContext}`);
   const ranges = PROFESSION_STAT_RANGES[profession];
   const draft: GeneratedCharacterDraft = {
-    name: random.pick(CHARACTER_NAMES[profession]),
+    name: parsedRequest.name,
     profession,
-    realm: inferRealm(parsedRequest.prompt),
+    realm: inferRealm(generationContext),
     attack: random.nextInt(ranges.attack.min, ranges.attack.max),
     maxHealth: random.nextInt(ranges.maxHealth.min, ranges.maxHealth.max),
     skills: [
       createSkillDraft("damage", random),
-      createSkillDraft(inferSecondarySkillType(profession, parsedRequest.prompt, random), random),
+      createSkillDraft(inferSecondarySkillType(profession, generationContext, random), random),
     ],
   };
 
@@ -333,7 +344,7 @@ export function generateLocalCharacter(
 }
 
 export function getCharacterGenerationSystemPrompt(): string {
-  return `你是“War AI”的角色设计器。根据用户描述生成一个可用于团队回合制战斗的角色，仅输出 JSON 对象，不要 Markdown。
+  return `你是“War AI”的角色设计器。根据用户提供的角色名称和角色描述生成一个可用于团队回合制战斗的角色；职业、属性和技能必须综合两项信息判断，仅输出 JSON 对象，不要 Markdown。
 JSON 必须含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，应根据角色世界观强度选择：凡人、武林高手、超能力者、修仙者、神灵。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；至少一个 type 为 damage、area_damage、cleave_passive 或 charge_strike_passive。每个技能都含 name、description、type、cooldown；damage 另含 damageMultiplier（0.8-1.8），area_damage 另含 damageMultiplier（0.45-0.9），shield 另含 shieldAmount（10-45），heal 另含 healAmount（10-45），area_heal 另含 healAmount（5-25），control 另含 stunChance（0-0.5）。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 20-30、85-120；ranger 16-25、105-145。冷却 1-5。所有中文文本简洁，技能名不重复。`;
 }

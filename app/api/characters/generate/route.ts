@@ -24,6 +24,7 @@ function getModelConfiguration(): ModelConfiguration | null {
 }
 
 async function generateWithModel(
+  name: string,
   prompt: string,
   configuration: ModelConfiguration,
 ) {
@@ -41,7 +42,7 @@ async function generateWithModel(
         { role: "system", content: getCharacterGenerationSystemPrompt() },
         {
           role: "user",
-          content: `角色设想：${prompt}`,
+          content: `角色名称：${name}\n角色描述：${prompt}`,
         },
       ],
     }),
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
   const parsedRequest = characterGenerationRequestSchema.safeParse(body);
   if (!parsedRequest.success) {
     return Response.json(
-      { error: "请用 8 至 500 个字符描述你想创建的角色。" },
+      { error: "请填写角色名称，并用 8 至 500 个字符描述角色。" },
       { status: 400 },
     );
   }
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
     const configuration = getModelConfiguration();
     const character = configuration
       ? await generateWithModel(
+        parsedRequest.data.name,
         parsedRequest.data.prompt,
         configuration,
       )

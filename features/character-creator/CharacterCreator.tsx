@@ -101,7 +101,17 @@ export function CharacterCreator() {
     clearGeneratedProfile();
   }
 
+  function changeName(nextName: string): void {
+    setName(nextName);
+    clearGeneratedProfile();
+  }
+
   async function handleGenerate(): Promise<void> {
+    if (name.trim().length === 0) {
+      setError("请先填写角色名称。");
+      return;
+    }
+
     if (originalPrompt.trim().length < 8) {
       setError("请至少用 8 个字符描述你想创建的角色。");
       return;
@@ -116,6 +126,7 @@ export function CharacterCreator() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: name.trim(),
           prompt: originalPrompt.trim(),
         }),
       });
@@ -138,8 +149,8 @@ export function CharacterCreator() {
       setGeneratedSkills(generated.skills);
       setGenerationNotice(
         payload.source === "model"
-          ? "AI 已根据角色描述判定职业，并生成属性和技能。"
-          : "已按角色描述与战斗规则判定职业，并生成属性和技能。",
+          ? "AI 已根据角色名称和描述判定职业，并生成属性和技能。"
+          : "已按角色名称、描述与战斗规则判定职业，并生成属性和技能。",
       );
     } catch (caughtError) {
       setError(
@@ -208,7 +219,7 @@ export function CharacterCreator() {
           <div>
             <p className="library-kicker">War AI · 手动创角</p>
             <h1>给出设定，其余交给 AI。</h1>
-            <p>选择战力阶位，再写下名称和描述；AI 会判定职业，并生成符合战斗规则的属性与技能。</p>
+            <p>选择战力阶位，再写下名称和描述；AI 会综合名称与描述判定职业，并生成符合战斗规则的属性与技能。</p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>
         </header>
@@ -246,7 +257,7 @@ export function CharacterCreator() {
                 required
                 maxLength={24}
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) => changeName(event.target.value)}
                 placeholder="例如：铁壁阿九"
               />
             </label>
@@ -263,7 +274,7 @@ export function CharacterCreator() {
             </label>
 
             <div className="ai-generator-actions creator-generation-action">
-              <p>属性和技能将由 AI 根据角色描述生成，生成后不可直接修改。</p>
+              <p>职业、属性和技能将由 AI 根据角色名称与描述生成，生成后不可直接修改。</p>
               <button type="button" onClick={handleGenerate} disabled={isGenerating}>
                 {isGenerating ? "正在生成…" : "生成角色属性"}
               </button>
@@ -276,7 +287,7 @@ export function CharacterCreator() {
               <span>AI</span>
               <div>
                 <h2>自动生成的战斗配置</h2>
-                <p>以下内容为只读结果；修改角色描述后需要重新生成。</p>
+                <p>以下内容为只读结果；修改角色名称或描述后需要重新生成。</p>
               </div>
             </div>
 

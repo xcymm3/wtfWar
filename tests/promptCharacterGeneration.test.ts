@@ -9,6 +9,7 @@ import { characterSchema } from "../lib/schemas/character";
 
 test("generates a valid local character from a natural-language prompt", () => {
   const character = generateLocalCharacter({
+    name: "霜语",
     prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
   });
 
@@ -22,23 +23,27 @@ test("generates a valid local character from a natural-language prompt", () => {
 
 test("infers profession from the description and rejects invalid model drafts", () => {
   const character = generateLocalCharacter({
+    name: "追风",
     prompt: "擅长远程弓箭狙击，也会治疗同伴的冒险者。",
   });
 
   assert.equal(character.profession, "ranger");
   assert.equal(
     generateLocalCharacter({
+      name: "飞剑",
       prompt: "渡劫后的修仙者以飞剑守护山门。",
     }).realm,
     "cultivator",
   );
   assert.equal(
     generateLocalCharacter({
+      name: "圣光",
       prompt: "以群体治疗守护全体队友的圣光法师。",
     }).skills.some((skill) => skill.type === "area_heal"),
     true,
   );
   const chargeCharacter = generateLocalCharacter({
+    name: "破阵武者",
     prompt: "擅长蓄力一击、专门击穿敌方前排的武者。",
   });
   const chargePassive = chargeCharacter.skills.find(
@@ -73,4 +78,14 @@ test("infers profession from the description and rejects invalid model drafts", 
     }, "invalid draft"),
     /different types/i,
   );
+});
+
+test("uses the role name when inferring a profession", () => {
+  const character = generateLocalCharacter({
+    name: "冰霜术士",
+    prompt: "沉默寡言的旅行者，习惯独自行动。",
+  });
+
+  assert.equal(character.profession, "mage");
+  assert.equal(character.name, "冰霜术士");
 });

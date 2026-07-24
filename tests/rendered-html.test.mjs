@@ -72,6 +72,7 @@ test("generates a validated local character through the production API route", a
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
+      name: "霜语",
       prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
     }),
   });
@@ -150,7 +151,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /disabled=\{!generatedSkills/);
   assert.match(creator, /api\/characters\/generate/);
   assert.match(creator, /战力阶位/);
-  assert.match(creator, /AI 会判定职业/);
+  assert.match(creator, /综合名称与描述判定职业/);
+  assert.match(creator, /角色名称与描述/);
   assert.match(creator, /群体伤害/);
   assert.match(creator, /群体治疗/);
   assert.match(creator, /横扫被动/);
@@ -160,6 +162,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /ProfessionIcon/);
   assert.doesNotMatch(library, /基础攻击|有效攻击|基础生命|有效生命/);
   assert.match(generator, /generateLocalCharacter/);
+  assert.match(generator, /角色名称/);
   assert.doesNotMatch(generator, /preferredProfession/);
   assert.match(generator, /realm/);
   assert.match(generator, /charge_strike_passive/);
