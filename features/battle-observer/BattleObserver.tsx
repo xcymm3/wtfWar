@@ -2,7 +2,14 @@
 
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type UIEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { simulateBattle } from "@/lib/battle/battleEngine";
 import { createBattleRecord } from "@/lib/battle/battleRecord";
@@ -141,6 +148,26 @@ function getTeamHealthPercentage(character: Character, health: number): number {
   );
 }
 
+function useBattleLogAutoFollow(visibleEventCount: number) {
+  const logRef = useRef<HTMLOListElement>(null);
+  const shouldFollowNewestRef = useRef(true);
+
+  useEffect(() => {
+    const log = logRef.current;
+    if (!log || !shouldFollowNewestRef.current) return;
+
+    log.scrollTop = log.scrollHeight;
+  }, [visibleEventCount]);
+
+  const handleLogScroll = useCallback((event: UIEvent<HTMLOListElement>) => {
+    const log = event.currentTarget;
+    const distanceFromBottom = log.scrollHeight - log.scrollTop - log.clientHeight;
+    shouldFollowNewestRef.current = distanceFromBottom <= 24;
+  }, []);
+
+  return { handleLogScroll, logRef };
+}
+
 function isStunSkip(event: BattleEvent): boolean {
   return event.skill === null && event.narration.includes("眩晕状态");
 }
@@ -214,78 +241,41 @@ function TeamFormationPanel({
   const currentFrontId = snapshots.find((member) => member.health > 0)?.characterId;
 
   return (
-    <section className={`team-observer-panel team-observer-panel-${side}`}>
-      <header className="team-observer-panel-heading">
-        <span>{isLeft ? "红方队伍" : "蓝方队伍"}</span>
-        <strong>{formation.members.length} 人阵容</strong>
-      </header>
-      <ol className="team-observer-list">
-        {formation.members.map((character, index) => {
-          const snapshot = snapshots.find(
-            (member) => member.characterId === character.id,
-          );
-          if (!snapshot) return null;
+    <ol
+      className={`team-observer-list team-observer-list-${side}`}
+      aria-label={isLeft ? "红方队伍" : "蓝方队伍"}
+    >
+      {formation.members.map((character) => {
+        const snapshot = snapshots.find(
+          (member) => member.characterId === character.id,
+        );
+        if (!snapshot) return null;
 
-          const effectiveStats = getTeamEffectiveStats(character);
-          const realm = character.realm ?? "mortal";
-          const chargeSkill = character.skills.find(
-            (skill) => skill.type === "charge_strike_passive",
-          );
-          const healthPercentage = getTeamHealthPercentage(character, snapshot.health);
-          const isDefeated = snapshot.health === 0;
-          const isFront = snapshot.characterId === currentFrontId;
+        const effectiveStats = getTeamEffectiveStats(character);
+        const healthPercentage = getTeamHealthPercentage(character, snapshot.health);
+        const isDefeated = snapshot.health === 0;
+        const isFront = snapshot.characterId === currentFrontId;
 
-          return (
-            <li
-              key={character.id}
-              className={`${isDefeated ? "is-defeated" : ""} ${isFront ? "is-front" : ""}`}
-            >
-              <div className="team-observer-member-heading">
-                <span>P{index + 1} {isFront ? "前排" : "后位"}</span>
-                <strong>{character.name}</strong>
-                <small>{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</small>
+        return (
+          <li
+            key={character.id}
+            className={`${isDefeated ? "is-defeated" : ""} ${isFront ? "is-front" : ""}`}
+          >
+            <div className="team-observer-member-heading">
+              <strong>{character.name}</strong>
+            </div>
+            <div className="health-block">
+              <div className="health-label">
+                <strong>{snapshot.health} / {effectiveStats.maxHealth}</strong>
               </div>
-              <div className="health-block">
-                <div className="health-label">
-                  <span>生命</span>
-                  <strong>{snapshot.health} / {effectiveStats.maxHealth}</strong>
-                </div>
-                <div className="health-track" aria-label={`${character.name} 当前生命 ${snapshot.health}`}>
-                  <span style={{ width: `${healthPercentage}%` }} />
-                </div>
+              <div className="health-track" aria-label={`${character.name} 当前生命 ${snapshot.health}`}>
+                <span style={{ width: `${healthPercentage}%` }} />
               </div>
-              <div className="observer-status-row">
-                <span>攻击 {effectiveStats.attack}</span>
-                <span>护盾 {snapshot.shield}</span>
-                {chargeSkill ? (
-                  <span>蓄力 {snapshot.chargeProgress}/{chargeSkill.chargeTurns}</span>
-                ) : null}
-                {snapshot.isStunned ? <span className="stunned-status">眩晕</span> : null}
-              </div>
-              <div className="team-observer-skills">
-                {character.skills.map((skill) => {
-                  const cooldown = snapshot.cooldowns[skill.id] ?? 0;
-                  const isPassive = skill.activation === "passive";
-                  const status = skill.type === "charge_strike_passive"
-                    ? `蓄力 ${snapshot.chargeProgress}/${skill.chargeTurns}`
-                    : isPassive
-                      ? "持续"
-                      : cooldown > 0
-                        ? `${cooldown} 回合`
-                        : "可用";
-
-                  return (
-                    <span key={skill.id} className={cooldown > 0 ? "is-cooling" : ""}>
-                      {skill.name} · {status}
-                    </span>
-                  );
-                })}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-    </section>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -359,6 +349,7 @@ function BattleObserverPlayer({
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
+  const { handleLogScroll, logRef } = useBattleLogAutoFollow(visibleEventCount);
 
   const finishBattleIfNeeded = useCallback((): void => {
     if (!hasRecorded && onBattleCompleted) {
@@ -456,7 +447,7 @@ function BattleObserverPlayer({
             <span>{hasFinishedReplay ? "已完成" : "等待推进"}</span>
           </div>
           {visibleEvents.length > 0 ? (
-            <ol className="battle-log-list">
+            <ol ref={logRef} className="battle-log-list" onScroll={handleLogScroll}>
               {visibleEvents.map((event, index) => {
                 const skip = isStunSkip(event);
 
@@ -506,6 +497,7 @@ function TeamBattleObserverPlayer({
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
+  const { handleLogScroll, logRef } = useBattleLogAutoFollow(visibleEventCount);
   const visualState = useMemo<TeamVisualState>(() => {
     const latestEvent = visibleEvents.at(-1);
     return latestEvent?.formations ?? createInitialTeamVisualState(leftTeam, rightTeam);
@@ -564,7 +556,7 @@ function TeamBattleObserverPlayer({
 
   return (
     <main className="observer-shell">
-      <div className="observer-frame">
+      <div className="observer-frame team-observer-frame">
         <header className="observer-header">
           <div>
             <p className="library-kicker">斗蛐蛐 AI · 团队观战</p>
@@ -578,12 +570,12 @@ function TeamBattleObserverPlayer({
         </header>
 
         <section className="team-observer-arena" aria-label="团队战斗状态">
-          <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} />
-          <div className="observer-center">
+          <div className="team-observer-round">
             <span>ROUND</span>
             <strong>{currentRound || "—"}</strong>
             <small>前排优先承受攻击</small>
           </div>
+          <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} />
           <TeamFormationPanel side="right" formation={rightTeam} snapshots={visualState.right} />
         </section>
 
@@ -613,7 +605,11 @@ function TeamBattleObserverPlayer({
             <span>{hasFinishedReplay ? "已完成" : "等待推进"}</span>
           </div>
           {visibleEvents.length > 0 ? (
-            <ol className="battle-log-list team-battle-log-list">
+            <ol
+              ref={logRef}
+              className="battle-log-list team-battle-log-list"
+              onScroll={handleLogScroll}
+            >
               {visibleEvents.map((event, index) => {
                 const skip = isTeamStunSkip(event);
                 const actorName = charactersById.get(event.actor.characterId)?.name ?? "未知角色";

@@ -171,6 +171,9 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /saveBattleRecord/);
   assert.match(observer, /saveTeamBattleRecord/);
   assert.match(observer, /团队逐回合战报/);
+  assert.match(observer, /useBattleLogAutoFollow/);
+  assert.match(observer, /team-observer-round/);
+  assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(history, /同种子复赛/);
   assert.match(history, /团队回放/);
   assert.match(history, /teamBattles/);
@@ -180,6 +183,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(storage, /migrateLegacyGameStore/);
   assert.match(layout, /title:\s*"斗蛐蛐 AI"/);
   assert.match(styles, /\.character-grid/);
+  assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /\.team-observer-frame/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);
   assert.doesNotMatch(library, /codex-preview|_sites-preview|SkeletonPreview/);
