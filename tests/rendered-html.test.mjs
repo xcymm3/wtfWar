@@ -173,6 +173,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /团队逐回合战报/);
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
+  assert.match(observer, /暂停播放/);
+  assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(history, /同种子复赛/);
   assert.match(history, /团队回放/);

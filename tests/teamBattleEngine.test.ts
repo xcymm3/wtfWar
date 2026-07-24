@@ -79,8 +79,9 @@ test("creates realm-adjusted team states without mutating team snapshots", () =>
   assert.deepEqual(preparation, before);
 });
 
-test("simulates team turns front-to-back and only targets the current front", () => {
+test("alternates team turns by formation position and only targets the current front", () => {
   const preparation = createPreparation();
+  preparation.rightTeam.members[0]!.maxHealth = 100;
   const firstResult = simulateTeamBattle(preparation);
   const secondResult = simulateTeamBattle(preparation);
 
@@ -89,13 +90,9 @@ test("simulates team turns front-to-back and only targets the current front", ()
   assert.ok(firstResult.events.length > 0);
 
   const roundOneEvents = firstResult.events.filter((event) => event.round === 1);
-  const firstSide = roundOneEvents[0]?.actor.side;
-  assert.ok(firstSide);
   assert.deepEqual(
-    roundOneEvents
-      .filter((event) => event.actor.side === firstSide)
-      .map((event) => event.actor.position),
-    [1, 2],
+    roundOneEvents.slice(0, 4).map((event) => [event.actor.side, event.actor.position]),
+    [["left", 1], ["right", 1], ["left", 2], ["right", 2]],
   );
 
   let rightFrontDefeated = false;

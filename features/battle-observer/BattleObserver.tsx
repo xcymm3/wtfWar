@@ -176,6 +176,58 @@ function isTeamStunSkip(event: TeamBattleEvent): boolean {
   return event.targets.length === 0 && event.narration.includes("眩晕状态");
 }
 
+function getTeamTargetLabel(
+  target: TeamBattleEvent["targets"][number],
+  charactersById: Map<string, Character>,
+): string {
+  const targetName = charactersById.get(target.characterId)?.name ?? "未知角色";
+  return `${target.side === "left" ? "红" : "蓝"}方 P${target.position} ${targetName}`;
+}
+
+function getTeamTargetResult(target: TeamBattleEvent["targets"][number]): string {
+  if (target.rawDamage > 0) {
+    return `造成 ${target.damage} 点伤害${target.shieldAbsorbed > 0 ? `（护盾吸收 ${target.shieldAbsorbed}）` : ""}`;
+  }
+  if (target.healing > 0) return `恢复 ${target.healing} 点生命`;
+  if (target.shieldGranted > 0) return `增加 ${target.shieldGranted} 点护盾`;
+  if (target.targetStunned) return "陷入眩晕";
+  return "未造成数值变化";
+}
+
+function formatTeamBattleLog(
+  event: TeamBattleEvent,
+  charactersById: Map<string, Character>,
+): string {
+  const actorName = charactersById.get(event.actor.characterId)?.name ?? "未知角色";
+  if (event.targets.length === 0) return event.narration;
+
+  const [target] = event.targets;
+  if (!target) return event.narration;
+
+  const relation = target.side === event.actor.side ? "己方" : "敌方";
+  const action = event.skill ? `使用 ${event.skill.name}` : "攻击";
+
+  if (event.targets.length > 1) {
+    const results = event.targets
+      .map((candidate) => `P${candidate.position} ${charactersById.get(candidate.characterId)?.name ?? "未知角色"} ${getTeamTargetResult(candidate)}`)
+      .join("；");
+    return `${actorName} ${action}，影响${relation}${target.side === "left" ? "红" : "蓝"}方 ${event.targets.length} 名角色：${results}。`;
+  }
+
+  const targetLabel = getTeamTargetLabel(target, charactersById);
+  if (target.rawDamage > 0) {
+    const attackAction = event.skill ? `${action}攻击` : action;
+    return `${actorName} ${attackAction}${relation}${targetLabel}，${getTeamTargetResult(target)}。`;
+  }
+  if (target.healing > 0 || target.shieldGranted > 0) {
+    return `${actorName} ${action}，为${relation}${targetLabel} ${getTeamTargetResult(target)}。`;
+  }
+  if (target.targetStunned) {
+    return `${actorName} ${action}，使${relation}${targetLabel}陷入眩晕。`;
+  }
+  return event.narration;
+}
+
 function FighterPanel({
   side,
   character,
@@ -283,6 +335,7 @@ function ObserverControls({
   isPlaying,
   hasFinishedReplay,
   onPlay,
+  onPause,
   onNext,
   onRestart,
   onNewSeed,
@@ -290,6 +343,7 @@ function ObserverControls({
   isPlaying: boolean;
   hasFinishedReplay: boolean;
   onPlay: () => void;
+  onPause: () => void;
   onNext: () => void;
   onRestart: () => void;
   onNewSeed: () => void;
@@ -298,6 +352,14 @@ function ObserverControls({
     <section className="observer-controls" aria-label="观战控制">
       <button type="button" onClick={onPlay}>
         {isPlaying ? "播放中…" : hasFinishedReplay ? "从头自动播放" : "自动播放"}
+      </button>
+      <button
+        type="button"
+        className="secondary-observer-button"
+        onClick={onPause}
+        disabled={!isPlaying}
+      >
+        暂停播放
       </button>
       <button
         type="button"
@@ -378,6 +440,10 @@ function BattleObserverPlayer({
     setIsPlaying(true);
   }
 
+  function pausePlayback(): void {
+    setIsPlaying(false);
+  }
+
   function showNextEvent(): void {
     const nextCount = Math.min(visibleEventCount + 1, events.length);
     setIsPlaying(false);
@@ -425,6 +491,7 @@ function BattleObserverPlayer({
           isPlaying={isPlaying}
           hasFinishedReplay={hasFinishedReplay}
           onPlay={playFromCurrentPosition}
+          onPause={pausePlayback}
           onNext={showNextEvent}
           onRestart={restartReplay}
           onNewSeed={onNewSeed}
@@ -536,6 +603,10 @@ function TeamBattleObserverPlayer({
     setIsPlaying(true);
   }
 
+  function pausePlayback(): void {
+    setIsPlaying(false);
+  }
+
   function showNextEvent(): void {
     const nextCount = Math.min(visibleEventCount + 1, events.length);
     setIsPlaying(false);
@@ -583,6 +654,7 @@ function TeamBattleObserverPlayer({
           isPlaying={isPlaying}
           hasFinishedReplay={hasFinishedReplay}
           onPlay={playFromCurrentPosition}
+          onPause={pausePlayback}
           onNext={showNextEvent}
           onRestart={restartReplay}
           onNewSeed={onNewSeed}
@@ -612,7 +684,6 @@ function TeamBattleObserverPlayer({
             >
               {visibleEvents.map((event, index) => {
                 const skip = isTeamStunSkip(event);
-                const actorName = charactersById.get(event.actor.characterId)?.name ?? "未知角色";
 
                 return (
                   <li
@@ -620,38 +691,9 @@ function TeamBattleObserverPlayer({
                     className={`${skip ? "is-skip" : ""} ${index === visibleEvents.length - 1 ? "is-current" : ""}`}
                   >
                     <span className="battle-log-round">R{event.round}</span>
-                    <div>
-                      <strong>
-                        {actorName} · P{event.actor.position} · {event.skill
-                          ? `${event.skill.name} · ${SKILL_TYPE_LABELS[event.skill.type]}`
-                          : skip
-                            ? "眩晕跳过"
-                            : "普通攻击"}
-                      </strong>
-                      <p>{event.narration}</p>
-                      {event.targets.length > 0 ? (
-                        <ul className="team-event-targets">
-                          {event.targets.map((target) => {
-                            const targetName = charactersById.get(target.characterId)?.name ?? "未知角色";
-                            const result = target.rawDamage > 0
-                              ? `伤害 ${target.damage}${target.shieldAbsorbed > 0 ? `（护盾吸收 ${target.shieldAbsorbed}）` : ""}`
-                              : target.healing > 0
-                                ? `恢复 ${target.healing}`
-                                : target.shieldGranted > 0
-                                  ? `护盾 +${target.shieldGranted}`
-                                  : target.targetStunned
-                                    ? "陷入眩晕"
-                                    : "效果未改变数值";
-                            return (
-                              <li key={`${target.side}-${target.characterId}`}>
-                                {target.side === "left" ? "红" : "蓝"}方 P{target.position} {targetName} · {result}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      ) : null}
-                    </div>
-                    <em>{event.actor.side === "left" ? "红方" : "蓝方"}</em>
+                    <p className="team-battle-log-summary">
+                      {formatTeamBattleLog(event, charactersById)}
+                    </p>
                   </li>
                 );
               })}

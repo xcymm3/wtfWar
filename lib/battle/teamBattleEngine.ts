@@ -983,9 +983,10 @@ function finishBattle(
 }
 
 /**
- * Simulates a complete v2 team battle. Action order follows each side's
- * front-to-back formation, and every single-target action hits the current
- * enemy front. Equal input snapshots and seed always produce the same result.
+ * Simulates a complete v2 team battle. Every round alternates by formation
+ * position: red P1, blue P1, red P2, blue P2, and so on. Every single-target
+ * action hits the current enemy front. Equal input snapshots and seed always
+ * produce the same result.
  */
 export function simulateTeamBattle(
   input: TeamBattlePreparation,
@@ -997,16 +998,15 @@ export function simulateTeamBattle(
   };
 
   for (let round = 1; round <= BATTLE_RULES.maxRounds; round += 1) {
-    const firstSide = random.pick<BattleSide>(["left", "right"]);
-    const turnOrder: BattleSide[] = firstSide === "left"
-      ? ["left", "right"]
-      : ["right", "left"];
+    const turnOrder: BattleSide[] = ["left", "right"];
     state = { ...state, round, turnOrder, actionIndex: 0 };
 
-    for (const side of turnOrder) {
-      const memberIds = getTeam(state, side).map((member) => member.character.id);
+    const formationSize = Math.max(state.left.length, state.right.length);
+    for (let positionIndex = 0; positionIndex < formationSize; positionIndex += 1) {
+      for (const side of turnOrder) {
+        const memberId = getTeam(state, side)[positionIndex]?.character.id;
+        if (!memberId) continue;
 
-      for (const memberId of memberIds) {
         const winnerBeforeAction = getKnockoutWinner(state);
         if (winnerBeforeAction) return finishBattle(state, winnerBeforeAction);
 
