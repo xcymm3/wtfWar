@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
 import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { useGameStore } from "@/lib/store/gameStore";
-import { PRESET_CHARACTERS } from "@/lib/characters/presetCharacters";
 import {
   PROFESSIONS,
   PROFESSION_LABELS,
@@ -60,71 +58,36 @@ function formatUpdatedAt(updatedAt: string): string {
   }).format(new Date(updatedAt));
 }
 
-function BattleSeat({
-  side,
-  character,
-}: {
-  side: "left" | "right";
-  character: Character | undefined;
-}) {
-  const isLeft = side === "left";
-  const realm = character?.realm ?? "mortal";
-
-  return (
-    <section className={`battle-seat ${isLeft ? "battle-seat-left" : "battle-seat-right"}`}>
-      <p>{isLeft ? "红方" : "蓝方"}</p>
-      <strong>{character?.name ?? "未选择角色"}</strong>
-      <span>{character ? `${PROFESSION_LABELS[character.profession]} · ${REALM_LABELS[realm]}` : "从角色库中指定"}</span>
-    </section>
-  );
-}
-
 export function CharacterLibrary() {
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const characters = useGameStore((state) => state.characters);
-  const selectedCharacterIds = useGameStore(
-    (state) => state.selectedCharacterIds,
-  );
   const hydrate = useGameStore((state) => state.hydrate);
-  const selectCharacter = useGameStore((state) => state.selectCharacter);
   const removeCharacter = useGameStore((state) => state.removeCharacter);
   const addPresetCharacters = useGameStore((state) => state.addPresetCharacters);
+  const hasImportedPresets = useRef(false);
   const [query, setQuery] = useState("");
-  const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>(
-    "all",
-  );
-  const [presetNotice, setPresetNotice] = useState<string | null>(null);
+  const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>("all");
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  const selectedCharacters = useMemo(
-    () => ({
-      left: characters.find(
-        (character) => character.id === selectedCharacterIds.left,
-      ),
-      right: characters.find(
-        (character) => character.id === selectedCharacterIds.right,
-      ),
-    }),
-    [characters, selectedCharacterIds],
-  );
+  useEffect(() => {
+    if (!hasHydrated || hasImportedPresets.current) return;
+
+    hasImportedPresets.current = true;
+    addPresetCharacters();
+  }, [addPresetCharacters, hasHydrated]);
 
   const filteredCharacters = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
 
     return characters
       .filter((character) => {
-        const matchesProfession =
-          professionFilter === "all" ||
-          character.profession === professionFilter;
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          character.name.toLocaleLowerCase("zh-CN").includes(normalizedQuery) ||
-          character.originalPrompt
-            .toLocaleLowerCase("zh-CN")
-            .includes(normalizedQuery);
+        const matchesProfession = professionFilter === "all" || character.profession === professionFilter;
+        const matchesQuery = normalizedQuery.length === 0
+          || character.name.toLocaleLowerCase("zh-CN").includes(normalizedQuery)
+          || character.originalPrompt.toLocaleLowerCase("zh-CN").includes(normalizedQuery);
 
         return matchesProfession && matchesQuery;
       })
@@ -137,25 +100,10 @@ export function CharacterLibrary() {
     }
   }
 
-  function handleAddPresets(): void {
-    const addedCount = addPresetCharacters();
-    setPresetNotice(
-      addedCount > 0
-        ? `已加入 ${addedCount} 名预设角色。`
-        : "10 名预设角色都已在角色库中。",
-    );
-  }
-
-  const missingPresetCount = PRESET_CHARACTERS.filter(
-    (preset) => !characters.some((character) => character.id === preset.id),
-  ).length;
-
   if (!hasHydrated) {
     return (
       <main className="library-shell">
-        <section className="library-loading" aria-live="polite">
-          正在读取本地角色库…
-        </section>
+        <section className="library-loading" aria-live="polite">正在读取本地角色库…</section>
       </main>
     );
   }
@@ -166,36 +114,19 @@ export function CharacterLibrary() {
         <header className="library-header">
           <div>
             <p className="library-kicker">War AI · 角色库</p>
-            <h1>选出下一场的主角</h1>
-            <p className="library-intro">
-              角色将保存在当前浏览器中。指定红蓝双方后，第 16 步的对战准备页会直接读取它们。
-            </p>
+            <h1>认识下一位主角</h1>
+            <p className="library-intro">在这里浏览角色的属性与技能；需要组队或开始单挑时，请前往“对战准备”。</p>
           </div>
           <div className="library-header-actions">
             <div className="library-count" aria-label={`当前共有 ${characters.length} 名角色`}>
               <strong>{characters.length}</strong>
               <span>名已保存角色</span>
             </div>
-            <Link href="/create" className="create-character-link">手动创角</Link>
-            <Link href="/battle/prepare" className="battle-prep-link">对战准备</Link>
-            <Link href="/history" className="history-link">战斗历史</Link>
-            <button
-              type="button"
-              className="preset-characters-button"
-              onClick={handleAddPresets}
-            >
-              {missingPresetCount > 0 ? `加入 ${missingPresetCount} 个预设角色` : "预设角色已齐全"}
-            </button>
+            <Link href="/create" className="create-character-link">创建角色</Link>
           </div>
         </header>
 
-        {presetNotice ? <p className="preset-notice" role="status">{presetNotice}</p> : null}
-
-        <section className="battle-seats" aria-label="当前对战选择">
-          <BattleSeat side="left" character={selectedCharacters.left} />
-          <div className="versus-mark" aria-hidden="true">VS</div>
-          <BattleSeat side="right" character={selectedCharacters.right} />
-        </section>
+        <p className="preset-notice" role="status">预设角色已自动导入；可在这里浏览属性与技能。</p>
 
         <section className="library-controls" aria-label="角色库筛选">
           <label className="search-field">
@@ -231,83 +162,37 @@ export function CharacterLibrary() {
         {filteredCharacters.length > 0 ? (
           <section className="character-grid" aria-label="角色列表">
             {filteredCharacters.map((character) => {
-              const isLeftSelected = selectedCharacterIds.left === character.id;
-              const isRightSelected = selectedCharacterIds.right === character.id;
               const effectiveStats = getEffectiveCombatStats(character);
               const realm = character.realm ?? "mortal";
 
               return (
-                <article
-                  key={character.id}
-                  className={`character-card profession-${character.profession}`}
-                >
+                <article key={character.id} className={`character-card profession-${character.profession}`}>
                   <div className="character-card-topline">
                     <span>{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
-                    <time dateTime={character.updatedAt}>
-                      更新于 {formatUpdatedAt(character.updatedAt)}
-                    </time>
+                    <time dateTime={character.updatedAt}>更新于 {formatUpdatedAt(character.updatedAt)}</time>
                   </div>
                   <h2>{character.name}</h2>
                   <p className="character-prompt">{character.originalPrompt}</p>
 
                   <dl className="character-stats">
-                    <div>
-                      <dt>基础攻击</dt>
-                      <dd>{character.attack}</dd>
-                    </div>
-                    <div>
-                      <dt>有效攻击</dt>
-                      <dd>{effectiveStats.attack}</dd>
-                    </div>
-                    <div>
-                      <dt>基础生命</dt>
-                      <dd>{character.maxHealth}</dd>
-                    </div>
-                    <div>
-                      <dt>有效生命</dt>
-                      <dd>{effectiveStats.maxHealth}</dd>
-                    </div>
+                    <div><dt>基础攻击</dt><dd>{character.attack}</dd></div>
+                    <div><dt>有效攻击</dt><dd>{effectiveStats.attack}</dd></div>
+                    <div><dt>基础生命</dt><dd>{character.maxHealth}</dd></div>
+                    <div><dt>有效生命</dt><dd>{effectiveStats.maxHealth}</dd></div>
                   </dl>
 
                   <div className="skill-list" aria-label={`${character.name} 的技能`}>
                     {character.skills.map((skill) => (
                       <section key={skill.id} className="skill-item">
-                        <div>
-                          <span>{SKILL_TYPE_LABELS[skill.type]}</span>
-                          <strong>{skill.name}</strong>
-                        </div>
+                        <div><span>{SKILL_TYPE_LABELS[skill.type]}</span><strong>{skill.name}</strong></div>
                         <p>{getSkillEffect(skill)} · 冷却 {skill.cooldown} 回合</p>
                       </section>
                     ))}
                   </div>
 
                   <div className="character-actions">
-                    <button
-                      type="button"
-                      className={`seat-button seat-button-left ${isLeftSelected ? "is-selected" : ""}`}
-                      aria-pressed={isLeftSelected}
-                      onClick={() =>
-                        selectCharacter("left", isLeftSelected ? null : character.id)
-                      }
-                    >
-                      {isLeftSelected ? "红方已选" : "设为红方"}
-                    </button>
-                    <button
-                      type="button"
-                      className={`seat-button seat-button-right ${isRightSelected ? "is-selected" : ""}`}
-                      aria-pressed={isRightSelected}
-                      onClick={() =>
-                        selectCharacter("right", isRightSelected ? null : character.id)
-                      }
-                    >
-                      {isRightSelected ? "蓝方已选" : "设为蓝方"}
-                    </button>
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() => handleRemove(character)}
-                    >
-                      删除
+                    <button type="button" className="delete-button" onClick={() => handleRemove(character)}>
+                      删除角色
                     </button>
                   </div>
                 </article>
@@ -316,15 +201,9 @@ export function CharacterLibrary() {
           </section>
         ) : (
           <section className="library-empty" aria-live="polite">
-            <p>{characters.length === 0 ? "角色库还是空的。" : "没有符合筛选条件的角色。"}</p>
-            <span>
-              {characters.length === 0
-                ? "先创建一名角色，再为它指定红方或蓝方。"
-                : "尝试清除搜索词或切换职业筛选。"}
-            </span>
-            {characters.length === 0 ? (
-              <Link href="/create" className="empty-create-link">创建第一名角色</Link>
-            ) : null}
+            <p>{characters.length === 0 ? "正在导入预设角色…" : "没有符合筛选条件的角色。"}</p>
+            <span>{characters.length === 0 ? "稍候片刻，预设角色会自动出现在这里。" : "尝试清除搜索词或切换职业筛选。"}</span>
+            <Link href="/create" className="empty-create-link">创建角色</Link>
           </section>
         )}
       </div>

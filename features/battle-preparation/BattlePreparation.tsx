@@ -177,6 +177,7 @@ export function BattlePreparation() {
   const preparedBattle = useGameStore((state) => state.preparedBattle);
   const teamCharacterIds = useGameStore((state) => state.teamCharacterIds);
   const preparedTeamBattle = useGameStore((state) => state.preparedTeamBattle);
+  const selectCharacter = useGameStore((state) => state.selectCharacter);
   const prepareBattle = useGameStore((state) => state.prepareBattle);
   const addCharacterToTeam = useGameStore((state) => state.addCharacterToTeam);
   const removeCharacterFromTeam = useGameStore(
@@ -429,35 +430,67 @@ export function BattlePreparation() {
           </section>
         ) : null}
 
-        {hasClassicSelection ? (
-          <section className="classic-duel-panel" aria-labelledby="classic-duel-heading">
-            <div className="classic-duel-heading">
-              <div>
-                <p className="library-kicker">现有 1v1</p>
-                <h2 id="classic-duel-heading">红蓝方快捷单挑</h2>
-                <p>角色库中已指定的红蓝双方仍可按当前 1v1 规则立即观战。</p>
-              </div>
+        <section className="classic-duel-panel" aria-labelledby="classic-duel-heading">
+          <div className="classic-duel-heading">
+            <div>
+              <p className="library-kicker">1v1 单挑</p>
+              <h2 id="classic-duel-heading">选择两名角色立即对战</h2>
+              <p>单挑角色只在本页选择，不会在角色库中标记阵营。</p>
             </div>
-            <section className="prepared-character-grid" aria-label="已选单挑角色">
-              <CharacterPreview side="left" character={selectedCharacters.left!} />
-              <div className="prepared-versus" aria-hidden="true">VS</div>
-              <CharacterPreview side="right" character={selectedCharacters.right!} />
-            </section>
-            <footer className="preparation-actions">
-              <div>
-                <strong>保留现有 1v1 对战流程。</strong>
-                <span>团队阵容与单挑配置彼此独立，互不覆盖。</span>
-              </div>
-              <button type="button" onClick={handleClassicPrepare}>确认单挑配置</button>
-            </footer>
-            {isPreparedForCurrentSelection && preparedBattle ? (
-              <section className="prepared-notice" aria-live="polite">
-                已确认：{selectedCharacters.left?.name} 对阵 {selectedCharacters.right?.name}，种子为 <code>{preparedBattle.seed}</code>。
-                <Link href="/battle" className="watch-battle-link">进入观战页</Link>
+          </div>
+          <div className="classic-selector-grid">
+            <label>
+              <span>红方角色</span>
+              <select
+                value={selectedCharacterIds.left ?? ""}
+                onChange={(event) => selectCharacter("left", event.target.value || null)}
+              >
+                <option value="">请选择角色</option>
+                {characters
+                  .filter((character) => character.id !== selectedCharacterIds.right)
+                  .map((character) => (
+                    <option key={character.id} value={character.id}>{character.name}</option>
+                  ))}
+              </select>
+            </label>
+            <label>
+              <span>蓝方角色</span>
+              <select
+                value={selectedCharacterIds.right ?? ""}
+                onChange={(event) => selectCharacter("right", event.target.value || null)}
+              >
+                <option value="">请选择角色</option>
+                {characters
+                  .filter((character) => character.id !== selectedCharacterIds.left)
+                  .map((character) => (
+                    <option key={character.id} value={character.id}>{character.name}</option>
+                  ))}
+              </select>
+            </label>
+          </div>
+          {hasClassicSelection ? (
+            <>
+              <section className="prepared-character-grid" aria-label="已选单挑角色">
+                <CharacterPreview side="left" character={selectedCharacters.left!} />
+                <div className="prepared-versus" aria-hidden="true">VS</div>
+                <CharacterPreview side="right" character={selectedCharacters.right!} />
               </section>
-            ) : null}
-          </section>
-        ) : null}
+              <footer className="preparation-actions">
+                <div>
+                  <strong>保留现有 1v1 对战流程。</strong>
+                  <span>团队阵容与单挑配置彼此独立，互不覆盖。</span>
+                </div>
+                <button type="button" onClick={handleClassicPrepare}>确认单挑配置</button>
+              </footer>
+              {isPreparedForCurrentSelection && preparedBattle ? (
+                <section className="prepared-notice" aria-live="polite">
+                  已确认：{selectedCharacters.left?.name} 对阵 {selectedCharacters.right?.name}，种子为 <code>{preparedBattle.seed}</code>。
+                  <Link href="/battle" className="watch-battle-link">进入观战页</Link>
+                </section>
+              ) : null}
+            </>
+          ) : <p className="classic-duel-empty">选择红蓝双方后，即可确认单挑配置。</p>}
+        </section>
       </div>
     </main>
   );

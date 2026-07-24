@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { BottomNavigation } from "@/features/navigation/BottomNavigation";
 
 export const metadata: Metadata = {
   title: "War AI",
@@ -17,7 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <div className="app-page">{children}</div>
+        <BottomNavigation />
+      </body>
     </html>
   );
 }

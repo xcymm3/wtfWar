@@ -29,6 +29,49 @@ body {
   font-family: Arial, "Microsoft YaHei", sans-serif;
 }
 
+.app-page {
+  min-height: 100vh;
+  padding-bottom: 88px;
+}
+
+.bottom-navigation {
+  position: fixed;
+  z-index: 40;
+  bottom: 12px;
+  left: 50%;
+  display: grid;
+  width: min(430px, calc(100% - 28px));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  border: 1px solid rgba(189, 177, 160, 0.34);
+  border-radius: 18px;
+  background: rgba(25, 23, 19, 0.92);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
+  padding: 5px;
+  backdrop-filter: blur(16px);
+}
+
+.bottom-navigation-link {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bottom-navigation-link.is-active {
+  border-color: rgba(243, 175, 50, 0.38);
+  background: rgba(243, 175, 50, 0.13);
+  color: var(--accent);
+}
+
 .library-shell {
   min-height: 100vh;
   background:
@@ -1207,6 +1250,42 @@ body {
   padding: clamp(18px, 3vw, 26px);
 }
 
+.classic-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.classic-selector-grid label {
+  display: grid;
+  gap: 7px;
+}
+
+.classic-selector-grid span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.classic-selector-grid select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid rgba(189, 177, 160, 0.42);
+  border-radius: 10px;
+  background: rgba(16, 16, 16, 0.58);
+  color: var(--foreground);
+  font: inherit;
+  padding: 0 11px;
+}
+
+.classic-duel-empty {
+  margin: 17px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
 .team-builder-heading,
 .classic-duel-heading,
 .team-roster header,
@@ -2087,7 +2166,7 @@ body {
 .team-observer-frame {
   box-sizing: border-box;
   display: flex;
-  height: 100dvh;
+  height: calc(100dvh - 84px);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -2684,8 +2763,12 @@ body {
   }
 
   .team-observer-frame {
-    height: 100dvh;
+    height: calc(100dvh - 76px);
     padding-bottom: 16px;
+  }
+
+  .classic-selector-grid {
+    grid-template-columns: 1fr;
   }
 
   .team-observer-frame .battle-log-panel {

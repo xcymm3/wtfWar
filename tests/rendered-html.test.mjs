@@ -85,7 +85,7 @@ test("generates a validated local character through the production API route", a
 });
 
 test("keeps the character library wired to the local game store", async () => {
-  const [page, library, presets, creator, generator, generationRoute, preparation, observer, history, transfer, storage, layout, packageJson, styles] = await Promise.all([
+  const [page, library, presets, creator, generator, generationRoute, preparation, observer, history, transfer, storage, navigation, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../features/character-library/CharacterLibrary.tsx", import.meta.url),
@@ -124,6 +124,7 @@ test("keeps the character library wired to the local game store", async () => {
       "utf8",
     ),
     readFile(new URL("../lib/storage/gameStorage.ts", import.meta.url), "utf8"),
+    readFile(new URL("../features/navigation/BottomNavigation.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -132,11 +133,11 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(page, /CharacterLibrary/);
   assert.match(library, /useGameStore/);
   assert.match(library, /按职业筛选/);
-  assert.match(library, /设为红方/);
-  assert.match(library, /设为蓝方/);
+  assert.match(library, /已自动导入/);
+  assert.match(library, /addPresetCharacters/);
+  assert.doesNotMatch(library, /设为红方|设为蓝方/);
   assert.match(library, /删除/);
-  assert.match(library, /战斗历史/);
-  assert.match(library, /加入 .*预设角色/);
+  assert.match(library, /创建角色/);
   assert.match(presets, /护卫/);
   assert.match(presets, /公主/);
   assert.match(creator, /保存角色卡/);
@@ -160,6 +161,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(generator, /charge_strike_passive/);
   assert.match(generationRoute, /OPENAI_API_KEY/);
   assert.match(preparation, /确认单挑配置/);
+  assert.match(preparation, /选择两名角色立即对战/);
+  assert.match(preparation, /classic-selector-grid/);
   assert.match(preparation, /随机种子/);
   assert.match(preparation, /prepareBattle/);
   assert.match(preparation, /有效生命/);
@@ -188,10 +191,15 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(history, /导入角色库/);
   assert.match(transfer, /war-ai-game.character-library/);
   assert.match(storage, /migrateLegacyGameStore/);
+  assert.match(navigation, /首页/);
+  assert.match(navigation, /对战准备/);
+  assert.match(navigation, /战斗历史/);
   assert.match(layout, /title:\s*"War AI"/);
+  assert.match(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
   assert.match(styles, /\.team-observer-frame/);
+  assert.match(styles, /\.bottom-navigation/);
   assert.match(styles, /\.generated-profile/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);
