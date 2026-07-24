@@ -834,7 +834,7 @@ export function BattleObserver() {
         <section className="observer-empty">
           <p className="library-kicker">War AI · 观战</p>
           <h1>还没有可观战的对局</h1>
-          <p>请先在对战准备页确认一场单挑或团队阵容，并设置随机种子。</p>
+          <p>请先在对战准备页确认双方阵容，并设置随机种子。</p>
           <Link href="/battle/prepare" className="empty-create-link">前往对战准备</Link>
         </section>
       </main>

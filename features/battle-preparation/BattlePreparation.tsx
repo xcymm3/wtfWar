@@ -13,72 +13,9 @@ import {
   REALM_LABELS,
   type Character,
   type Profession,
-  type Skill,
 } from "@/types/character";
 
-const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
-  damage: "伤害",
-  shield: "护盾",
-  heal: "治疗",
-  control: "控制",
-  area_damage: "群体伤害",
-  area_heal: "群体治疗",
-  cleave_passive: "横扫被动",
-  charge_strike_passive: "蓄力被动",
-  buff: "增益",
-};
-
 type ProfessionFilter = Profession | "all";
-
-function CharacterPreview({
-  side,
-  character,
-}: {
-  side: "left" | "right";
-  character: Character;
-}) {
-  const sideLabel = side === "left" ? "红方" : "蓝方";
-  const realm = character.realm ?? "mortal";
-  const effectiveStats = getEffectiveCombatStats(character);
-
-  return (
-    <article className={`prepared-character prepared-character-${side}`}>
-      <p className="prepared-character-side">{sideLabel}</p>
-      <span className="prepared-profession">
-        {PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}
-      </span>
-      <h2>{character.name}</h2>
-      <p>{character.originalPrompt}</p>
-      <dl>
-        <div>
-          <dt>基础攻击</dt>
-          <dd>{character.attack}</dd>
-        </div>
-        <div>
-          <dt>有效攻击</dt>
-          <dd>{effectiveStats.attack}</dd>
-        </div>
-        <div>
-          <dt>基础生命</dt>
-          <dd>{character.maxHealth}</dd>
-        </div>
-        <div>
-          <dt>有效生命</dt>
-          <dd>{effectiveStats.maxHealth}</dd>
-        </div>
-      </dl>
-      <ul>
-        {character.skills.map((skill) => (
-          <li key={skill.id}>
-            <span>{SKILL_TYPE_LABELS[skill.type]}</span>
-            <strong>{skill.name}</strong>
-            <em>冷却 {skill.cooldown}</em>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
 
 function TeamLineup({
   side,
@@ -175,14 +112,8 @@ export function BattlePreparation() {
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const hydrate = useGameStore((state) => state.hydrate);
   const characters = useGameStore((state) => state.characters);
-  const selectedCharacterIds = useGameStore(
-    (state) => state.selectedCharacterIds,
-  );
-  const preparedBattle = useGameStore((state) => state.preparedBattle);
   const teamCharacterIds = useGameStore((state) => state.teamCharacterIds);
   const preparedTeamBattle = useGameStore((state) => state.preparedTeamBattle);
-  const selectCharacter = useGameStore((state) => state.selectCharacter);
-  const prepareBattle = useGameStore((state) => state.prepareBattle);
   const addCharacterToTeam = useGameStore((state) => state.addCharacterToTeam);
   const removeCharacterFromTeam = useGameStore(
     (state) => state.removeCharacterFromTeam,
@@ -198,17 +129,6 @@ export function BattlePreparation() {
     hydrate();
   }, [hydrate]);
 
-  const selectedCharacters = useMemo(
-    () => ({
-      left: characters.find(
-        (character) => character.id === selectedCharacterIds.left,
-      ),
-      right: characters.find(
-        (character) => character.id === selectedCharacterIds.right,
-      ),
-    }),
-    [characters, selectedCharacterIds],
-  );
   const teamMembers = useMemo(
     () => ({
       left: teamCharacterIds.left.flatMap((characterId) => {
@@ -222,41 +142,17 @@ export function BattlePreparation() {
     }),
     [characters, teamCharacterIds],
   );
-  const hasClassicSelection = Boolean(
-    selectedCharacters.left && selectedCharacters.right,
-  );
-  const isPreparedForCurrentSelection =
-    preparedBattle?.leftCharacterId === selectedCharacterIds.left &&
-    preparedBattle.rightCharacterId === selectedCharacterIds.right &&
-    preparedBattle.seed === seed.trim();
   const isPreparedForCurrentTeam =
     preparedTeamBattle?.seed === seed.trim() &&
     sameMemberOrder(preparedTeamBattle.leftTeam.members, teamCharacterIds.left) &&
     sameMemberOrder(preparedTeamBattle.rightTeam.members, teamCharacterIds.right);
-  const teamSizeMatches =
-    teamMembers.left.length > 0 &&
-    teamMembers.left.length === teamMembers.right.length;
+  const hasCompleteTeams = teamMembers.left.length > 0 && teamMembers.right.length > 0;
   const filteredCharacters = useMemo(
     () => characters.filter(
       (character) => professionFilter === "all" || character.profession === professionFilter,
     ),
     [characters, professionFilter],
   );
-
-  function handleClassicPrepare(): void {
-    setError(null);
-
-    try {
-      prepareBattle(seed);
-      setSeed(seed.trim());
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "无法创建单人对战配置。",
-      );
-    }
-  }
 
   function handleTeamPrepare(): void {
     setError(null);
@@ -315,7 +211,7 @@ export function BattlePreparation() {
             <p className="library-kicker">War AI · 对战准备</p>
             <h1>布置队伍与战斗种子</h1>
             <p>
-              每队可排入 1–5 名角色；位置越靠前，越会先承受攻击。双方人数必须相同，不设战力或阶位上限。
+              每队可排入 1–5 名角色；位置越靠前，越会先承受攻击。双方人数可不同，不设战力或阶位上限。
             </p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>
@@ -453,10 +349,10 @@ export function BattlePreparation() {
 
         <footer className="preparation-actions team-preparation-actions">
           <div>
-            <strong>{teamSizeMatches ? `阵容合法：${teamMembers.left.length} v ${teamMembers.right.length}` : "双方需各有 1–5 名角色，且人数相同。"}</strong>
+            <strong>{hasCompleteTeams ? `阵容合法：${teamMembers.left.length} v ${teamMembers.right.length}` : "双方至少各需 1 名角色。"}</strong>
             <span>保存后会冻结当前队伍顺序和角色快照，可立即进入团队观战并生成完整战报。</span>
           </div>
-          <button type="button" onClick={handleTeamPrepare} disabled={!teamSizeMatches}>
+          <button type="button" onClick={handleTeamPrepare} disabled={!hasCompleteTeams}>
             保存团队阵容
           </button>
         </footer>
@@ -464,71 +360,9 @@ export function BattlePreparation() {
         {isPreparedForCurrentTeam && preparedTeamBattle ? (
           <section className="prepared-notice" aria-live="polite">
             团队阵容已保存：红方 {preparedTeamBattle.leftTeam.members.length} 人，对阵蓝方 {preparedTeamBattle.rightTeam.members.length} 人，种子为 <code>{preparedTeamBattle.seed}</code>。
-            <Link href="/battle" className="watch-battle-link">进入团队观战</Link>
+            <Link href="/battle" className="watch-battle-link">进入观战</Link>
           </section>
         ) : null}
-
-        <section className="classic-duel-panel" aria-labelledby="classic-duel-heading">
-          <div className="classic-duel-heading">
-            <div>
-              <p className="library-kicker">1v1 单挑</p>
-              <h2 id="classic-duel-heading">选择两名角色立即对战</h2>
-              <p>单挑角色只在本页选择，不会在角色库中标记阵营。</p>
-            </div>
-          </div>
-          <div className="classic-selector-grid">
-            <label>
-              <span>红方角色</span>
-              <select
-                value={selectedCharacterIds.left ?? ""}
-                onChange={(event) => selectCharacter("left", event.target.value || null)}
-              >
-                <option value="">请选择角色</option>
-                {characters
-                  .filter((character) => character.id !== selectedCharacterIds.right)
-                  .map((character) => (
-                    <option key={character.id} value={character.id}>{character.name}</option>
-                  ))}
-              </select>
-            </label>
-            <label>
-              <span>蓝方角色</span>
-              <select
-                value={selectedCharacterIds.right ?? ""}
-                onChange={(event) => selectCharacter("right", event.target.value || null)}
-              >
-                <option value="">请选择角色</option>
-                {characters
-                  .filter((character) => character.id !== selectedCharacterIds.left)
-                  .map((character) => (
-                    <option key={character.id} value={character.id}>{character.name}</option>
-                  ))}
-              </select>
-            </label>
-          </div>
-          {hasClassicSelection ? (
-            <>
-              <section className="prepared-character-grid" aria-label="已选单挑角色">
-                <CharacterPreview side="left" character={selectedCharacters.left!} />
-                <div className="prepared-versus" aria-hidden="true">VS</div>
-                <CharacterPreview side="right" character={selectedCharacters.right!} />
-              </section>
-              <footer className="preparation-actions">
-                <div>
-                  <strong>保留现有 1v1 对战流程。</strong>
-                  <span>团队阵容与单挑配置彼此独立，互不覆盖。</span>
-                </div>
-                <button type="button" onClick={handleClassicPrepare}>确认单挑配置</button>
-              </footer>
-              {isPreparedForCurrentSelection && preparedBattle ? (
-                <section className="prepared-notice" aria-live="polite">
-                  已确认：{selectedCharacters.left?.name} 对阵 {selectedCharacters.right?.name}，种子为 <code>{preparedBattle.seed}</code>。
-                  <Link href="/battle" className="watch-battle-link">进入观战页</Link>
-                </section>
-              ) : null}
-            </>
-          ) : <p className="classic-duel-empty">选择红蓝双方后，即可确认单挑配置。</p>}
-        </section>
       </div>
     </main>
   );

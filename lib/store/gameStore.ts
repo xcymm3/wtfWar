@@ -172,10 +172,6 @@ function createTeamBattlePreparation(
 
   const leftTeam = createTeamFormation("left", characters, leftMemberIds);
   const rightTeam = createTeamFormation("right", characters, rightMemberIds);
-  if (leftTeam.members.length !== rightTeam.members.length) {
-    throw new Error("Both teams must contain the same number of characters.");
-  }
-
   return {
     rulesVersion: 2,
     seed: normalizedSeed,

@@ -115,6 +115,21 @@ test("alternates team turns by formation position and only targets the current f
   );
 });
 
+test("allows teams with different member counts", () => {
+  const preparation = createPreparation();
+  preparation.rightTeam.members = [preparation.rightTeam.members[0]!];
+  preparation.leftTeam.members[0]!.attack = 1;
+  preparation.rightTeam.members[0]!.maxHealth = 1_000;
+
+  const initialState = createInitialTeamBattleState(preparation);
+  const result = simulateTeamBattle(preparation);
+
+  assert.equal(initialState.left.length, 2);
+  assert.equal(initialState.right.length, 1);
+  assert.equal(result.status, "finished");
+  assert.ok(result.events.some((event) => event.actor.side === "left" && event.actor.position === 2));
+});
+
 test("rejects malformed team formations before starting a battle", () => {
   const preparation = createPreparation();
   preparation.rightTeam.members = [

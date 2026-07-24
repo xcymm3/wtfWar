@@ -335,7 +335,7 @@ export function generateLocalCharacter(
 }
 
 export function getCharacterGenerationSystemPrompt(): string {
-  return `你是“War AI”的角色设计器。根据用户描述生成一个可用于单挑或团队回合制战斗的角色，仅输出 JSON 对象，不要 Markdown。
+  return `你是“War AI”的角色设计器。根据用户描述生成一个可用于团队回合制战斗的角色，仅输出 JSON 对象，不要 Markdown。
 JSON 必须含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，应根据角色世界观强度选择：凡人、武林高手、超能力者、修仙者、神灵。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；至少一个 type 为 damage、area_damage、cleave_passive 或 charge_strike_passive。每个技能都含 name、description、type、cooldown；damage 另含 damageMultiplier（0.8-1.8），area_damage 另含 damageMultiplier（0.45-0.9），shield 另含 shieldAmount（10-45），heal 另含 healAmount（10-45），area_heal 另含 healAmount（5-25），control 另含 stunChance（0-0.5）。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 20-30、85-120；ranger 16-25、105-145。冷却 1-5。所有中文文本简洁，技能名不重复。`;
 }

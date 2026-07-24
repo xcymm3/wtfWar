@@ -159,7 +159,7 @@ test("adds, edits, selects, deletes, and persists library characters", () => {
   });
 });
 
-test("builds equal teams in a mutable front-to-back order", () => {
+test("builds teams in a mutable front-to-back order", () => {
   withMemoryStorage(() => {
     const store = createGameStore();
     const leftOne = createCharacter("team-left-one");
@@ -206,6 +206,25 @@ test("builds equal teams in a mutable front-to-back order", () => {
 
     store.getState().removeCharacterFromTeam("left", leftOne.id);
     assert.equal(store.getState().preparedTeamBattle, null);
+  });
+});
+
+test("prepares teams with different member counts", () => {
+  withMemoryStorage(() => {
+    const store = createGameStore();
+    const leftFront = createCharacter("uneven-left-front");
+    const leftBack = createCharacter("uneven-left-back");
+    const rightFront = createCharacter("uneven-right-front");
+    store.getState().hydrate();
+
+    [leftFront, leftBack, rightFront].forEach((character) => store.getState().addCharacter(character));
+    store.getState().addCharacterToTeam("left", leftFront.id);
+    store.getState().addCharacterToTeam("left", leftBack.id);
+    store.getState().addCharacterToTeam("right", rightFront.id);
+    store.getState().prepareTeamBattle("uneven-team-seed");
+
+    assert.equal(store.getState().preparedTeamBattle?.leftTeam.members.length, 2);
+    assert.equal(store.getState().preparedTeamBattle?.rightTeam.members.length, 1);
   });
 });
 

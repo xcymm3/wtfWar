@@ -115,7 +115,7 @@ export function CharacterLibrary() {
           <div>
             <p className="library-kicker">War AI · 角色库</p>
             <h1>认识下一位主角</h1>
-            <p className="library-intro">在这里浏览角色的属性与技能；需要组队或开始单挑时，请前往“对战准备”。</p>
+            <p className="library-intro">在这里浏览角色的属性与技能；需要组队或开始对战时，请前往“对战准备”。</p>
           </div>
           <div className="library-header-actions">
             <div className="library-count" aria-label={`当前共有 ${characters.length} 名角色`}>

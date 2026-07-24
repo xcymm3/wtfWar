@@ -107,13 +107,12 @@ const teamBattleRecordSchema = z.object({
   if (
     record.leftTeam.side !== "left" ||
     record.rightTeam.side !== "right" ||
-    record.leftTeam.members.length !== record.rightTeam.members.length ||
     new Set(memberIds).size !== memberIds.length
   ) {
     context.addIssue({
       code: "custom",
       path: ["leftTeam"],
-      message: "A team battle record must contain two equal, disjoint formations.",
+      message: "A team battle record must contain two disjoint formations.",
     });
   }
 });

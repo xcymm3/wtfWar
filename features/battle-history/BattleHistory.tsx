@@ -51,7 +51,7 @@ function getMatchTitle(item: HistoryItem): string {
 function getBattleModeLabel(item: HistoryItem): string {
   return item.kind === "team"
     ? `${item.record.leftTeam.members.length}v${item.record.rightTeam.members.length} 团队战`
-    : "1v1 单挑";
+    : "历史 1v1 单挑";
 }
 
 export function BattleHistory() {
@@ -184,7 +184,7 @@ export function BattleHistory() {
               <p className="library-kicker">已保存战报</p>
               <h2>{history.length} 场可回看对局</h2>
             </div>
-            <span>单挑与团队战各保存最近 100 场</span>
+            <span>新对局会保存为团队战；旧单挑记录仍可回放</span>
           </div>
 
           {history.length > 0 ? (
@@ -205,13 +205,15 @@ export function BattleHistory() {
                       <button type="button" onClick={() => handleReplay(item)}>
                         {item.kind === "team" ? "团队回放" : "回放"}
                       </button>
-                      <button
-                        type="button"
-                        className="history-rematch-button"
-                        onClick={() => handleHistoricalRematch(item)}
-                      >
-                        同种子复赛
-                      </button>
+                      {item.kind === "team" ? (
+                        <button
+                          type="button"
+                          className="history-rematch-button"
+                          onClick={() => handleHistoricalRematch(item)}
+                        >
+                          同种子复赛
+                        </button>
+                      ) : null}
                     </div>
                   </article>
                 </li>

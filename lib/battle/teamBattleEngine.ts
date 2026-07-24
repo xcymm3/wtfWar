@@ -69,9 +69,10 @@ function assertTeamPreparation(input: TeamBattlePreparation): void {
     input.rightTeam.side !== "right" ||
     leftMembers.length === 0 ||
     leftMembers.length > 5 ||
-    leftMembers.length !== rightMembers.length
+    rightMembers.length === 0 ||
+    rightMembers.length > 5
   ) {
-    throw new Error("Team battles require equal teams of 1 to 5 characters.");
+    throw new Error("Team battles require 1 to 5 characters on each side.");
   }
 
   const ids = [...leftMembers, ...rightMembers].map((character) => character.id);
