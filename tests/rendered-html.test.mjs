@@ -30,7 +30,7 @@ test("server-renders the character library loading boundary", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>斗蛐蛐 AI<\/title>/i);
+  assert.match(html, /<title>War AI<\/title>/i);
   assert.match(html, /正在读取本地角色库/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
@@ -173,6 +173,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /团队逐回合战报/);
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
+  assert.match(observer, /displayMembers = isLeft \? \[\.\.\.formation\.members\]\.reverse\(\)/);
   assert.match(observer, /暂停播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
@@ -183,7 +184,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(history, /导入角色库/);
   assert.match(transfer, /war-ai-game.character-library/);
   assert.match(storage, /migrateLegacyGameStore/);
-  assert.match(layout, /title:\s*"斗蛐蛐 AI"/);
+  assert.match(layout, /title:\s*"War AI"/);
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
   assert.match(styles, /\.team-observer-frame/);

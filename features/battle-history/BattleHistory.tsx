@@ -152,7 +152,7 @@ export function BattleHistory() {
       <div className="history-frame">
         <header className="history-header">
           <div>
-            <p className="library-kicker">斗蛐蛐 AI · 战斗历史</p>
+            <p className="library-kicker">War AI · 战斗历史</p>
             <h1>每一场较量，都能重看。</h1>
             <p>
               战报保存了当时的角色快照、队伍站位和行动记录。即使后来编辑或删除角色，历史回放也不会改变。

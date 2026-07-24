@@ -1,4 +1,4 @@
-# 斗蛐蛐 AI Beta 架构
+# War AI Beta 架构
 
 ## 边界
 

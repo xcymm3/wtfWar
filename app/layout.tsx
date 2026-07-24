@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "斗蛐蛐 AI",
+  title: "War AI",
   description: "用一句话创造角色，开始一场 AI 文字对战。",
   icons: {
     icon: "/favicon.svg",

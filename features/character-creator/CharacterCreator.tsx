@@ -529,7 +529,7 @@ export function CharacterCreator() {
       <div className="creator-frame">
         <header className="creator-header">
           <div>
-            <p className="library-kicker">斗蛐蛐 AI · 手动创角</p>
+            <p className="library-kicker">War AI · 手动创角</p>
             <h1>把设想变成可战斗的角色</h1>
             <p>
               输入一句角色设想，让 AI 自动填充合规角色卡；你也可以继续使用表单逐项调整。

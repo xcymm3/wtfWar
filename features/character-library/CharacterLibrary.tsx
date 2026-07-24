@@ -165,7 +165,7 @@ export function CharacterLibrary() {
       <div className="library-frame">
         <header className="library-header">
           <div>
-            <p className="library-kicker">斗蛐蛐 AI · 角色库</p>
+            <p className="library-kicker">War AI · 角色库</p>
             <h1>选出下一场的主角</h1>
             <p className="library-intro">
               角色将保存在当前浏览器中。指定红蓝双方后，第 16 步的对战准备页会直接读取它们。

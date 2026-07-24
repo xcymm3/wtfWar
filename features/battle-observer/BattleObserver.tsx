@@ -291,13 +291,14 @@ function TeamFormationPanel({
 }) {
   const isLeft = side === "left";
   const currentFrontId = snapshots.find((member) => member.health > 0)?.characterId;
+  const displayMembers = isLeft ? [...formation.members].reverse() : formation.members;
 
   return (
     <ol
       className={`team-observer-list team-observer-list-${side}`}
       aria-label={isLeft ? "红方队伍" : "蓝方队伍"}
     >
-      {formation.members.map((character) => {
+      {displayMembers.map((character) => {
         const snapshot = snapshots.find(
           (member) => member.characterId === character.id,
         );
@@ -467,7 +468,7 @@ function BattleObserverPlayer({
       <div className="observer-frame">
         <header className="observer-header">
           <div>
-            <p className="library-kicker">斗蛐蛐 AI · 单挑观战</p>
+            <p className="library-kicker">War AI · 单挑观战</p>
             <h1>这一回合，谁能站到最后？</h1>
             <p>种子 <code>{seed}</code> · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
@@ -630,7 +631,7 @@ function TeamBattleObserverPlayer({
       <div className="observer-frame team-observer-frame">
         <header className="observer-header">
           <div>
-            <p className="library-kicker">斗蛐蛐 AI · 团队观战</p>
+            <p className="library-kicker">War AI · 团队观战</p>
             <h1>前排顶住，后排接力。</h1>
             <p>种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
@@ -831,7 +832,7 @@ export function BattleObserver() {
     return (
       <main className="observer-shell">
         <section className="observer-empty">
-          <p className="library-kicker">斗蛐蛐 AI · 观战</p>
+          <p className="library-kicker">War AI · 观战</p>
           <h1>还没有可观战的对局</h1>
           <p>请先在对战准备页确认一场单挑或团队阵容，并设置随机种子。</p>
           <Link href="/battle/prepare" className="empty-create-link">前往对战准备</Link>
