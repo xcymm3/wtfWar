@@ -362,15 +362,21 @@ function formatSkillEffect(stats: SkillBalanceStats): string {
 
   switch (stats.skillType) {
     case "damage":
+    case "area_damage":
       return `平均生命伤害 ${formatAverage(stats.healthDamage / stats.uses)}`;
     case "shield":
       return `平均获盾 ${formatAverage(stats.shieldGranted / stats.uses)}`;
     case "heal":
+    case "area_heal":
       return `平均治疗 ${formatAverage(stats.healing / stats.uses)}`;
     case "control":
       return `眩晕命中 ${formatPercentage(stats.stunHits / stats.stunAttempts)}`;
     case "buff":
       return "Beta 阶段不参与战斗";
+    case "cleave_passive":
+      return "被动效果已计入普通攻击";
+    case "charge_strike_passive":
+      return "被动效果已计入蓄力攻击";
   }
 }
 

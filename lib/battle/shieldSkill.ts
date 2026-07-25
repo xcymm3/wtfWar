@@ -23,7 +23,7 @@ function getShieldSkill(
     throw new Error(`Skill ${skillId} is not a valid shield skill.`);
   }
 
-  return skill;
+  return skill as ShieldSkill;
 }
 
 function createShieldSkillNarration({

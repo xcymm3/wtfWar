@@ -760,7 +760,7 @@ export function BattleObserver() {
       seed: preparedBattle.seed,
       leftCharacter: preparedBattle.leftCharacter,
       rightCharacter: preparedBattle.rightCharacter,
-      winner: result.winner,
+      winner: result.winner ?? "draw",
       rounds: result.round,
       events: result.events,
     };

@@ -20,7 +20,7 @@ function getHealSkill(skill: Skill | undefined, skillId: string): HealSkill {
     throw new Error(`Skill ${skillId} is not a valid heal skill.`);
   }
 
-  return skill;
+  return skill as HealSkill;
 }
 
 function createHealSkillNarration({

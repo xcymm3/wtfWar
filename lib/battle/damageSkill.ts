@@ -28,7 +28,7 @@ function getDamageSkill(
     throw new Error(`Skill ${skillId} is not a valid damage skill.`);
   }
 
-  return skill;
+  return skill as DamageSkill;
 }
 
 export function calculateDamageSkillDamage(

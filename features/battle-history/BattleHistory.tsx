@@ -23,15 +23,16 @@ function formatBattleTime(value: string): string {
 }
 
 function getWinnerLabel(item: HistoryItem): string {
-  const { record } = item;
-  if (record.winner === "draw") return "平局";
+  if (item.record.winner === "draw") return "平局";
   if (item.kind === "duel") {
+    const { record } = item;
     const winner = record.winner === "left"
       ? record.leftCharacter.name
       : record.rightCharacter.name;
     return `${record.winner === "left" ? "红方" : "蓝方"}胜 · ${winner}`;
   }
 
+  const { record } = item;
   const count = record.winner === "left"
     ? record.leftTeam.members.length
     : record.rightTeam.members.length;

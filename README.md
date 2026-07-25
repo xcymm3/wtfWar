@@ -8,7 +8,7 @@ Beta 阶段使用浏览器 `localStorage` 保存角色和最近战报，不依�
 
 ## Prerequisites
 
-- Node.js `>=22.13.0`
+- Node.js `22.x`
 
 ## Quick Start
 
@@ -30,8 +30,6 @@ OPENAI_MODEL=gpt-4.1-mini
 
 接口使用兼容 Chat Completions 的配置。未配置时，自动创角仍可用，但页面会明确提示使用的是本地规则生成。
 
-This starter does not use `wrangler.jsonc`.
-
 ## 当前工程结构
 
 - `app/`：页面与全局样式
@@ -46,8 +44,8 @@ This starter does not use `wrangler.jsonc`.
 ## Useful Commands
 
 - `pnpm dev`: start local development
-- `pnpm build`: verify the vinext build output
+- `pnpm build`: 验证原生 Next.js 生产构建
 - `pnpm test`: 运行规则测试、构建并验证基础页面
 - `pnpm simulate:balance`: 对五个职业基准角色进行平衡模拟
 
-Windows 环境已使用跨平台脚本配置，可直接运行上述命令。
+项目使用原生 Next.js App Router，可直接导入 Vercel 并使用默认的 Next.js 构建设置部署。

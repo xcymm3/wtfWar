@@ -27,7 +27,7 @@ function getControlSkill(
     throw new Error(`Skill ${skillId} is not a valid control skill.`);
   }
 
-  return skill;
+  return skill as ControlSkill;
 }
 
 function createControlSkillNarration({

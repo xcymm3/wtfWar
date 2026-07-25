@@ -210,7 +210,7 @@ function createTargetResult(
   state: TeamBattleRuntimeState,
   side: BattleSide,
   combatant: CombatantState,
-  resolution: Omit<TeamBattleTargetResult, "side" | "characterId" | "position" | "health" | "shield" | "cooldowns" | "isStunned">,
+  resolution: Omit<TeamBattleTargetResult, "side" | "characterId" | "position" | "health" | "shield" | "cooldowns" | "isStunned" | "chargeProgress">,
 ): TeamBattleTargetResult {
   return {
     side,

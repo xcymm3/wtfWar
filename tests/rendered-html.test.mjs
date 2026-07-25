@@ -1,27 +1,66 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { after, before, test } from "node:test";
 
-async function render(path = "/", init = {}) {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+const port = 4300 + (process.pid % 1000);
+const origin = `http://127.0.0.1:${port}`;
+const nextBin = fileURLToPath(
+  new URL("../node_modules/next/dist/bin/next", import.meta.url),
+);
+let server;
 
-  return worker.fetch(
-    new Request(`http://localhost${path}`, {
-      ...init,
-      headers: { accept: "text/html", ...init.headers },
-    }),
+async function waitForServer() {
+  const deadline = Date.now() + 20_000;
+
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(origin);
+      if (response.ok) return;
+    } catch {
+      // The production server is still starting.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
+  throw new Error("Next.js production server did not start in time.");
+}
+
+before(async () => {
+  server = spawn(
+    process.execPath,
+    [nextBin, "start", "--hostname", "127.0.0.1", "--port", String(port)],
     {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
+      cwd: fileURLToPath(new URL("..", import.meta.url)),
+      env: {
+        ...process.env,
+        OPENAI_API_KEY: "",
+        OPENAI_BASE_URL: "",
+        OPENAI_MODEL: "",
       },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
+      stdio: "ignore",
     },
   );
+
+  await waitForServer();
+});
+
+after(async () => {
+  if (!server || server.exitCode !== null) return;
+
+  await new Promise((resolve) => {
+    server.once("exit", resolve);
+    server.kill();
+  });
+});
+
+async function render(path = "/", init = {}) {
+  return fetch(`${origin}${path}`, {
+    ...init,
+    headers: { accept: "text/html", ...init.headers },
+  });
 }
 
 test("server-renders the character library loading boundary", async () => {
@@ -212,6 +251,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.profession-icon/);
   assert.match(packageJson, /"zod"/);
   assert.match(packageJson, /"zustand"/);
+  assert.match(packageJson, /"next build"/);
+  assert.doesNotMatch(packageJson, /vinext|wrangler|@cloudflare\/vite-plugin/);
   assert.doesNotMatch(library, /codex-preview|_sites-preview|SkeletonPreview/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
