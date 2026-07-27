@@ -228,7 +228,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(layout, /title:\s*"War AI"/);
   assert.doesNotMatch(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
-  assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 52px minmax\(0, 1fr\)/);
+  assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 80px minmax\(0, 1fr\)/);
   assert.match(styles, /\.team-observer-list-left[\s\S]*direction: rtl/);
   assert.match(styles, /\.team-battle-log-list li[\s\S]*width: 100%/);
   assert.match(styles, /\.team-observer-frame/);

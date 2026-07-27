@@ -1924,7 +1924,7 @@ body {
 
 .team-observer-arena {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 80px minmax(0, 1fr);
   align-items: stretch;
   gap: 14px;
   margin-top: 28px;
@@ -2224,6 +2224,7 @@ body {
   font-weight: 900;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .observer-controls {
@@ -2935,7 +2936,7 @@ body {
   }
 
   .team-observer-arena {
-    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr);
     gap: 6px;
     margin-top: 22px;
   }
