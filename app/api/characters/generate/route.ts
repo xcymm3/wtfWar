@@ -34,43 +34,53 @@ async function generateWithModel(
   prompt: string,
   configuration: ModelConfiguration,
 ) {
-  const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${configuration.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: configuration.model,
-      temperature: 0.7,
-      messages: [
-        { role: "system", content: getCharacterGenerationSystemPrompt() },
-        {
-          role: "user",
-          content: `角色名称：${name}\n角色描述：${prompt}`,
+  let lastError: unknown;
+
+  // Agnes does not support grammar-constrained JSON. A lower temperature and a
+  // single retry let the prompt-based JSON path recover from occasional drafts
+  // that do not satisfy the game schema.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${configuration.apiKey}`,
+          "Content-Type": "application/json",
         },
-      ],
-    }),
-  });
+        body: JSON.stringify({
+          model: configuration.model,
+          temperature: 0.2,
+          max_tokens: 1000,
+          messages: [
+            { role: "system", content: getCharacterGenerationSystemPrompt() },
+            {
+              role: "user",
+              content: `角色名称：${name}\n角色描述：${prompt}`,
+            },
+          ],
+        }),
+      });
 
-  if (!response.ok) {
-    throw new Error("The configured character model returned an error.");
+      if (!response.ok) {
+        throw new Error("The configured character model returned an error.");
+      }
+
+      const payload = await response.json() as {
+        choices?: Array<{ message?: { content?: string | null } }>;
+      };
+      const content = payload.choices?.[0]?.message?.content;
+      if (!content) throw new Error("The configured character model returned no content.");
+
+      const draft = generatedCharacterDraftSchema.parse(
+        JSON.parse(extractJsonContent(content)),
+      );
+      return finalizeGeneratedCharacter({ ...draft, name }, prompt);
+    } catch (error) {
+      lastError = error;
+    }
   }
 
-  const payload = await response.json() as {
-    choices?: Array<{ message?: { content?: string | null } }>;
-  };
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new Error("The configured character model returned no content.");
-
-  let draft: unknown;
-  try {
-    draft = JSON.parse(extractJsonContent(content));
-  } catch {
-    throw new Error("The configured character model did not return JSON.");
-  }
-
-  return finalizeGeneratedCharacter(generatedCharacterDraftSchema.parse(draft), prompt);
+  throw lastError;
 }
 
 export async function POST(request: Request) {
