@@ -216,7 +216,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /实时战报/);
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
-  assert.match(observer, /displayMembers = isLeft \? \[\.\.\.formation\.members\]\.reverse\(\)/);
+  assert.match(observer, /const displayMembers = formation\.members/);
   assert.match(observer, /暂停播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
@@ -226,6 +226,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 52px minmax\(0, 1fr\)/);
+  assert.match(styles, /\.team-observer-list-left[\s\S]*direction: rtl/);
   assert.match(styles, /\.team-observer-frame/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);

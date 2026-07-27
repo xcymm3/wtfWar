@@ -319,7 +319,7 @@ function TeamFormationPanel({
 }) {
   const isLeft = side === "left";
   const currentFrontId = snapshots.find((member) => member.health > 0)?.characterId;
-  const displayMembers = isLeft ? [...formation.members].reverse() : formation.members;
+  const displayMembers = formation.members;
 
   return (
     <ol
@@ -657,11 +657,9 @@ function TeamBattleObserverPlayer({
 
         <section className="team-observer-arena" aria-label="团队战斗状态">
           <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} />
-          <div className="team-observer-divider" aria-hidden="true">
+          <div className="team-observer-divider">
             <div className="team-observer-round">
-              <span>ROUND</span>
-              <strong>{currentRound || "—"}</strong>
-              <small>前排在中线</small>
+              <strong>ROUND {currentRound || "—"}</strong>
             </div>
           </div>
           <TeamFormationPanel side="right" formation={rightTeam} snapshots={visualState.right} />
