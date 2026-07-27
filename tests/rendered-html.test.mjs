@@ -231,6 +231,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 80px minmax\(0, 1fr\)/);
   assert.match(styles, /\.team-observer-list-left[\s\S]*direction: rtl/);
   assert.match(styles, /\.team-battle-log-list li[\s\S]*width: 100%/);
+  assert.match(styles, /\.team-battle-log-list[\s\S]*grid-auto-rows: 64px/);
+  assert.match(styles, /\.team-battle-log-list li[\s\S]*height: 64px/);
   assert.match(styles, /\.team-observer-frame/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);

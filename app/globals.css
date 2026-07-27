@@ -2385,6 +2385,7 @@ body {
 .team-battle-log-list li {
   width: 100%;
   min-width: 0;
+  height: 64px;
   box-sizing: border-box;
   align-self: stretch;
   justify-self: stretch;
@@ -2394,12 +2395,18 @@ body {
 
 .team-battle-log-list {
   grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 64px;
+  align-content: start;
 }
 
 .team-battle-log-list .team-battle-log-summary {
   margin: 0;
   color: var(--foreground);
   line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .battle-log-combatant-name {
