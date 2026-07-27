@@ -18,6 +18,9 @@ test("generates a valid local character from a natural-language prompt", () => {
   assert.equal(character.originalPrompt, "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。");
   assert.ok(character.skills.some((skill) => skill.type === "damage"));
   assert.notEqual(character.skills[0].type, character.skills[1].type);
+  assert.equal(character.skills.every((skill) => (
+    Boolean(skill.usageText) && Array.from(skill.usageText ?? "").length <= 10
+  )), true);
   assert.deepEqual(characterSchema.parse(character), character);
 });
 
@@ -63,6 +66,7 @@ test("infers profession from the description and rejects invalid model drafts", 
         {
           name: "One",
           description: "Damage skill.",
+          usageText: "凝神施展",
           type: "damage",
           cooldown: 2,
           damageMultiplier: 1.2,
@@ -70,6 +74,7 @@ test("infers profession from the description and rejects invalid model drafts", 
         {
           name: "Two",
           description: "Another damage skill.",
+          usageText: "蓄力施展",
           type: "damage",
           cooldown: 3,
           damageMultiplier: 1.3,

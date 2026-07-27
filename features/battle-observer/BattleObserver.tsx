@@ -3,6 +3,7 @@
 import { nanoid } from "nanoid";
 import Link from "next/link";
 import {
+  type ReactNode,
   type UIEvent,
   useCallback,
   useEffect,
@@ -17,6 +18,7 @@ import { BATTLE_RULES } from "@/lib/battle/constants";
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { createTeamBattleRecord } from "@/lib/battle/teamBattleRecord";
 import { simulateTeamBattle } from "@/lib/battle/teamBattleEngine";
+import { getSkillUsageText } from "@/lib/battle/skillUsageText";
 import { useGameStore } from "@/lib/store/gameStore";
 import type {
   BattleEvent,
@@ -176,12 +178,14 @@ function isTeamStunSkip(event: TeamBattleEvent): boolean {
   return event.targets.length === 0 && event.narration.includes("眩晕状态");
 }
 
-function getTeamTargetLabel(
-  target: TeamBattleEvent["targets"][number],
-  charactersById: Map<string, Character>,
-): string {
-  const targetName = charactersById.get(target.characterId)?.name ?? "未知角色";
-  return `${target.side === "left" ? "红" : "蓝"}方 P${target.position} ${targetName}`;
+function TeamCombatantName({
+  name,
+  side,
+}: {
+  name: string;
+  side: BattleSide;
+}) {
+  return <span className={`battle-log-combatant-name is-${side}`}>{name}</span>;
 }
 
 function getTeamTargetResult(target: TeamBattleEvent["targets"][number]): string {
@@ -197,35 +201,61 @@ function getTeamTargetResult(target: TeamBattleEvent["targets"][number]): string
 function formatTeamBattleLog(
   event: TeamBattleEvent,
   charactersById: Map<string, Character>,
-): string {
-  const actorName = charactersById.get(event.actor.characterId)?.name ?? "未知角色";
-  if (event.targets.length === 0) return event.narration;
+): ReactNode {
+  const actorCharacter = charactersById.get(event.actor.characterId);
+  const actorName = actorCharacter?.name ?? "未知角色";
+  const actorLabel = <TeamCombatantName name={actorName} side={event.actor.side} />;
+  if (event.targets.length === 0) {
+    const narration = event.narration.startsWith(actorName)
+      ? event.narration.slice(actorName.length)
+      : event.narration;
+    return <>{actorLabel}{narration}</>;
+  }
 
   const [target] = event.targets;
   if (!target) return event.narration;
 
   const relation = target.side === event.actor.side ? "己方" : "敌方";
-  const action = event.skill ? `使用 ${event.skill.name}` : "攻击";
+  const sourceSkill = event.skill
+    ? actorCharacter?.skills.find((skill) => skill.id === event.skill?.id) ?? event.skill
+    : null;
+  const action = sourceSkill
+    ? `${getSkillUsageText(sourceSkill)} ${sourceSkill.name}`
+    : "发动普通攻击";
 
   if (event.targets.length > 1) {
-    const results = event.targets
-      .map((candidate) => `P${candidate.position} ${charactersById.get(candidate.characterId)?.name ?? "未知角色"} ${getTeamTargetResult(candidate)}`)
-      .join("；");
-    return `${actorName} ${action}，影响${relation}${target.side === "left" ? "红" : "蓝"}方 ${event.targets.length} 名角色：${results}。`;
+    return (
+      <>
+        {actorLabel} {action}，影响{relation} {event.targets.length} 名角色：
+        {event.targets.map((candidate, index) => {
+          const targetName = charactersById.get(candidate.characterId)?.name ?? "未知角色";
+          return (
+            <span key={candidate.characterId}>
+              {index > 0 ? "；" : ""}
+              <TeamCombatantName name={targetName} side={candidate.side} /> {getTeamTargetResult(candidate)}
+            </span>
+          );
+        })}
+        。
+      </>
+    );
   }
 
-  const targetLabel = getTeamTargetLabel(target, charactersById);
+  const targetName = charactersById.get(target.characterId)?.name ?? "未知角色";
+  const targetLabel = <TeamCombatantName name={targetName} side={target.side} />;
   if (target.rawDamage > 0) {
-    const attackAction = event.skill ? `${action}攻击` : action;
-    return `${actorName} ${attackAction}${relation}${targetLabel}，${getTeamTargetResult(target)}。`;
+    return <>{actorLabel} {action}攻击{relation}{targetLabel}，{getTeamTargetResult(target)}。</>;
   }
   if (target.healing > 0 || target.shieldGranted > 0) {
-    return `${actorName} ${action}，为${relation}${targetLabel} ${getTeamTargetResult(target)}。`;
+    return <>{actorLabel} {action}，为{relation}{targetLabel} {getTeamTargetResult(target)}。</>;
   }
   if (target.targetStunned) {
-    return `${actorName} ${action}，使${relation}${targetLabel}陷入眩晕。`;
+    return <>{actorLabel} {action}，使{relation}{targetLabel}陷入眩晕。</>;
   }
-  return event.narration;
+  const narration = event.narration.startsWith(actorName)
+    ? event.narration.slice(actorName.length)
+    : event.narration;
+  return <>{actorLabel}{narration}</>;
 }
 
 function FighterPanel({

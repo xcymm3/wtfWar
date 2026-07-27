@@ -59,6 +59,7 @@ const normalizedSkillSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1).max(24),
   description: z.string().trim().min(1).max(120),
+  usageText: z.string().trim().min(1).max(10).optional(),
   type: z.enum(SKILL_TYPES),
   activation: z.enum(["active", "passive"]),
   target: z.enum(SKILL_TARGETS),

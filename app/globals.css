@@ -2293,6 +2293,18 @@ body {
   line-height: 1.55;
 }
 
+.battle-log-combatant-name {
+  font-weight: 850;
+}
+
+.battle-log-combatant-name.is-left {
+  color: #f07178;
+}
+
+.battle-log-combatant-name.is-right {
+  color: #78a9ff;
+}
+
 .battle-log-list li {
   display: grid;
   grid-template-columns: 45px minmax(0, 1fr) auto;

@@ -80,6 +80,8 @@ export type Skill = {
   id: string;
   name: string;
   description: string;
+  /** A concise, model-generated lead-in for the battle report (at most 10 characters). */
+  usageText?: string;
   type: SkillType;
   /** Optional only for legacy v1 TypeScript callers; persisted cards are migrated to active. */
   activation?: SkillActivation;

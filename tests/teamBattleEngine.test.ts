@@ -149,6 +149,7 @@ test("resolves area damage against every living enemy in formation order", () =>
     target: "enemies_all",
     cooldown: 3,
     damageMultiplier: 0.6,
+    usageText: "引动风雷，施展",
   });
   const preparation: TeamBattlePreparation = {
     rulesVersion: 2,
@@ -178,6 +179,7 @@ test("resolves area damage against every living enemy in formation order", () =>
   assert.deepEqual(event.targets.map((target) => target.position), [1, 2]);
   assert.equal(event.targets.every((target) => target.side === "right"), true);
   assert.equal(event.targets.every((target) => target.rawDamage > 0), true);
+  assert.match(event.narration, /引动风雷，施展 left-storm攻击敌方全体/);
 });
 
 test("resolves area healing for every living ally and records each result", () => {

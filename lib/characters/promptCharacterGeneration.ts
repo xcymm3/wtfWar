@@ -27,6 +27,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("damage"),
     cooldown: z.number().int().min(1).max(5),
     damageMultiplier: z.number().min(0.8).max(1.8),
@@ -34,6 +35,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("area_damage"),
     cooldown: z.number().int().min(1).max(5),
     damageMultiplier: z.number().min(0.45).max(0.9),
@@ -41,6 +43,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("shield"),
     cooldown: z.number().int().min(1).max(5),
     shieldAmount: z.number().int().min(10).max(45),
@@ -48,6 +51,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("heal"),
     cooldown: z.number().int().min(1).max(5),
     healAmount: z.number().int().min(10).max(45),
@@ -55,6 +59,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("area_heal"),
     cooldown: z.number().int().min(1).max(5),
     healAmount: z.number().int().min(5).max(25),
@@ -62,6 +67,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("control"),
     cooldown: z.number().int().min(1).max(5),
     stunChance: z.number().min(0).max(0.5),
@@ -69,12 +75,14 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("cleave_passive"),
     cooldown: z.literal(0),
   }).strict(),
   z.object({
     name: z.string().trim().min(1).max(24),
     description: z.string().trim().min(1).max(120),
+    usageText: z.string().trim().min(1).max(10),
     type: z.literal("charge_strike_passive"),
     cooldown: z.literal(0),
     chargeTurns: z.number().int().min(2).max(5),
@@ -195,6 +203,7 @@ function createSkillDraft(
       return {
         name: random.pick(["破阵一击", "致命突袭", "贯穿打击"]),
         description: "集中力量发动一次高效伤害攻击。",
+        usageText: random.pick(["凝神聚气，使出", "身形一闪，使出", "汇聚劲力，施展"]),
         type,
         cooldown: random.nextInt(2, 4),
         damageMultiplier: random.nextInt(10, 18) / 10,
@@ -203,6 +212,7 @@ function createSkillDraft(
       return {
         name: random.pick(["裂地冲击", "星火风暴", "箭雨齐射"]),
         description: "对敌方所有存活角色造成范围伤害。",
+        usageText: random.pick(["聚力挥出", "引动风雷，施展", "抬手唤出"]),
         type,
         cooldown: random.nextInt(3, 5),
         damageMultiplier: random.nextInt(45, 90) / 100,
@@ -211,6 +221,7 @@ function createSkillDraft(
       return {
         name: random.pick(["临时护甲", "壁垒展开", "法力屏障"]),
         description: "为自身施加可吸收伤害的护盾。",
+        usageText: random.pick(["凝结灵光，施展", "抬手展开", "气息沉稳，施展"]),
         type,
         cooldown: random.nextInt(2, 4),
         shieldAmount: random.nextInt(18, 38),
@@ -219,6 +230,7 @@ function createSkillDraft(
       return {
         name: random.pick(["战地修整", "生命回响", "野战急救"]),
         description: "迅速恢复自身生命值。",
+        usageText: random.pick(["调息运气，施展", "收敛心神，施展", "轻抚伤处，施展"]),
         type,
         cooldown: random.nextInt(3, 5),
         healAmount: random.nextInt(18, 36),
@@ -227,6 +239,7 @@ function createSkillDraft(
       return {
         name: random.pick(["生命共鸣", "圣光回响", "战歌治愈"]),
         description: "为己方所有存活角色恢复生命。",
+        usageText: random.pick(["引动生机，施展", "放声吟唱", "挥洒光辉，施展"]),
         type,
         cooldown: random.nextInt(3, 5),
         healAmount: random.nextInt(8, 22),
@@ -235,6 +248,7 @@ function createSkillDraft(
       return {
         name: random.pick(["震慑打击", "束缚箭", "寒霜禁锢"]),
         description: "有概率使对手下一次行动跳过。",
+        usageText: random.pick(["目光一凛，使出", "冷然出手，使出", "屏息凝神，施展"]),
         type,
         cooldown: random.nextInt(3, 5),
         stunChance: random.nextInt(20, 45) / 100,
@@ -243,6 +257,7 @@ function createSkillDraft(
       return {
         name: "横扫",
         description: "普通攻击改为命中敌方所有存活角色，但有效攻击降低。",
+        usageText: "横扫千军",
         type,
         cooldown: 0,
       };
@@ -250,6 +265,7 @@ function createSkillDraft(
       return {
         name: "蓄力一击",
         description: "积蓄数次行动后，对敌方前排释放固定高伤害。",
+        usageText: "蓄势已久，释放",
         type,
         cooldown: 0,
         chargeTurns: random.nextInt(2, 4),
@@ -264,6 +280,7 @@ function draftSkillToCharacterSkill(
     id: nanoid(),
     name: draft.name,
     description: draft.description,
+    usageText: draft.usageText,
     type: draft.type,
     cooldown: draft.cooldown,
   };
@@ -345,6 +362,6 @@ export function generateLocalCharacter(
 
 export function getCharacterGenerationSystemPrompt(): string {
   return `你是“War AI”的角色设计器。根据用户提供的角色名称和角色描述生成一个可用于团队回合制战斗的角色；职业、属性和技能必须综合两项信息判断，仅输出 JSON 对象，不要 Markdown。
-JSON 必须含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，应根据角色世界观强度选择：凡人、武林高手、超能力者、修仙者、神灵。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；至少一个 type 为 damage、area_damage、cleave_passive 或 charge_strike_passive。每个技能都含 name、description、type、cooldown；damage 另含 damageMultiplier（0.8-1.8），area_damage 另含 damageMultiplier（0.45-0.9），shield 另含 shieldAmount（10-45），heal 另含 healAmount（10-45），area_heal 另含 healAmount（5-25），control 另含 stunChance（0-0.5）。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
+JSON 必须含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，应根据角色世界观强度选择：凡人、武林高手、超能力者、修仙者、神灵。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；至少一个 type 为 damage、area_damage、cleave_passive 或 charge_strike_passive。每个技能都含 name、description、usageText、type、cooldown；usageText 是战报中放在技能名前的动作短语，如“易掌为拳，使出”，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8），area_damage 另含 damageMultiplier（0.45-0.9），shield 另含 shieldAmount（10-45），heal 另含 healAmount（10-45），area_heal 另含 healAmount（5-25），control 另含 stunChance（0-0.5）。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 20-30、85-120；ranger 16-25、105-145。冷却 1-5。所有中文文本简洁，技能名不重复。`;
 }

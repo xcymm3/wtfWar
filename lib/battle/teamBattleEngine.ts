@@ -16,6 +16,7 @@ import { applyHealing } from "./heal";
 import { createSeededRandom, type SeededRandom } from "./random";
 import { scaleSkillAmountByRealm } from "./realm";
 import { applyShield } from "./shield";
+import { getSkillUsageText } from "./skillUsageText";
 import {
   createCombatantState,
   type BattleStatus,
@@ -380,6 +381,10 @@ function getSkill(
   return skill;
 }
 
+function formatSkillUse(actorName: string, skill: Skill): string {
+  return `${actorName} ${getSkillUsageText(skill)} ${skill.name}`;
+}
+
 function resolveNormalAttack(
   state: TeamBattleRuntimeState,
   actorSide: BattleSide,
@@ -448,7 +453,7 @@ function resolveNormalAttack(
     targets,
     cleavePassive
       ? `${actor.character.name} 的 ${cleavePassive.name} 生效，横扫敌方 ${targets.length} 名存活角色。`
-      : `${actor.character.name} 攻击敌方前排，造成 ${targets[0]?.rawDamage ?? 0} 点固定伤害。`,
+      : `${actor.character.name} 攻击敌方 ${targetIds.length} 名角色，造成 ${targets[0]?.damage ?? 0} 点伤害。`,
   );
 }
 
@@ -515,7 +520,7 @@ function resolveChargeStrikeAction(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    `${actor.character.name} 释放 ${skill.name}，对敌方前排 ${target.character.name} 造成 ${resolution.rawDamage} 点固定伤害。`,
+    `${formatSkillUse(actor.character.name, skill)}攻击敌方 ${target.character.name}，造成 ${resolution.healthDamage} 点伤害。`,
   );
 }
 
@@ -565,7 +570,7 @@ function resolveDamageSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    `${actor.character.name} 使用 ${skill.name} 攻击敌方前排 ${target.character.name}。`,
+    `${formatSkillUse(actor.character.name, skill)}攻击敌方 ${target.character.name}，造成 ${damageResolution.healthDamage} 点伤害。`,
   );
 }
 
@@ -642,7 +647,7 @@ function resolveAreaDamageSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     targets,
-    `${actor.character.name} 使用 ${skill.name}，攻击敌方 ${targets.length} 名存活角色。`,
+    `${formatSkillUse(actor.character.name, skill)}攻击敌方全体，影响 ${targets.length} 名角色。`,
   );
 }
 
@@ -683,7 +688,7 @@ function resolveShieldSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    `${actor.character.name} 使用 ${skill.name}，获得 ${shieldResolution.shieldGranted} 点护盾。`,
+    `${formatSkillUse(actor.character.name, skill)}，获得 ${shieldResolution.shieldGranted} 点护盾。`,
   );
 }
 
@@ -719,7 +724,7 @@ function resolveHealSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    `${actor.character.name} 使用 ${skill.name}，恢复 ${healResolution.healing} 点生命。`,
+    `${formatSkillUse(actor.character.name, skill)}，恢复 ${healResolution.healing} 点生命。`,
   );
 }
 
@@ -778,7 +783,7 @@ function resolveAreaHealSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     targets,
-    `${actor.character.name} 使用 ${skill.name}，恢复己方 ${targets.length} 名存活角色。`,
+    `${formatSkillUse(actor.character.name, skill)}，恢复己方 ${targets.length} 名角色。`,
   );
 }
 
@@ -824,8 +829,8 @@ function resolveControlSkill(
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
     stunResolution.targetStunned
-      ? `${actor.character.name} 使用 ${skill.name}，使敌方前排 ${target.character.name} 陷入眩晕。`
-      : `${actor.character.name} 使用 ${skill.name}，但未能眩晕敌方前排 ${target.character.name}。`,
+      ? `${formatSkillUse(actor.character.name, skill)}，使敌方 ${target.character.name} 陷入眩晕。`
+      : `${formatSkillUse(actor.character.name, skill)}，但未能眩晕敌方 ${target.character.name}。`,
   );
 }
 
