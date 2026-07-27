@@ -12,6 +12,12 @@ type ModelConfiguration = {
   model: string;
 };
 
+function extractJsonContent(content: string): string {
+  const trimmedContent = content.trim();
+  const fencedJson = trimmedContent.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fencedJson?.[1] ?? trimmedContent;
+}
+
 function getModelConfiguration(): ModelConfiguration | null {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return null;
@@ -36,7 +42,6 @@ async function generateWithModel(
     },
     body: JSON.stringify({
       model: configuration.model,
-      response_format: { type: "json_object" },
       temperature: 0.7,
       messages: [
         { role: "system", content: getCharacterGenerationSystemPrompt() },
@@ -60,7 +65,7 @@ async function generateWithModel(
 
   let draft: unknown;
   try {
-    draft = JSON.parse(content);
+    draft = JSON.parse(extractJsonContent(content));
   } catch {
     throw new Error("The configured character model did not return JSON.");
   }
