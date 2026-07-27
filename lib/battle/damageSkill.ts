@@ -16,6 +16,16 @@ type DamageSkill = Skill & {
   damageMultiplier: number;
 };
 
+export type DamageMultiplierRange = {
+  min: number;
+  max: number;
+};
+
+const DEFAULT_DAMAGE_MULTIPLIER_RANGE: DamageMultiplierRange = {
+  min: BATTLE_RULES.minDamageMultiplier,
+  max: BATTLE_RULES.maxDamageMultiplier,
+};
+
 function getDamageSkill(
   skill: Skill | undefined,
   skillId: string,
@@ -35,6 +45,7 @@ export function calculateDamageSkillDamage(
   attack: number,
   damageMultiplier: number,
   random: SeededRandom,
+  multiplierRange: DamageMultiplierRange = DEFAULT_DAMAGE_MULTIPLIER_RANGE,
 ): number {
   if (!Number.isInteger(attack) || attack <= 0) {
     throw new RangeError("Attack must be a positive integer.");
@@ -42,8 +53,8 @@ export function calculateDamageSkillDamage(
 
   if (
     !Number.isFinite(damageMultiplier) ||
-    damageMultiplier < BATTLE_RULES.minDamageMultiplier ||
-    damageMultiplier > BATTLE_RULES.maxDamageMultiplier
+    damageMultiplier < multiplierRange.min ||
+    damageMultiplier > multiplierRange.max
   ) {
     throw new RangeError("Damage multiplier is outside the allowed range.");
   }

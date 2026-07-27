@@ -148,7 +148,7 @@ test("resolves area damage against every living enemy in formation order", () =>
     activation: "active",
     target: "enemies_all",
     cooldown: 3,
-    damageMultiplier: 0.9,
+    damageMultiplier: 0.6,
   });
   const preparation: TeamBattlePreparation = {
     rulesVersion: 2,

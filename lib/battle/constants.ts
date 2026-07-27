@@ -10,6 +10,8 @@ export const BATTLE_RULES = {
   maxCooldown: 5,
   minDamageMultiplier: 0.8,
   maxDamageMultiplier: 1.8,
+  minAreaDamageMultiplier: 0.45,
+  maxAreaDamageMultiplier: 0.9,
   minDamageRandomMultiplier: 0.9,
   maxDamageRandomMultiplier: 1.1,
   maxShield: 60,

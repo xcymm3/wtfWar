@@ -598,6 +598,10 @@ function resolveAreaDamageSkill(
       actor.effectiveStats.attack,
       skill.damageMultiplier,
       random,
+      {
+        min: BATTLE_RULES.minAreaDamageMultiplier,
+        max: BATTLE_RULES.maxAreaDamageMultiplier,
+      },
     );
     const damageResolution = applyDamage(target, rawDamage);
     nextState = replaceCombatant(
