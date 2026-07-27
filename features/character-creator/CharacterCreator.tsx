@@ -236,8 +236,7 @@ export function CharacterCreator() {
         <header className="creator-header">
           <div>
             <p className="library-kicker">War AI · 手动创角</p>
-            <h1>给出设定，其余交给 AI。</h1>
-            <p>选择战力阶位，再写下名称和描述；AI 会综合名称与描述判定职业，并生成符合战斗规则的属性与技能。</p>
+            <p>让你想的角色成真！！你只需要输入名称+设定+战斗力，就可以自动生成一个角色！注意：同名角色只能有一个</p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>
         </header>
@@ -245,18 +244,13 @@ export function CharacterCreator() {
         <form className="creator-form" onSubmit={handleSubmit}>
           <section className="form-section">
             <div className="section-heading">
-              <span>01</span>
-              <div>
-                <h2>角色设定</h2>
-                <p>以下三项由你决定。</p>
-              </div>
+              <h2>角色设定</h2>
             </div>
 
             <div className="realm-heading">
-              <span>战力阶位</span>
-              <small>阶位会放大角色进入战斗后的属性。</small>
+              <span>战斗力</span>
             </div>
-            <div className="realm-picker" aria-label="选择战力阶位">
+            <div className="realm-picker" aria-label="选择战斗力">
               {REALMS.map((item) => (
                 <button
                   key={item}
@@ -280,7 +274,7 @@ export function CharacterCreator() {
               />
             </label>
             <label>
-              <span>角色描述</span>
+              <span>角色设定</span>
               <textarea
                 required
                 maxLength={500}
@@ -292,7 +286,6 @@ export function CharacterCreator() {
             </label>
 
             <div className="ai-generator-actions creator-generation-action">
-              <p>职业、属性和技能将由 AI 根据角色名称与描述生成，生成后不可直接修改。</p>
               <button type="button" onClick={handleGenerate} disabled={isGenerating || isSaving}>
                 {isGenerating ? "正在生成…" : "生成角色属性"}
               </button>

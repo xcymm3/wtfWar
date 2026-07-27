@@ -180,9 +180,9 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /api\/characters\/generate/);
   assert.match(creator, /fetch\("\/api\/characters"/);
   assert.match(creator, /正在保存到角色库/);
-  assert.match(creator, /战力阶位/);
-  assert.match(creator, /综合名称与描述判定职业/);
-  assert.match(creator, /角色名称与描述/);
+  assert.match(creator, /战斗力/);
+  assert.match(creator, /让你想的角色成真/);
+  assert.doesNotMatch(creator, /给出设定，其余交给 AI|以下三项由你决定|阶位会放大角色/);
   assert.match(creator, /群体伤害/);
   assert.match(creator, /群体治疗/);
   assert.match(creator, /横扫被动/);
