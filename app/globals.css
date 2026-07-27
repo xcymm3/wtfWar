@@ -1,3 +1,5 @@
+/* Hallmark · pre-emit critique: P5 H5 E4 S5 R5 V4 */
+/* Hallmark · macrostructure: Workbench · tone: utilitarian · anchor hue: ember */
 @import "tailwindcss";
 
 :root {
@@ -7,6 +9,10 @@
   --border: #4c4232;
   --accent: #f3af32;
   --muted: #bdb1a0;
+  --team-left: #dc625c;
+  --team-left-soft: #f08b85;
+  --team-right: #679ed8;
+  --team-right-soft: #8dbcf1;
 }
 
 @theme inline {
@@ -30,18 +36,18 @@ body {
 }
 
 .app-page {
-  min-height: 100vh;
-  padding-bottom: 88px;
+  min-height: 100dvh;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
 .bottom-navigation {
   position: fixed;
   z-index: 40;
-  bottom: 12px;
+  bottom: max(8px, env(safe-area-inset-bottom));
   left: 50%;
   display: grid;
-  width: min(430px, calc(100% - 28px));
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(320px, calc(100% - 24px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
   box-sizing: border-box;
   transform: translateX(-50%);
@@ -49,7 +55,7 @@ body {
   border-radius: 18px;
   background: rgba(25, 23, 19, 0.92);
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
-  padding: 5px;
+  padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
   backdrop-filter: blur(16px);
 }
 
@@ -102,10 +108,12 @@ body {
 }
 
 .library-header h1 {
-  margin: 0.55rem 0 0;
+  margin: 0;
   font-size: clamp(2.7rem, 6vw, 5.3rem);
   font-weight: 900;
   letter-spacing: -0.07em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .library-intro {
@@ -400,6 +408,11 @@ body {
   background: linear-gradient(160deg, rgba(37, 33, 27, 0.95), rgba(23, 21, 18, 0.96));
   padding: 20px;
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+  cursor: grab;
+}
+
+.character-card:active {
+  cursor: grabbing;
 }
 
 .character-card.profession-tank { border-top-color: #84aa93; }
@@ -540,6 +553,31 @@ body {
   gap: 7px;
   margin-top: auto;
   padding-top: 20px;
+}
+
+.team-add-button {
+  min-height: 37px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: transparent;
+  padding: 0 10px;
+  color: var(--foreground);
+  font-size: 0.78rem;
+}
+
+.team-add-left:hover:not(:disabled) {
+  border-color: var(--team-left);
+  color: var(--team-left-soft);
+}
+
+.team-add-right:hover:not(:disabled) {
+  border-color: var(--team-right);
+  color: var(--team-right-soft);
+}
+
+.team-add-button:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .seat-button,
@@ -1353,6 +1391,12 @@ body {
   margin: 0;
 }
 
+.team-builder-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .team-builder-heading h2,
 .classic-duel-heading h2 {
   margin-top: 5px;
@@ -1481,6 +1525,26 @@ body {
   border-radius: 10px;
   background: rgba(29, 27, 23, 0.76);
   padding: 8px;
+  cursor: grab;
+}
+
+.team-lineup li:active {
+  cursor: grabbing;
+}
+
+.team-lineup li.is-drop-target {
+  border-color: var(--accent);
+  background: rgba(243, 175, 50, 0.12);
+  transform: translateY(2px);
+}
+
+.team-lineup li.team-lineup-empty {
+  display: grid;
+  min-height: 72px;
+  place-items: center;
+  border-style: dashed;
+  color: var(--muted);
+  cursor: default;
 }
 
 .team-position {
@@ -1519,15 +1583,62 @@ body {
   font-size: 0.69rem;
 }
 
-.team-member-actions {
+.team-member-remove {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 4px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  cursor: pointer;
+  border: 1px solid rgba(189, 177, 160, 0.32);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
-.team-member-actions button {
-  min-height: 27px;
-  padding: 0 6px;
+.team-member-remove:hover {
+  border-color: var(--team-left);
+  color: var(--team-left-soft);
+}
+
+.team-member-remove:focus-visible,
+.team-add-button:focus-visible,
+.team-builder-footer > button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.home-team-builder {
+  margin-top: 28px;
+}
+
+.team-builder-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.team-builder-footer > button {
+  min-height: 42px;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: #23190b;
+  padding: 0 15px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.team-builder-footer > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .team-roster {
@@ -2867,6 +2978,28 @@ body {
   .team-observer-frame {
     height: calc(100dvh - 76px);
     padding-bottom: 16px;
+  }
+
+  .team-builder-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .team-builder-versus {
+    height: 20px;
+  }
+
+  .team-builder-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .team-builder-footer > button {
+    width: 100%;
+  }
+
+  .home-team-builder .seed-input-row {
+    width: 100%;
   }
 
   .classic-selector-grid {

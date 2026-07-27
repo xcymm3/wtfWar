@@ -6,6 +6,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { characterSchema } from "@/lib/schemas/character";
 import { useGameStore } from "@/lib/store/gameStore";
+import {
+  beginTeamCharacterDrag,
+  TeamBuilder,
+} from "@/features/battle-preparation/TeamBuilder";
 import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
 import {
   PROFESSIONS,
@@ -65,6 +69,8 @@ export function CharacterLibrary() {
   const characters = useGameStore((state) => state.characters);
   const hydrate = useGameStore((state) => state.hydrate);
   const removeCharacter = useGameStore((state) => state.removeCharacter);
+  const teamCharacterIds = useGameStore((state) => state.teamCharacterIds);
+  const addCharacterToTeam = useGameStore((state) => state.addCharacterToTeam);
   const addPresetCharacters = useGameStore((state) => state.addPresetCharacters);
   const importCharacters = useGameStore((state) => state.importCharacters);
   const hasImportedPresets = useRef(false);
@@ -139,6 +145,14 @@ export function CharacterLibrary() {
     }
   }
 
+  function handleAddToTeam(side: "left" | "right", characterId: string): void {
+    try {
+      addCharacterToTeam(side, characterId);
+    } catch (error) {
+      setRemoteLibraryNotice(error instanceof Error ? error.message : "无法加入阵容。");
+    }
+  }
+
   if (!hasHydrated) {
     return (
       <main className="library-shell">
@@ -152,9 +166,7 @@ export function CharacterLibrary() {
       <div className="library-frame">
         <header className="library-header">
           <div>
-            <p className="library-kicker">War AI · 角色库</p>
-            <h1>认识下一位主角</h1>
-            <p className="library-intro">在这里浏览角色的属性与技能；需要组队或开始对战时，请前往“对战准备”。</p>
+            <h1>角色库</h1>
           </div>
           <div className="library-header-actions">
             <div className="library-count" aria-label={`当前共有 ${characters.length} 名角色`}>
@@ -165,8 +177,9 @@ export function CharacterLibrary() {
           </div>
         </header>
 
-        <p className="preset-notice" role="status">预设角色已自动导入；可在这里浏览属性与技能。</p>
         {remoteLibraryNotice ? <p className="form-error" role="alert">{remoteLibraryNotice}</p> : null}
+
+        <TeamBuilder characters={characters} />
 
         <section className="library-controls" aria-label="角色库筛选">
           <label className="search-field">
@@ -179,7 +192,7 @@ export function CharacterLibrary() {
             />
           </label>
           <div className="library-profession-filter">
-            <span>职业分类</span>
+            <span>职业</span>
             <div className="profession-filters" aria-label="按职业筛选">
               <button
                 type="button"
@@ -211,7 +224,13 @@ export function CharacterLibrary() {
               const realm = character.realm ?? "mortal";
 
               return (
-                <article key={character.id} className={`character-card profession-${character.profession}`}>
+                <article
+                  key={character.id}
+                  draggable
+                  onDragStart={(event) => beginTeamCharacterDrag(event, character.id)}
+                  className={`character-card profession-${character.profession}`}
+                  title="拖到上方阵容"
+                >
                   <div className="character-card-topline">
                     <span><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
                     <time dateTime={character.updatedAt}>更新于 {formatUpdatedAt(character.updatedAt)}</time>
@@ -234,6 +253,22 @@ export function CharacterLibrary() {
                   </div>
 
                   <div className="character-actions">
+                    <button
+                      type="button"
+                      className="team-add-button team-add-left"
+                      onClick={() => handleAddToTeam("left", character.id)}
+                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                    >
+                      红方
+                    </button>
+                    <button
+                      type="button"
+                      className="team-add-button team-add-right"
+                      onClick={() => handleAddToTeam("right", character.id)}
+                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                    >
+                      蓝方
+                    </button>
                     <button type="button" className="delete-button" onClick={() => handleRemove(character)}>
                       删除角色
                     </button>

@@ -48,6 +48,7 @@ export type GameStoreState = GameStore & {
     characterId: string,
     direction: -1 | 1,
   ) => void;
+  setTeamCharacterIds: (teamCharacterIds: TeamCharacterIds) => void;
   clearTeam: (side: BattleSide) => void;
   prepareTeamBattle: (seed: string) => void;
   rematchBattle: (
@@ -432,6 +433,40 @@ export function createGameStore() {
             ...state.teamCharacterIds,
             [side]: nextMembers,
           },
+          preparedTeamBattle: null,
+          activeReplayBattleId: null,
+          activeReplayTeamBattleId: null,
+        };
+      });
+    },
+
+    setTeamCharacterIds: (teamCharacterIds) => {
+      set((state) => {
+        const nextTeamCharacterIds: TeamCharacterIds = {
+          left: [...teamCharacterIds.left],
+          right: [...teamCharacterIds.right],
+        };
+        const allCharacterIds = [
+          ...nextTeamCharacterIds.left,
+          ...nextTeamCharacterIds.right,
+        ];
+
+        if (
+          nextTeamCharacterIds.left.length > MAX_TEAM_SIZE
+          || nextTeamCharacterIds.right.length > MAX_TEAM_SIZE
+        ) {
+          throw new Error("Each team can contain at most 5 characters.");
+        }
+        if (new Set(allCharacterIds).size !== allCharacterIds.length) {
+          throw new Error("A character cannot appear on both teams.");
+        }
+        allCharacterIds.forEach((characterId) => {
+          assertCharacterExists(state.characters, characterId);
+        });
+
+        return {
+          ...state,
+          teamCharacterIds: nextTeamCharacterIds,
           preparedTeamBattle: null,
           activeReplayBattleId: null,
           activeReplayTeamBattleId: null,

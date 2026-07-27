@@ -4,14 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { href: "/", label: "首页" },
-  { href: "/battle/prepare", label: "对战准备" },
+  { href: "/", label: "角色库" },
   { href: "/history", label: "战斗历史" },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/" || pathname.startsWith("/create");
-  if (href === "/battle/prepare") return pathname.startsWith("/battle");
   return pathname.startsWith(href);
 }
 

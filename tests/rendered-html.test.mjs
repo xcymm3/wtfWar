@@ -82,12 +82,12 @@ test("server-renders the manual character creator loading boundary", async () =>
   assert.match(html, /正在准备创角表单/);
 });
 
-test("server-renders the battle preparation loading boundary", async () => {
+test("redirects the legacy battle preparation route to the merged home page", async () => {
   const response = await render("/battle/prepare");
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /正在读取对战阵容/);
+  assert.match(html, /正在读取本地角色库/);
 });
 
 test("server-renders the battle observer loading boundary", async () => {
@@ -153,7 +153,7 @@ test("keeps the character library wired to the local game store", async () => {
       "utf8",
     ),
     readFile(
-      new URL("../features/battle-preparation/BattlePreparation.tsx", import.meta.url),
+      new URL("../features/battle-preparation/TeamBuilder.tsx", import.meta.url),
       "utf8",
     ),
     readFile(
@@ -179,9 +179,10 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /useGameStore/);
   assert.match(library, /按职业筛选/);
   assert.match(library, /aria-pressed/);
-  assert.match(library, /已自动导入/);
+  assert.doesNotMatch(library, /已自动导入/);
   assert.match(library, /addPresetCharacters/);
-  assert.doesNotMatch(library, /设为红方|设为蓝方/);
+  assert.match(library, /TeamBuilder/);
+  assert.match(library, /beginTeamCharacterDrag/);
   assert.match(library, /删除/);
   assert.match(library, /创建角色/);
   assert.match(presets, /护卫/);
@@ -218,16 +219,13 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(charactersRoute, /DuplicateCharacterNameError/);
   assert.match(repository, /ensurePresetCharacters/);
   assert.match(repository, /characters\.normalizedName/);
-  assert.match(preparation, /双方人数可不同/);
+  assert.match(preparation, /拖动角色卡排位/);
   assert.match(preparation, /hasCompleteTeams/);
-  assert.doesNotMatch(preparation, /确认单挑配置|classic-duel-panel|prepareBattle/);
-  assert.match(preparation, /职业分类/);
-  assert.match(preparation, /filteredCharacters/);
-  assert.match(preparation, /随机种子/);
-  assert.match(preparation, /保存团队阵容/);
-  assert.match(preparation, /进入观战/);
-  assert.match(preparation, /向前/);
-  assert.match(preparation, /addCharacterToTeam/);
+  assert.match(preparation, /onDragStart/);
+  assert.match(preparation, /onDrop/);
+  assert.match(preparation, /setTeamCharacterIds/);
+  assert.match(preparation, /开始观战/);
+  assert.doesNotMatch(preparation, /向前|向后/);
   assert.match(observer, /simulateBattle/);
   assert.match(observer, /simulateTeamBattle/);
   assert.match(observer, /getEffectiveCombatStats/);
@@ -249,8 +247,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(history, /导入角色库/);
   assert.match(transfer, /war-ai-game.character-library/);
   assert.match(storage, /migrateLegacyGameStore/);
-  assert.match(navigation, /首页/);
-  assert.match(navigation, /对战准备/);
+  assert.match(navigation, /角色库/);
+  assert.doesNotMatch(navigation, /对战准备/);
   assert.match(navigation, /战斗历史/);
   assert.match(layout, /title:\s*"War AI"/);
   assert.match(layout, /BottomNavigation/);

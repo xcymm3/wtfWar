@@ -1,5 +1,5 @@
-import { BattlePreparation } from "@/features/battle-preparation/BattlePreparation";
+import { redirect } from "next/navigation";
 
 export default function BattlePreparationPage() {
-  return <BattlePreparation />;
+  redirect("/");
 }

@@ -184,12 +184,22 @@ test("builds teams in a mutable front-to-back order", () => {
       /both teams/i,
     );
 
-    store.getState().moveTeamCharacter("left", leftThree.id, -1);
+    store.getState().setTeamCharacterIds({
+      left: [leftOne.id, leftThree.id, leftTwo.id],
+      right: [rightOne.id, rightTwo.id, rightThree.id],
+    });
     assert.deepEqual(store.getState().teamCharacterIds.left, [
       leftOne.id,
       leftThree.id,
       leftTwo.id,
     ]);
+    assert.throws(
+      () => store.getState().setTeamCharacterIds({
+        left: [leftOne.id],
+        right: [leftOne.id],
+      }),
+      /both teams/i,
+    );
     store.getState().prepareTeamBattle("five-a-side-seed");
 
     const preparedTeam = store.getState().preparedTeamBattle;
