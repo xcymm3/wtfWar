@@ -380,7 +380,7 @@ function ObserverControls({
   return (
     <section className="observer-controls" aria-label="观战控制">
       <button type="button" onClick={onPlay}>
-        {isPlaying ? "播放中…" : hasFinishedReplay ? "从头自动播放" : "自动播放"}
+        {isPlaying ? "战斗中…" : hasFinishedReplay ? "从头自动战斗" : "自动战斗"}
       </button>
       <button
         type="button"
@@ -388,7 +388,7 @@ function ObserverControls({
         onClick={onPause}
         disabled={!isPlaying}
       >
-        暂停播放
+        暂停战斗
       </button>
       <button
         type="button"
@@ -403,7 +403,7 @@ function ObserverControls({
         className="secondary-observer-button"
         onClick={onRestart}
       >
-        重新播放
+        重新战斗
       </button>
       <button
         type="button"
@@ -568,7 +568,7 @@ function BattleObserverPlayer({
               })}
             </ol>
           ) : (
-            <p className="battle-log-empty">点击“自动播放”或“下一次行动”开始观战。</p>
+            <p className="battle-log-empty">点击“自动战斗”或“下一次行动”开始战斗。</p>
           )}
         </section>
       </div>
@@ -647,8 +647,7 @@ function TeamBattleObserverPlayer({
         <header className="observer-header">
           <div>
             <p className="library-kicker">War AI · 团队观战</p>
-            <h1>前排顶住，后排接力。</h1>
-            <p>种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
+            <p className="team-observer-meta">种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">
             <Link href="/" className="back-link">返回角色库</Link>
@@ -714,7 +713,7 @@ function TeamBattleObserverPlayer({
               })}
             </ol>
           ) : (
-            <p className="battle-log-empty">点击“自动播放”或“下一次行动”开始团队观战。</p>
+            <p className="battle-log-empty">点击“自动战斗”或“下一次行动”开始战斗。</p>
           )}
         </section>
       </div>

@@ -1899,6 +1899,21 @@ body {
   padding: 2px 5px;
 }
 
+.team-observer-frame .observer-header {
+  align-items: center;
+}
+
+.team-observer-frame .observer-header > div:first-child {
+  min-width: 0;
+}
+
+.team-observer-frame .team-observer-meta {
+  max-width: none;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .observer-arena {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 116px minmax(0, 1fr);
@@ -2367,8 +2382,17 @@ body {
 }
 
 .team-battle-log-list li {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  align-self: stretch;
+  justify-self: stretch;
   grid-template-columns: 38px minmax(0, 1fr);
   padding: 9px 11px;
+}
+
+.team-battle-log-list {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .team-battle-log-list .team-battle-log-summary {
@@ -2917,12 +2941,28 @@ body {
   }
 
   .team-observer-list {
-    grid-template-columns: 1fr;
+    display: flex;
     gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .team-observer-list > li {
+    min-height: 78px;
+    flex: 0 0 108px;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .team-observer-list .health-track {
+    height: 6px;
   }
 
   .team-observer-divider {
-    min-height: 100%;
+    min-height: 86px;
   }
 
   .team-observer-round {
@@ -2955,6 +2995,27 @@ body {
     padding-bottom: 16px;
   }
 
+  .team-observer-frame .observer-header {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .team-observer-frame .observer-header-actions {
+    width: auto;
+    margin-left: auto;
+  }
+
+  .team-observer-frame .back-link {
+    white-space: nowrap;
+  }
+
+  .team-observer-frame .team-observer-meta {
+    margin-top: 4px;
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+
   .team-builder-grid {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -2983,6 +3044,15 @@ body {
 
   .team-observer-frame .battle-log-panel {
     padding: 12px;
+  }
+
+  .team-observer-frame .battle-log-heading h2 {
+    font-size: 1.02rem;
+  }
+
+  .team-battle-log-list li {
+    grid-template-columns: 34px minmax(0, 1fr);
+    padding: 8px 9px;
   }
 
   .prepared-versus {

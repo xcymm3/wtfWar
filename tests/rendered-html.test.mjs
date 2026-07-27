@@ -217,7 +217,10 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
   assert.match(observer, /const displayMembers = formation\.members/);
-  assert.match(observer, /暂停播放/);
+  assert.match(observer, /自动战斗/);
+  assert.match(observer, /暂停战斗/);
+  assert.match(observer, /重新战斗/);
+  assert.doesNotMatch(observer, /自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
@@ -227,6 +230,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 52px minmax\(0, 1fr\)/);
   assert.match(styles, /\.team-observer-list-left[\s\S]*direction: rtl/);
+  assert.match(styles, /\.team-battle-log-list li[\s\S]*width: 100%/);
   assert.match(styles, /\.team-observer-frame/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
