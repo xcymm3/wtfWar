@@ -37,45 +37,6 @@ body {
 
 .app-page {
   min-height: 100dvh;
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
-}
-
-.bottom-navigation {
-  position: fixed;
-  z-index: 40;
-  bottom: max(8px, env(safe-area-inset-bottom));
-  left: 50%;
-  display: grid;
-  width: min(320px, calc(100% - 24px));
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  box-sizing: border-box;
-  transform: translateX(-50%);
-  border: 1px solid rgba(189, 177, 160, 0.34);
-  border-radius: 18px;
-  background: rgba(25, 23, 19, 0.92);
-  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34);
-  padding: 5px 5px calc(5px + env(safe-area-inset-bottom));
-  backdrop-filter: blur(16px);
-}
-
-.bottom-navigation-link {
-  display: grid;
-  min-height: 42px;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 13px;
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.bottom-navigation-link.is-active {
-  border-color: rgba(243, 175, 50, 0.38);
-  background: rgba(243, 175, 50, 0.13);
-  color: var(--accent);
 }
 
 .library-shell {
@@ -190,19 +151,6 @@ body {
   color: #e4effd;
 }
 
-.history-link,
-.observer-history-link {
-  border: 1px solid rgba(243, 175, 50, 0.46);
-  border-radius: 10px;
-  background: rgba(243, 175, 50, 0.08);
-  color: #f9dfaa;
-  padding: 10px 12px;
-  font-size: 0.86rem;
-  font-weight: 800;
-  text-align: center;
-  text-decoration: none;
-}
-
 .preset-characters-button {
   min-height: 38px;
   cursor: pointer;
@@ -230,13 +178,6 @@ body {
   color: #c3ebd4;
   padding: 11px 13px;
   font-size: 0.84rem;
-}
-
-.history-link:hover,
-.observer-history-link:hover {
-  border-color: var(--accent);
-  background: rgba(243, 175, 50, 0.16);
-  color: #fff6dd;
 }
 
 .create-character-link:hover,
@@ -1968,17 +1909,44 @@ body {
 
 .team-observer-arena {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr);
   align-items: stretch;
-  gap: 8px;
+  gap: 14px;
   margin-top: 28px;
 }
 
 .team-observer-list {
-  display: contents;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.team-observer-list-left {
+  grid-column: 1;
+}
+
+.team-observer-list-right {
+  grid-column: 3;
+}
+
+.team-observer-divider {
+  position: relative;
+  display: grid;
+  grid-column: 2;
+  place-items: center;
+  min-height: 132px;
+}
+
+.team-observer-divider::before {
+  position: absolute;
+  inset: 0 50%;
+  width: 1px;
+  content: "";
+  background: linear-gradient(180deg, transparent, rgba(243, 175, 50, 0.72) 18%, rgba(243, 175, 50, 0.72) 82%, transparent);
 }
 
 .team-observer-list > li {
@@ -1991,7 +1959,6 @@ body {
   border-radius: 11px;
   background: rgba(16, 16, 16, 0.25);
   padding: 10px 8px;
-  transition: opacity 220ms ease, border-color 220ms ease;
 }
 
 .team-observer-list > li.is-front {
@@ -2213,12 +2180,19 @@ body {
 
 .team-observer-round {
   display: flex;
-  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 32px;
+  min-height: 68px;
+  flex-direction: column;
+  padding: 8px 3px;
+  border: 1px solid rgba(243, 175, 50, 0.24);
+  border-radius: 999px;
+  background: #171820;
   color: var(--muted);
+  text-align: center;
 }
 
 .team-observer-round span {
@@ -2938,20 +2912,28 @@ body {
   }
 
   .team-observer-arena {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+    gap: 6px;
     margin-top: 22px;
   }
 
-  .team-observer-round {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
+  .team-observer-list {
+    grid-template-columns: 1fr;
     gap: 6px;
   }
 
+  .team-observer-divider {
+    min-height: 100%;
+  }
+
+  .team-observer-round {
+    gap: 3px;
+    min-height: 58px;
+    padding: 6px 2px;
+  }
+
   .team-observer-round small {
-    margin-left: auto;
-    text-align: right;
+    font-size: 0.62rem;
   }
 
   .observer-center {

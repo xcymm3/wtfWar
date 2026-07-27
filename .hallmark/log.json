@@ -1,6 +1,13 @@
 [
   {
     "date": "2026-07-27",
+    "macrostructure": "Arena Split",
+    "theme": "existing dark game palette",
+    "enrichment": "centerline formation marker",
+    "brief": "Remove stored battle history and reshape the live arena around opposing formations."
+  },
+  {
+    "date": "2026-07-27",
     "macrostructure": "Workbench",
     "theme": "existing dark game palette",
     "enrichment": "none",

@@ -13,10 +13,8 @@ import {
 } from "react";
 
 import { simulateBattle } from "@/lib/battle/battleEngine";
-import { createBattleRecord } from "@/lib/battle/battleRecord";
 import { BATTLE_RULES } from "@/lib/battle/constants";
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
-import { createTeamBattleRecord } from "@/lib/battle/teamBattleRecord";
 import { simulateTeamBattle } from "@/lib/battle/teamBattleEngine";
 import { getSkillUsageText } from "@/lib/battle/skillUsageText";
 import { useGameStore } from "@/lib/store/gameStore";
@@ -503,8 +501,7 @@ function BattleObserverPlayer({
             <p>种子 <code>{seed}</code> · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">
-            <Link href="/history" className="observer-history-link">战斗历史</Link>
-            <Link href="/battle/prepare" className="back-link">返回对战准备</Link>
+            <Link href="/" className="back-link">返回角色库</Link>
           </div>
         </header>
 
@@ -581,17 +578,14 @@ function BattleObserverPlayer({
 
 function TeamBattleObserverPlayer({
   battle,
-  onBattleCompleted,
   onNewSeed,
 }: {
   battle: ObservedTeamBattle;
-  onBattleCompleted?: () => void;
   onNewSeed: () => void;
 }) {
   const { events, leftTeam, rightTeam, rounds, seed, winner } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [hasRecorded, setHasRecorded] = useState(false);
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
@@ -607,13 +601,6 @@ function TeamBattleObserverPlayer({
     [leftTeam, rightTeam],
   );
 
-  const finishBattleIfNeeded = useCallback((): void => {
-    if (!hasRecorded && onBattleCompleted) {
-      onBattleCompleted();
-      setHasRecorded(true);
-    }
-  }, [hasRecorded, onBattleCompleted]);
-
   useEffect(() => {
     if (!isPlaying || hasFinishedReplay) return;
 
@@ -622,12 +609,11 @@ function TeamBattleObserverPlayer({
       setVisibleEventCount(nextCount);
       if (nextCount >= events.length) {
         setIsPlaying(false);
-        finishBattleIfNeeded();
       }
     }, 600);
 
     return () => window.clearTimeout(timer);
-  }, [events.length, finishBattleIfNeeded, hasFinishedReplay, isPlaying, visibleEventCount]);
+  }, [events.length, hasFinishedReplay, isPlaying, visibleEventCount]);
 
   function playFromCurrentPosition(): void {
     if (hasFinishedReplay) setVisibleEventCount(0);
@@ -642,7 +628,6 @@ function TeamBattleObserverPlayer({
     const nextCount = Math.min(visibleEventCount + 1, events.length);
     setIsPlaying(false);
     setVisibleEventCount(nextCount);
-    if (nextCount >= events.length) finishBattleIfNeeded();
   }
 
   function restartReplay(): void {
@@ -666,18 +651,19 @@ function TeamBattleObserverPlayer({
             <p>种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">
-            <Link href="/history" className="observer-history-link">战斗历史</Link>
-            <Link href="/battle/prepare" className="back-link">返回对战准备</Link>
+            <Link href="/" className="back-link">返回角色库</Link>
           </div>
         </header>
 
         <section className="team-observer-arena" aria-label="团队战斗状态">
-          <div className="team-observer-round">
-            <span>ROUND</span>
-            <strong>{currentRound || "—"}</strong>
-            <small>前排优先承受攻击</small>
-          </div>
           <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} />
+          <div className="team-observer-divider" aria-hidden="true">
+            <div className="team-observer-round">
+              <span>ROUND</span>
+              <strong>{currentRound || "—"}</strong>
+              <small>前排在中线</small>
+            </div>
+          </div>
           <TeamFormationPanel side="right" formation={rightTeam} snapshots={visualState.right} />
         </section>
 
@@ -695,14 +681,14 @@ function TeamBattleObserverPlayer({
           <section className="observer-result" aria-live="polite">
             <span>{winner === "draw" ? "战斗结束" : "胜者"}</span>
             <strong>{winnerName}</strong>
-            <p>本场共进行 {rounds} 回合。冻结的队伍、站位和种子可完整复现这份团队战报。</p>
+            <p>本场共进行 {rounds} 回合。</p>
           </section>
         ) : null}
 
-        <section className="battle-log-panel" aria-label="团队逐回合战报">
+        <section className="battle-log-panel" aria-label="实时行动记录">
           <div className="battle-log-heading">
             <div>
-              <p className="library-kicker">团队逐回合战报</p>
+              <p className="library-kicker">实时战报</p>
               <h2>行动与目标结果</h2>
             </div>
             <span>{hasFinishedReplay ? "已完成" : "等待推进"}</span>
@@ -741,71 +727,14 @@ function TeamBattleObserverPlayer({
 export function BattleObserver() {
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const hydrate = useGameStore((state) => state.hydrate);
-  const battles = useGameStore((state) => state.battles);
-  const teamBattles = useGameStore((state) => state.teamBattles);
-  const preparedBattle = useGameStore((state) => state.preparedBattle);
   const preparedTeamBattle = useGameStore((state) => state.preparedTeamBattle);
-  const activeReplayBattleId = useGameStore((state) => state.activeReplayBattleId);
-  const activeReplayTeamBattleId = useGameStore(
-    (state) => state.activeReplayTeamBattleId,
-  );
-  const saveBattleRecord = useGameStore((state) => state.saveBattleRecord);
-  const saveTeamBattleRecord = useGameStore((state) => state.saveTeamBattleRecord);
-  const rematchBattle = useGameStore((state) => state.rematchBattle);
   const rematchTeamBattle = useGameStore((state) => state.rematchTeamBattle);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  const replayRecord = useMemo(
-    () => battles.find((battle) => battle.id === activeReplayBattleId),
-    [activeReplayBattleId, battles],
-  );
-  const teamReplayRecord = useMemo(
-    () => teamBattles.find((battle) => battle.id === activeReplayTeamBattleId),
-    [activeReplayTeamBattleId, teamBattles],
-  );
-  const observedBattle = useMemo<ObservedBattle | null>(() => {
-    if (replayRecord) {
-      return {
-        seed: replayRecord.seed,
-        leftCharacter: replayRecord.leftCharacter,
-        rightCharacter: replayRecord.rightCharacter,
-        winner: replayRecord.winner,
-        rounds: replayRecord.rounds,
-        events: replayRecord.events,
-      };
-    }
-
-    if (!preparedBattle) return null;
-
-    const result = simulateBattle({
-      seed: preparedBattle.seed,
-      leftCharacter: preparedBattle.leftCharacter,
-      rightCharacter: preparedBattle.rightCharacter,
-    });
-
-    return {
-      seed: preparedBattle.seed,
-      leftCharacter: preparedBattle.leftCharacter,
-      rightCharacter: preparedBattle.rightCharacter,
-      winner: result.winner ?? "draw",
-      rounds: result.round,
-      events: result.events,
-    };
-  }, [preparedBattle, replayRecord]);
   const observedTeamBattle = useMemo<ObservedTeamBattle | null>(() => {
-    if (teamReplayRecord) {
-      return {
-        seed: teamReplayRecord.seed,
-        leftTeam: teamReplayRecord.leftTeam,
-        rightTeam: teamReplayRecord.rightTeam,
-        winner: teamReplayRecord.winner,
-        rounds: teamReplayRecord.rounds,
-        events: teamReplayRecord.events,
-      };
-    }
     if (!preparedTeamBattle) return null;
 
     const result = simulateTeamBattle(preparedTeamBattle);
@@ -817,19 +746,7 @@ export function BattleObserver() {
       rounds: result.round,
       events: result.events,
     };
-  }, [preparedTeamBattle, teamReplayRecord]);
-  const newBattleRecord = useMemo(
-    () => observedBattle && !replayRecord
-      ? createBattleRecord(observedBattle)
-      : null,
-    [observedBattle, replayRecord],
-  );
-  const newTeamBattleRecord = useMemo(
-    () => observedTeamBattle && !teamReplayRecord
-      ? createTeamBattleRecord(observedTeamBattle)
-      : null,
-    [observedTeamBattle, teamReplayRecord],
-  );
+  }, [preparedTeamBattle]);
 
   if (!hasHydrated) {
     return (
@@ -844,9 +761,8 @@ export function BattleObserver() {
   if (observedTeamBattle) {
     return (
       <TeamBattleObserverPlayer
-        key={teamReplayRecord?.id ?? `${observedTeamBattle.seed}:${observedTeamBattle.leftTeam.members.map((member) => member.id).join(":")}:${observedTeamBattle.rightTeam.members.map((member) => member.id).join(":")}`}
+        key={`${observedTeamBattle.seed}:${observedTeamBattle.leftTeam.members.map((member) => member.id).join(":")}:${observedTeamBattle.rightTeam.members.map((member) => member.id).join(":")}`}
         battle={observedTeamBattle}
-        onBattleCompleted={newTeamBattleRecord ? () => saveTeamBattleRecord(newTeamBattleRecord) : undefined}
         onNewSeed={() =>
           rematchTeamBattle(
             `team-battle-${nanoid(12)}`,
@@ -858,31 +774,14 @@ export function BattleObserver() {
     );
   }
 
-  if (!observedBattle) {
-    return (
-      <main className="observer-shell">
-        <section className="observer-empty">
-          <p className="library-kicker">War AI · 观战</p>
-          <h1>还没有可观战的对局</h1>
-          <p>请先在对战准备页确认双方阵容，并设置随机种子。</p>
-          <Link href="/battle/prepare" className="empty-create-link">前往对战准备</Link>
-        </section>
-      </main>
-    );
-  }
-
   return (
-    <BattleObserverPlayer
-      key={replayRecord?.id ?? `${observedBattle.leftCharacter.id}:${observedBattle.rightCharacter.id}:${observedBattle.seed}`}
-      battle={observedBattle}
-      onBattleCompleted={newBattleRecord ? () => saveBattleRecord(newBattleRecord) : undefined}
-      onNewSeed={() =>
-        rematchBattle(
-          `battle-${nanoid(12)}`,
-          observedBattle.leftCharacter,
-          observedBattle.rightCharacter,
-        )
-      }
-    />
+    <main className="observer-shell">
+      <section className="observer-empty">
+        <p className="library-kicker">War AI · 观战</p>
+        <h1>还没有可观战的对局</h1>
+        <p>请先在角色库布置双方阵容。</p>
+        <Link href="/" className="empty-create-link">返回角色库</Link>
+      </section>
+    </main>
   );
 }

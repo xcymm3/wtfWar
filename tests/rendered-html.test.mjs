@@ -98,14 +98,6 @@ test("server-renders the battle observer loading boundary", async () => {
   assert.match(html, /正在加载战斗配置/);
 });
 
-test("server-renders the battle history loading boundary", async () => {
-  const response = await render("/history");
-  assert.equal(response.status, 200);
-
-  const html = await response.text();
-  assert.match(html, /正在读取战斗历史/);
-});
-
 test("generates a validated local character through the production API route", async () => {
   const response = await render("/api/characters/generate", {
     method: "POST",
@@ -125,7 +117,7 @@ test("generates a validated local character through the production API route", a
 });
 
 test("keeps the character library wired to the local game store", async () => {
-  const [page, library, presets, creator, generator, generationRoute, charactersRoute, repository, preparation, observer, history, transfer, storage, navigation, layout, packageJson, styles] = await Promise.all([
+  const [page, library, presets, creator, generator, generationRoute, charactersRoute, repository, preparation, observer, storage, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../features/character-library/CharacterLibrary.tsx", import.meta.url),
@@ -160,16 +152,7 @@ test("keeps the character library wired to the local game store", async () => {
       new URL("../features/battle-observer/BattleObserver.tsx", import.meta.url),
       "utf8",
     ),
-    readFile(
-      new URL("../features/battle-history/BattleHistory.tsx", import.meta.url),
-      "utf8",
-    ),
-    readFile(
-      new URL("../lib/storage/characterLibraryTransfer.ts", import.meta.url),
-      "utf8",
-    ),
     readFile(new URL("../lib/storage/gameStorage.ts", import.meta.url), "utf8"),
-    readFile(new URL("../features/navigation/BottomNavigation.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -229,33 +212,22 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /simulateBattle/);
   assert.match(observer, /simulateTeamBattle/);
   assert.match(observer, /getEffectiveCombatStats/);
-  assert.match(observer, /逐回合战报/);
   assert.match(observer, /新种子再战/);
-  assert.match(observer, /saveBattleRecord/);
-  assert.match(observer, /saveTeamBattleRecord/);
-  assert.match(observer, /团队逐回合战报/);
+  assert.match(observer, /实时战报/);
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
   assert.match(observer, /displayMembers = isLeft \? \[\.\.\.formation\.members\]\.reverse\(\)/);
   assert.match(observer, /暂停播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
-  assert.match(history, /同种子复赛/);
-  assert.match(history, /团队回放/);
-  assert.match(history, /teamBattles/);
-  assert.match(history, /导出角色库/);
-  assert.match(history, /导入角色库/);
-  assert.match(transfer, /war-ai-game.character-library/);
   assert.match(storage, /migrateLegacyGameStore/);
-  assert.match(navigation, /角色库/);
-  assert.doesNotMatch(navigation, /对战准备/);
-  assert.match(navigation, /战斗历史/);
+  assert.doesNotMatch(storage, /teamBattles:/);
   assert.match(layout, /title:\s*"War AI"/);
-  assert.match(layout, /BottomNavigation/);
+  assert.doesNotMatch(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
-  assert.match(styles, /grid-template-columns: repeat\(10, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 52px minmax\(0, 1fr\)/);
   assert.match(styles, /\.team-observer-frame/);
-  assert.match(styles, /\.bottom-navigation/);
+  assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
   assert.match(styles, /\.generated-profile/);
   assert.match(styles, /\.profession-icon/);

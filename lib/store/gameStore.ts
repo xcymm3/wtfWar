@@ -11,9 +11,7 @@ import {
 } from "@/lib/storage/gameStorage";
 import type {
   BattlePreparation,
-  BattleRecord,
   BattleSide,
-  TeamBattleRecord,
   TeamBattlePreparation,
   TeamFormation,
 } from "@/types/battle";
@@ -63,13 +61,6 @@ export type GameStoreState = GameStore & {
   ) => void;
   clearPreparedBattle: () => void;
   clearPreparedTeamBattle: () => void;
-  saveBattleRecord: (record: BattleRecord) => void;
-  saveTeamBattleRecord: (record: TeamBattleRecord) => void;
-  openBattleReplay: (recordId: string) => void;
-  openTeamBattleReplay: (recordId: string) => void;
-  closeBattleReplay: () => void;
-  startHistoricalRematch: (recordId: string) => void;
-  startHistoricalTeamRematch: (recordId: string) => void;
   importCharacters: (characters: Character[]) => void;
   addPresetCharacters: () => number;
   setSoundEnabled: (soundEnabled: boolean) => void;
@@ -91,8 +82,6 @@ function createPersistedStore(state: GameStoreState): GameStore {
   return {
     version: state.version,
     characters: state.characters,
-    battles: state.battles,
-    teamBattles: state.teamBattles,
     settings: state.settings,
   };
 }
@@ -182,25 +171,7 @@ function createTeamBattlePreparation(
   };
 }
 
-function getBattleRecord(
-  battles: BattleRecord[],
-  recordId: string,
-): BattleRecord {
-  const record = battles.find((battle) => battle.id === recordId);
-  if (!record) throw new Error(`Battle record ${recordId} does not exist.`);
-  return record;
-}
-
-function getTeamBattleRecord(
-  battles: TeamBattleRecord[],
-  recordId: string,
-): TeamBattleRecord {
-  const record = battles.find((battle) => battle.id === recordId);
-  if (!record) throw new Error(`Team battle record ${recordId} does not exist.`);
-  return record;
-}
-
-function createHistoricalTeamPreparation(
+function createTeamRematchPreparation(
   seed: string,
   leftTeam: TeamFormation,
   rightTeam: TeamFormation,
@@ -522,7 +493,7 @@ export function createGameStore() {
     rematchTeamBattle: (seed, leftTeam, rightTeam) => {
       set((state) => ({
         ...state,
-        preparedTeamBattle: createHistoricalTeamPreparation(seed, leftTeam, rightTeam),
+        preparedTeamBattle: createTeamRematchPreparation(seed, leftTeam, rightTeam),
         preparedBattle: null,
         activeReplayBattleId: null,
         activeReplayTeamBattleId: null,
@@ -535,104 +506,6 @@ export function createGameStore() {
 
     clearPreparedTeamBattle: () => {
       set((state) => ({ ...state, preparedTeamBattle: null }));
-    },
-
-    saveBattleRecord: (record) => {
-      set((state) => {
-        const nextState = {
-          ...state,
-          battles: [
-            ...state.battles.filter((battle) => battle.id !== record.id),
-            record,
-          ],
-        };
-        saveState(nextState);
-        return nextState;
-      });
-    },
-
-    saveTeamBattleRecord: (record) => {
-      set((state) => {
-        const nextState = {
-          ...state,
-          teamBattles: [
-            ...state.teamBattles.filter((battle) => battle.id !== record.id),
-            record,
-          ],
-        };
-        saveState(nextState);
-        return nextState;
-      });
-    },
-
-    openBattleReplay: (recordId) => {
-      set((state) => {
-        getBattleRecord(state.battles, recordId);
-        return {
-          ...state,
-          activeReplayBattleId: recordId,
-          activeReplayTeamBattleId: null,
-          preparedBattle: null,
-          preparedTeamBattle: null,
-        };
-      });
-    },
-
-    openTeamBattleReplay: (recordId) => {
-      set((state) => {
-        getTeamBattleRecord(state.teamBattles, recordId);
-        return {
-          ...state,
-          activeReplayTeamBattleId: recordId,
-          activeReplayBattleId: null,
-          preparedBattle: null,
-          preparedTeamBattle: null,
-        };
-      });
-    },
-
-    closeBattleReplay: () => {
-      set((state) => ({
-        ...state,
-        activeReplayBattleId: null,
-        activeReplayTeamBattleId: null,
-      }));
-    },
-
-    startHistoricalRematch: (recordId) => {
-      set((state) => {
-        const record = getBattleRecord(state.battles, recordId);
-
-        return {
-          ...state,
-          preparedBattle: createBattlePreparation(
-            record.seed,
-            record.leftCharacter,
-            record.rightCharacter,
-          ),
-          preparedTeamBattle: null,
-          activeReplayBattleId: null,
-          activeReplayTeamBattleId: null,
-        };
-      });
-    },
-
-    startHistoricalTeamRematch: (recordId) => {
-      set((state) => {
-        const record = getTeamBattleRecord(state.teamBattles, recordId);
-
-        return {
-          ...state,
-          preparedTeamBattle: createHistoricalTeamPreparation(
-            record.seed,
-            record.leftTeam,
-            record.rightTeam,
-          ),
-          preparedBattle: null,
-          activeReplayBattleId: null,
-          activeReplayTeamBattleId: null,
-        };
-      });
     },
 
     importCharacters: (characters) => {
