@@ -77,6 +77,7 @@ export function CharacterCreator() {
   const [maxHealth, setMaxHealth] = useState<number | null>(null);
   const [generatedSkills, setGeneratedSkills] = useState<[Skill, Skill] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [generationNotice, setGenerationNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -161,7 +162,7 @@ export function CharacterCreator() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setError(null);
 
@@ -194,11 +195,28 @@ export function CharacterCreator() {
       return;
     }
 
+    setIsSaving(true);
     try {
-      addCharacter(validation.data);
+      const response = await fetch("/api/characters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validation.data),
+      });
+      const payload = await response.json() as { character?: unknown; error?: unknown };
+      if (!response.ok) {
+        throw new Error(
+          typeof payload.error === "string" ? payload.error : "角色保存失败。",
+        );
+      }
+
+      addCharacter(characterSchema.parse(payload.character));
       router.push("/");
-    } catch {
-      setError("角色保存失败，请检查信息后重试。");
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : "角色保存失败，请稍后重试。",
+      );
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -275,7 +293,7 @@ export function CharacterCreator() {
 
             <div className="ai-generator-actions creator-generation-action">
               <p>职业、属性和技能将由 AI 根据角色名称与描述生成，生成后不可直接修改。</p>
-              <button type="button" onClick={handleGenerate} disabled={isGenerating}>
+              <button type="button" onClick={handleGenerate} disabled={isGenerating || isSaving}>
                 {isGenerating ? "正在生成…" : "生成角色属性"}
               </button>
             </div>
@@ -312,7 +330,9 @@ export function CharacterCreator() {
 
           <footer className="creator-actions">
             <p>保存后可在角色库查看，并加入任意一方阵容。</p>
-            <button type="submit" disabled={!generatedSkills || !profession || isGenerating}>保存角色卡</button>
+            <button type="submit" disabled={!generatedSkills || !profession || isGenerating || isSaving}>
+              {isSaving ? "正在保存到角色库…" : "保存角色卡"}
+            </button>
           </footer>
         </form>
       </div>

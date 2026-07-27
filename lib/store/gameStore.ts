@@ -243,7 +243,6 @@ export function createGameStore() {
         if (state.characters.some((existing) => existing.id === validCharacter.id)) {
           throw new Error(`Character ${validCharacter.id} already exists in the library.`);
         }
-
         const nextState = {
           ...state,
           characters: [...state.characters, validCharacter],

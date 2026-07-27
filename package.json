@@ -9,13 +9,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:unit": "tsx --test tests/battleEngine.test.ts tests/teamBattleEngine.test.ts tests/balanceSimulation.test.ts tests/gameStore.test.ts tests/characterSchema.test.ts tests/characterLibraryTransfer.test.ts tests/promptCharacterGeneration.test.ts tests/presetCharacters.test.ts",
+    "test:unit": "tsx --test tests/battleEngine.test.ts tests/teamBattleEngine.test.ts tests/balanceSimulation.test.ts tests/gameStore.test.ts tests/characterSchema.test.ts tests/characterLibraryTransfer.test.ts tests/promptCharacterGeneration.test.ts tests/presetCharacters.test.ts tests/characterName.test.ts",
     "simulate:balance": "tsx scripts/simulateBalance.ts",
     "test": "pnpm run test:unit && pnpm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "drizzle-orm": "^0.45.2",
     "nanoid": "^6.0.0",
     "next": "16.2.6",
     "react": "19.2.6",
@@ -28,6 +31,8 @@
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.10",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "4.2.1",

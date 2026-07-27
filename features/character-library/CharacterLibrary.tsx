@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
+import { characterSchema } from "@/lib/schemas/character";
 import { useGameStore } from "@/lib/store/gameStore";
 import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
 import {
@@ -65,9 +66,11 @@ export function CharacterLibrary() {
   const hydrate = useGameStore((state) => state.hydrate);
   const removeCharacter = useGameStore((state) => state.removeCharacter);
   const addPresetCharacters = useGameStore((state) => state.addPresetCharacters);
+  const importCharacters = useGameStore((state) => state.importCharacters);
   const hasImportedPresets = useRef(false);
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>("all");
+  const [remoteLibraryNotice, setRemoteLibraryNotice] = useState<string | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -79,6 +82,41 @@ export function CharacterLibrary() {
     hasImportedPresets.current = true;
     addPresetCharacters();
   }, [addPresetCharacters, hasHydrated]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/characters");
+        const payload = await response.json() as { characters?: unknown; error?: unknown };
+        if (!response.ok) {
+          throw new Error(
+            typeof payload.error === "string" ? payload.error : "远端角色库暂时不可用。",
+          );
+        }
+
+        const remoteCharacters = Array.isArray(payload.characters)
+          ? payload.characters.map((character) => characterSchema.parse(character))
+          : [];
+        if (!cancelled) {
+          importCharacters(remoteCharacters);
+          setRemoteLibraryNotice(null);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRemoteLibraryNotice(
+            error instanceof Error ? error.message : "远端角色库暂时不可用。",
+          );
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasHydrated, importCharacters]);
 
   const filteredCharacters = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("zh-CN");
@@ -128,6 +166,7 @@ export function CharacterLibrary() {
         </header>
 
         <p className="preset-notice" role="status">预设角色已自动导入；可在这里浏览属性与技能。</p>
+        {remoteLibraryNotice ? <p className="form-error" role="alert">{remoteLibraryNotice}</p> : null}
 
         <section className="library-controls" aria-label="角色库筛选">
           <label className="search-field">

@@ -30,6 +30,16 @@ OPENAI_MODEL=gpt-4.1-mini
 
 接口使用兼容 Chat Completions 的配置。未配置时，自动创角仍可用，但页面会明确提示使用的是本地规则生成。
 
+## Neon 角色库
+
+角色库会把 10 名预设英雄写入 Neon，并将新创建的角色保存到远端数据库。复制 Neon 控制台中的连接串，填入根目录 `.env`：
+
+```text
+DATABASE_URL=postgresql://...
+```
+
+随后执行一次 `pnpm db:push` 创建数据表。部署到 Vercel 时，也需要在项目环境变量中配置同一个 `DATABASE_URL`。
+
 ## 当前工程结构
 
 - `app/`：页面与全局样式

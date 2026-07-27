@@ -125,7 +125,7 @@ test("generates a validated local character through the production API route", a
 });
 
 test("keeps the character library wired to the local game store", async () => {
-  const [page, library, presets, creator, generator, generationRoute, preparation, observer, history, transfer, storage, navigation, layout, packageJson, styles] = await Promise.all([
+  const [page, library, presets, creator, generator, generationRoute, charactersRoute, repository, preparation, observer, history, transfer, storage, navigation, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../features/character-library/CharacterLibrary.tsx", import.meta.url),
@@ -145,6 +145,11 @@ test("keeps the character library wired to the local game store", async () => {
     ),
     readFile(
       new URL("../app/api/characters/generate/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/api/characters/route.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../lib/characters/characterRepository.ts", import.meta.url),
       "utf8",
     ),
     readFile(
@@ -189,6 +194,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /GeneratedSkillCard/);
   assert.match(creator, /disabled=\{!generatedSkills/);
   assert.match(creator, /api\/characters\/generate/);
+  assert.match(creator, /fetch\("\/api\/characters"/);
+  assert.match(creator, /正在保存到角色库/);
   assert.match(creator, /战力阶位/);
   assert.match(creator, /综合名称与描述判定职业/);
   assert.match(creator, /角色名称与描述/);
@@ -206,6 +213,10 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(generator, /realm/);
   assert.match(generator, /charge_strike_passive/);
   assert.match(generationRoute, /OPENAI_API_KEY/);
+  assert.match(charactersRoute, /createRemoteCharacter/);
+  assert.match(charactersRoute, /DuplicateCharacterNameError/);
+  assert.match(repository, /ensurePresetCharacters/);
+  assert.match(repository, /characters\.normalizedName/);
   assert.match(preparation, /双方人数可不同/);
   assert.match(preparation, /hasCompleteTeams/);
   assert.doesNotMatch(preparation, /确认单挑配置|classic-duel-panel|prepareBattle/);
