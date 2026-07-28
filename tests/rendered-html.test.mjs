@@ -219,6 +219,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /自动战斗/);
   assert.match(observer, /暂停战斗/);
   assert.match(observer, /重新战斗/);
+  assert.match(observer, /■/);
+  assert.doesNotMatch(observer, /Ⅱ/);
   assert.match(observer, /const \[isPlaying, setIsPlaying\] = useState\(true\)/);
   assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
@@ -239,7 +241,9 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(library, /名已保存角色/);
   assert.match(library, /character-more-button/);
   assert.match(library, /character-card-team-button/);
-  assert.doesNotMatch(library, /加入红方|加入蓝方/);
+  assert.match(library, /leftTeamIsFull|rightTeamIsFull/);
+  assert.doesNotMatch(library, />\s*加入红方\s*</);
+  assert.doesNotMatch(library, />\s*加入蓝方\s*</);
   assert.match(library, /character-detail-dialog/);
   assert.match(library, /setSortKey/);
   assert.match(library, /setSortDirection/);

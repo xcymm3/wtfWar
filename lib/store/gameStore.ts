@@ -76,7 +76,7 @@ const EMPTY_TEAM_SELECTION: TeamCharacterIds = {
   right: [],
 };
 
-const MAX_TEAM_SIZE = 5;
+export const MAX_TEAM_SIZE = 5;
 
 function createPersistedStore(state: GameStoreState): GameStore {
   return {
@@ -354,7 +354,7 @@ export function createGameStore() {
           throw new Error("A character cannot appear on both teams.");
         }
         if (currentTeam.length >= MAX_TEAM_SIZE) {
-          throw new Error("Each team can contain at most 5 characters.");
+          throw new Error("每支队伍最多容纳 5 名角色。");
         }
 
         return {
@@ -426,7 +426,7 @@ export function createGameStore() {
           nextTeamCharacterIds.left.length > MAX_TEAM_SIZE
           || nextTeamCharacterIds.right.length > MAX_TEAM_SIZE
         ) {
-          throw new Error("Each team can contain at most 5 characters.");
+          throw new Error("每支队伍最多容纳 5 名角色。");
         }
         if (new Set(allCharacterIds).size !== allCharacterIds.length) {
           throw new Error("A character cannot appear on both teams.");

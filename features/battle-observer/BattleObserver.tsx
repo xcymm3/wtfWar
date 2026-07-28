@@ -392,7 +392,7 @@ function ObserverControls({
         aria-label="暂停战斗"
         title="暂停战斗"
       >
-        <span aria-hidden="true">Ⅱ</span>
+        <span aria-hidden="true">■</span>
       </button>
       <button
         type="button"

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { characterSchema } from "@/lib/schemas/character";
-import { useGameStore } from "@/lib/store/gameStore";
+import { MAX_TEAM_SIZE, useGameStore } from "@/lib/store/gameStore";
 import {
   beginTeamCharacterDrag,
   TeamBuilder,
@@ -268,6 +268,9 @@ export function CharacterLibrary() {
             {filteredCharacters.map((character) => {
               const effectiveStats = getEffectiveCombatStats(character);
               const realm = character.realm ?? "mortal";
+              const isAssigned = teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id);
+              const leftTeamIsFull = teamCharacterIds.left.length >= MAX_TEAM_SIZE;
+              const rightTeamIsFull = teamCharacterIds.right.length >= MAX_TEAM_SIZE;
 
               return (
                 <article
@@ -289,7 +292,8 @@ export function CharacterLibrary() {
                       type="button"
                       className="team-add-button team-add-left character-card-team-button"
                       onClick={() => handleAddToTeam("left", character.id)}
-                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                      disabled={isAssigned || leftTeamIsFull}
+                      title={leftTeamIsFull ? "红方已满" : "加入红方"}
                     >
                       红方
                     </button>
@@ -297,7 +301,8 @@ export function CharacterLibrary() {
                       type="button"
                       className="team-add-button team-add-right character-card-team-button"
                       onClick={() => handleAddToTeam("right", character.id)}
-                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                      disabled={isAssigned || rightTeamIsFull}
+                      title={rightTeamIsFull ? "蓝方已满" : "加入蓝方"}
                     >
                       蓝方
                     </button>
