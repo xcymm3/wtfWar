@@ -222,6 +222,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /■/);
   assert.doesNotMatch(observer, /Ⅱ/);
   assert.match(observer, /const \[isPlaying, setIsPlaying\] = useState\(true\)/);
+  assert.match(observer, /PLAYBACK_SPEEDS = \[0\.5, 1, 2, 4\]/);
+  assert.match(observer, /BASE_ACTION_INTERVAL_MS \/ playbackSpeed/);
   assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
@@ -258,6 +260,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.search-field[\s\S]*flex: 0 0 auto/);
   assert.match(styles, /\.team-observer-frame/);
   assert.match(styles, /\.observer-icon-button/);
+  assert.match(styles, /\.observer-speed-control/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
   assert.match(styles, /\.generated-profile/);

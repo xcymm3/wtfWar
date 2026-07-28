@@ -43,6 +43,10 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
   buff: "增益",
 };
 
+const PLAYBACK_SPEEDS = [0.5, 1, 2, 4] as const;
+const BASE_ACTION_INTERVAL_MS = 600;
+type PlaybackSpeed = typeof PLAYBACK_SPEEDS[number];
+
 type VisualCombatant = {
   health: number;
   shield: number;
@@ -365,12 +369,16 @@ function ObserverControls({
   onPlay,
   onPause,
   onRestart,
+  playbackSpeed,
+  onPlaybackSpeedChange,
 }: {
   isPlaying: boolean;
   hasFinishedReplay: boolean;
   onPlay: () => void;
   onPause: () => void;
   onRestart: () => void;
+  playbackSpeed: PlaybackSpeed;
+  onPlaybackSpeedChange: (speed: PlaybackSpeed) => void;
 }) {
   return (
     <section className="observer-controls" aria-label="观战控制">
@@ -403,6 +411,20 @@ function ObserverControls({
       >
         <span aria-hidden="true">↻</span>
       </button>
+      <div className="observer-speed-control" aria-label="战斗倍速">
+        <span>倍速</span>
+        {PLAYBACK_SPEEDS.map((speed) => (
+          <button
+            key={speed}
+            type="button"
+            className={`observer-speed-button ${playbackSpeed === speed ? "is-active" : ""}`}
+            onClick={() => onPlaybackSpeedChange(speed)}
+            aria-pressed={playbackSpeed === speed}
+          >
+            {speed}×
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
@@ -417,6 +439,7 @@ function BattleObserverPlayer({
   const { events, leftCharacter, rightCharacter, rounds, seed, winner } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1);
   const [hasRecorded, setHasRecorded] = useState(false);
   const visualState = useMemo(() => {
     const initialState: VisualBattleState = {
@@ -448,10 +471,10 @@ function BattleObserverPlayer({
         setIsPlaying(false);
         finishBattleIfNeeded();
       }
-    }, 600);
+    }, BASE_ACTION_INTERVAL_MS / playbackSpeed);
 
     return () => window.clearTimeout(timer);
-  }, [events.length, finishBattleIfNeeded, hasFinishedReplay, isPlaying, visibleEventCount]);
+  }, [events.length, finishBattleIfNeeded, hasFinishedReplay, isPlaying, playbackSpeed, visibleEventCount]);
 
   function playFromCurrentPosition(): void {
     if (hasFinishedReplay) setVisibleEventCount(0);
@@ -503,6 +526,8 @@ function BattleObserverPlayer({
           onPlay={playFromCurrentPosition}
           onPause={pausePlayback}
           onRestart={restartReplay}
+          playbackSpeed={playbackSpeed}
+          onPlaybackSpeedChange={setPlaybackSpeed}
         />
 
         {hasFinishedReplay ? (
@@ -564,6 +589,7 @@ function TeamBattleObserverPlayer({
   const { events, leftTeam, rightTeam, rounds, seed, winner } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1);
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
@@ -588,10 +614,10 @@ function TeamBattleObserverPlayer({
       if (nextCount >= events.length) {
         setIsPlaying(false);
       }
-    }, 600);
+    }, BASE_ACTION_INTERVAL_MS / playbackSpeed);
 
     return () => window.clearTimeout(timer);
-  }, [events.length, hasFinishedReplay, isPlaying, visibleEventCount]);
+  }, [events.length, hasFinishedReplay, isPlaying, playbackSpeed, visibleEventCount]);
 
   function playFromCurrentPosition(): void {
     if (hasFinishedReplay) setVisibleEventCount(0);
@@ -642,6 +668,8 @@ function TeamBattleObserverPlayer({
           onPlay={playFromCurrentPosition}
           onPause={pausePlayback}
           onRestart={restartReplay}
+          playbackSpeed={playbackSpeed}
+          onPlaybackSpeedChange={setPlaybackSpeed}
         />
 
         {hasFinishedReplay ? (
