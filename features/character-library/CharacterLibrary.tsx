@@ -33,6 +33,8 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
 };
 
 type ProfessionFilter = Profession | "all";
+type SortKey = "profession" | "updatedAt";
+type SortDirection = "asc" | "desc";
 
 function getSkillEffect(skill: Skill): string {
   switch (skill.type) {
@@ -76,6 +78,8 @@ export function CharacterLibrary() {
   const hasImportedPresets = useRef(false);
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [remoteLibraryNotice, setRemoteLibraryNotice] = useState<string | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
@@ -137,8 +141,16 @@ export function CharacterLibrary() {
 
         return matchesProfession && matchesQuery;
       })
-      .sort((first, second) => second.updatedAt.localeCompare(first.updatedAt));
-  }, [characters, professionFilter, query]);
+      .sort((first, second) => {
+        const direction = sortDirection === "asc" ? 1 : -1;
+        const primary = sortKey === "profession"
+          ? PROFESSIONS.indexOf(first.profession) - PROFESSIONS.indexOf(second.profession)
+          : first.updatedAt.localeCompare(second.updatedAt);
+
+        if (primary !== 0) return primary * direction;
+        return first.name.localeCompare(second.name, "zh-CN") * direction;
+      });
+  }, [characters, professionFilter, query, sortDirection, sortKey]);
 
   function handleRemove(character: Character): void {
     if (window.confirm(`确定从角色库中删除“${character.name}”吗？`)) {
@@ -215,6 +227,43 @@ export function CharacterLibrary() {
                   {PROFESSION_LABELS[profession]}
                 </button>
               ))}
+            </div>
+          </div>
+          <div className="library-sort-control">
+            <span>排序</span>
+            <div className="library-sort-buttons" aria-label="角色排序">
+              <button
+                type="button"
+                className={sortKey === "profession" ? "is-active" : ""}
+                onClick={() => setSortKey("profession")}
+                aria-pressed={sortKey === "profession"}
+              >
+                职业
+              </button>
+              <button
+                type="button"
+                className={sortKey === "updatedAt" ? "is-active" : ""}
+                onClick={() => setSortKey("updatedAt")}
+                aria-pressed={sortKey === "updatedAt"}
+              >
+                时间
+              </button>
+              <button
+                type="button"
+                className={sortDirection === "asc" ? "is-active" : ""}
+                onClick={() => setSortDirection("asc")}
+                aria-pressed={sortDirection === "asc"}
+              >
+                正序
+              </button>
+              <button
+                type="button"
+                className={sortDirection === "desc" ? "is-active" : ""}
+                onClick={() => setSortDirection("desc")}
+                aria-pressed={sortDirection === "desc"}
+              >
+                倒序
+              </button>
             </div>
           </div>
         </section>

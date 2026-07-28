@@ -310,6 +310,45 @@ body {
   white-space: nowrap;
 }
 
+.library-sort-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.library-sort-control > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.library-sort-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.library-sort-buttons button {
+  min-height: 36px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(29, 27, 23, 0.72);
+  color: var(--muted);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.83rem;
+}
+
+.library-sort-buttons button:hover,
+.library-sort-buttons button.is-active {
+  border-color: var(--accent);
+  background: rgba(243, 175, 50, 0.12);
+  color: var(--foreground);
+}
+
 .profession-filters button,
 .character-actions button {
   cursor: pointer;
@@ -3015,6 +3054,15 @@ body {
     justify-content: start;
   }
 
+  .search-field {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+
+  .library-sort-control {
+    justify-content: start;
+  }
+
   .battle-profession-filter {
     grid-template-columns: 1fr;
     align-items: start;
@@ -3098,6 +3146,11 @@ body {
   }
 
   .library-profession-filter {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .library-sort-control {
     grid-template-columns: 1fr;
     gap: 8px;
   }

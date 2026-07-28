@@ -236,8 +236,12 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /character-card-summary/);
   assert.match(library, /character-more-button/);
   assert.match(library, /character-detail-dialog/);
+  assert.match(library, /setSortKey/);
+  assert.match(library, /setSortDirection/);
+  assert.match(library, /职业[\s\S]*时间[\s\S]*正序[\s\S]*倒序/);
   assert.match(styles, /\.character-card[\s\S]*min-height: 66px/);
   assert.match(styles, /\.character-detail-dialog/);
+  assert.match(styles, /\.search-field[\s\S]*flex: 0 0 auto/);
   assert.match(styles, /\.team-observer-frame/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
