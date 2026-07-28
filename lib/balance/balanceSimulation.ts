@@ -142,7 +142,7 @@ export const PROFESSION_BALANCE_PROFILES: readonly ProfessionProfile[] = [
   },
   {
     profession: "assassin",
-    character: createProfileCharacter("assassin", 25, 100, [
+    character: createProfileCharacter("assassin", 20, 125, [
       createSkill("assassin-strike", "致命突刺", "damage", {
         damageMultiplier: 1.8,
         cooldown: 3,
@@ -155,7 +155,7 @@ export const PROFESSION_BALANCE_PROFILES: readonly ProfessionProfile[] = [
   },
   {
     profession: "ranger",
-    character: createProfileCharacter("ranger", 20, 125, [
+    character: createProfileCharacter("ranger", 25, 100, [
       createSkill("ranger-arrow", "穿云箭", "damage", {
         damageMultiplier: 1.35,
         cooldown: 2,

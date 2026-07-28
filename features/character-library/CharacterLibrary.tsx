@@ -33,7 +33,7 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
 };
 
 type ProfessionFilter = Profession | "all";
-type SortKey = "profession" | "updatedAt";
+type SortKey = "profession" | "updatedAt" | "name";
 type SortDirection = "asc" | "desc";
 
 function getSkillEffect(skill: Skill): string {
@@ -145,7 +145,9 @@ export function CharacterLibrary() {
         const direction = sortDirection === "asc" ? 1 : -1;
         const primary = sortKey === "profession"
           ? PROFESSIONS.indexOf(first.profession) - PROFESSIONS.indexOf(second.profession)
-          : first.updatedAt.localeCompare(second.updatedAt);
+          : sortKey === "updatedAt"
+            ? first.updatedAt.localeCompare(second.updatedAt)
+            : first.name.localeCompare(second.name, "zh-CN");
 
         if (primary !== 0) return primary * direction;
         return first.name.localeCompare(second.name, "zh-CN") * direction;
@@ -222,39 +224,16 @@ export function CharacterLibrary() {
           </div>
           <div className="library-sort-control">
             <span>排序</span>
-            <div className="library-sort-buttons" aria-label="角色排序">
-              <button
-                type="button"
-                className={sortKey === "profession" ? "is-active" : ""}
-                onClick={() => setSortKey("profession")}
-                aria-pressed={sortKey === "profession"}
-              >
-                职业
-              </button>
-              <button
-                type="button"
-                className={sortKey === "updatedAt" ? "is-active" : ""}
-                onClick={() => setSortKey("updatedAt")}
-                aria-pressed={sortKey === "updatedAt"}
-              >
-                时间
-              </button>
-              <button
-                type="button"
-                className={sortDirection === "asc" ? "is-active" : ""}
-                onClick={() => setSortDirection("asc")}
-                aria-pressed={sortDirection === "asc"}
-              >
-                正序
-              </button>
-              <button
-                type="button"
-                className={sortDirection === "desc" ? "is-active" : ""}
-                onClick={() => setSortDirection("desc")}
-                aria-pressed={sortDirection === "desc"}
-              >
-                倒序
-              </button>
+            <div className="library-sort-selects" aria-label="角色排序">
+              <select aria-label="排序方式" value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)}>
+                <option value="updatedAt">创建时间</option>
+                <option value="profession">职业</option>
+                <option value="name">名称字母</option>
+              </select>
+              <select aria-label="排序方向" value={sortDirection} onChange={(event) => setSortDirection(event.target.value as SortDirection)}>
+                <option value="desc">倒序</option>
+                <option value="asc">正序</option>
+              </select>
             </div>
           </div>
         </section>

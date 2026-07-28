@@ -25,12 +25,12 @@ export const PROFESSION_STAT_RANGES: Record<Profession, ProfessionStatRange> = {
     maxHealth: { min: 95, max: 130 },
   },
   assassin: {
-    attack: { min: 20, max: 30 },
-    maxHealth: { min: 85, max: 120 },
-  },
-  ranger: {
     attack: { min: 16, max: 25 },
     maxHealth: { min: 105, max: 145 },
+  },
+  ranger: {
+    attack: { min: 20, max: 30 },
+    maxHealth: { min: 85, max: 120 },
   },
 };
 

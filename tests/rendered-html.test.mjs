@@ -256,7 +256,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /character-detail-dialog/);
   assert.match(library, /setSortKey/);
   assert.match(library, /setSortDirection/);
-  assert.match(library, /职业[\s\S]*时间[\s\S]*正序[\s\S]*倒序/);
+  assert.match(library, /创建时间[\s\S]*职业[\s\S]*名称字母[\s\S]*倒序[\s\S]*正序/);
+  assert.match(library, /library-sort-selects/);
   assert.match(styles, /\.character-card[\s\S]*min-height: 66px/);
   assert.match(styles, /\.character-detail-dialog/);
   assert.match(styles, /\.library-help-dialog/);

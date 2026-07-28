@@ -354,29 +354,28 @@ body {
   white-space: nowrap;
 }
 
-.library-sort-buttons {
+.library-sort-selects {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
 }
 
-.library-sort-buttons button {
+.library-sort-selects select {
   min-height: 36px;
-  cursor: pointer;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 9px;
   background: rgba(29, 27, 23, 0.72);
-  color: var(--muted);
-  padding: 0 12px;
+  color: var(--foreground);
+  padding: 0 10px;
   font: inherit;
   font-size: 0.83rem;
+  cursor: pointer;
 }
 
-.library-sort-buttons button:hover,
-.library-sort-buttons button.is-active {
+.library-sort-selects select:hover,
+.library-sort-selects select:focus-visible {
   border-color: var(--accent);
-  background: rgba(243, 175, 50, 0.12);
-  color: var(--foreground);
+  outline: none;
 }
 
 .profession-filters button,
