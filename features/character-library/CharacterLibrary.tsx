@@ -180,10 +180,7 @@ export function CharacterLibrary() {
     <main className="library-shell">
       <div className="library-frame">
         <header className="library-header">
-          <div className="library-title-row">
-            <h1>阵容选择</h1>
-            <button type="button" className="library-help-button" onClick={() => setIsHelpOpen(true)}>帮助</button>
-          </div>
+          <p className="library-kicker">阵容选择</p>
         </header>
 
         {remoteLibraryNotice ? <p className="form-error" role="alert">{remoteLibraryNotice}</p> : null}
@@ -193,7 +190,10 @@ export function CharacterLibrary() {
         <section className="library-controls" aria-label="角色库筛选">
           <div className="library-toolbar">
             <span className="library-count" aria-label={`当前角色数：${characters.length}`}>当前角色数：{characters.length}</span>
-            <Link href="/create" className="create-character-link">创建角色</Link>
+            <div className="library-toolbar-actions">
+              <button type="button" className="library-help-button" onClick={() => setIsHelpOpen(true)}>玩法介绍</button>
+              <Link href="/create" className="create-character-link">创建角色</Link>
+            </div>
           </div>
           <label className="search-field">
             <span className="sr-only">搜索角色</span>

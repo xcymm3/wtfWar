@@ -84,6 +84,12 @@ body {
   gap: 14px;
 }
 
+.library-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .library-help-button {
   min-height: 34px;
   cursor: pointer;

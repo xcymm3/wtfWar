@@ -501,7 +501,7 @@ function BattleObserverPlayer({
       <div className="observer-frame">
         <header className="observer-header">
           <div>
-            <p className="library-kicker">War AI · 单挑观战</p>
+            <p className="library-kicker">战斗界面</p>
             <h1>这一回合，谁能站到最后？</h1>
             <p>种子 <code>{seed}</code> · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
@@ -644,7 +644,7 @@ function TeamBattleObserverPlayer({
       <div className="observer-frame team-observer-frame">
         <header className="observer-header">
           <div>
-            <p className="library-kicker">War AI · 团队观战</p>
+            <p className="library-kicker">战斗界面</p>
             <p className="team-observer-meta">种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">

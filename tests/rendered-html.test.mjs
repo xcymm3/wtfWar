@@ -219,6 +219,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /自动战斗/);
   assert.match(observer, /暂停战斗/);
   assert.match(observer, /重新战斗/);
+  assert.match(observer, /战斗界面/);
+  assert.doesNotMatch(observer, /War AI · 团队观战/);
   assert.match(observer, /■/);
   assert.doesNotMatch(observer, /Ⅱ/);
   assert.match(observer, /const \[isPlaying, setIsPlaying\] = useState\(true\)/);
@@ -240,6 +242,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.team-battle-log-list li[\s\S]*height: 64px/);
   assert.match(library, /character-card-summary/);
   assert.match(library, /阵容选择/);
+  assert.match(library, /玩法介绍/);
   assert.match(library, /游戏玩法/);
   assert.match(library, /AI 创建角色/);
   assert.match(library, /选择战斗力/);
