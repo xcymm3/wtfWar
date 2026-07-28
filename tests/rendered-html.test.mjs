@@ -212,7 +212,6 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /simulateBattle/);
   assert.match(observer, /simulateTeamBattle/);
   assert.match(observer, /getEffectiveCombatStats/);
-  assert.match(observer, /新种子再战/);
   assert.match(observer, /实时战报/);
   assert.match(observer, /useBattleLogAutoFollow/);
   assert.match(observer, /team-observer-round/);
@@ -220,7 +219,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /自动战斗/);
   assert.match(observer, /暂停战斗/);
   assert.match(observer, /重新战斗/);
-  assert.doesNotMatch(observer, /自动播放|暂停播放|重新播放/);
+  assert.match(observer, /const \[isPlaying, setIsPlaying\] = useState\(true\)/);
+  assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
@@ -246,6 +246,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.character-detail-dialog/);
   assert.match(styles, /\.search-field[\s\S]*flex: 0 0 auto/);
   assert.match(styles, /\.team-observer-frame/);
+  assert.match(styles, /\.observer-icon-button/);
   assert.doesNotMatch(styles, /\.bottom-navigation/);
   assert.match(styles, /\.battle-profession-filter/);
   assert.match(styles, /\.generated-profile/);

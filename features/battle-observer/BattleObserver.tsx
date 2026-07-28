@@ -1,6 +1,5 @@
 "use client";
 
-import { nanoid } from "nanoid";
 import Link from "next/link";
 import {
   type ReactNode,
@@ -365,52 +364,44 @@ function ObserverControls({
   hasFinishedReplay,
   onPlay,
   onPause,
-  onNext,
   onRestart,
-  onNewSeed,
 }: {
   isPlaying: boolean;
   hasFinishedReplay: boolean;
   onPlay: () => void;
   onPause: () => void;
-  onNext: () => void;
   onRestart: () => void;
-  onNewSeed: () => void;
 }) {
   return (
     <section className="observer-controls" aria-label="观战控制">
-      <button type="button" onClick={onPlay}>
-        {isPlaying ? "战斗中…" : hasFinishedReplay ? "从头自动战斗" : "自动战斗"}
+      <button
+        type="button"
+        className="observer-icon-button"
+        onClick={onPlay}
+        disabled={isPlaying}
+        aria-label={hasFinishedReplay ? "从头自动战斗" : "自动战斗"}
+        title={hasFinishedReplay ? "从头自动战斗" : "自动战斗"}
+      >
+        <span aria-hidden="true">▶</span>
       </button>
       <button
         type="button"
-        className="secondary-observer-button"
+        className="secondary-observer-button observer-icon-button"
         onClick={onPause}
         disabled={!isPlaying}
+        aria-label="暂停战斗"
+        title="暂停战斗"
       >
-        暂停战斗
+        <span aria-hidden="true">Ⅱ</span>
       </button>
       <button
         type="button"
-        className="secondary-observer-button"
-        onClick={onNext}
-        disabled={hasFinishedReplay}
-      >
-        下一次行动
-      </button>
-      <button
-        type="button"
-        className="secondary-observer-button"
+        className="secondary-observer-button observer-icon-button"
         onClick={onRestart}
+        aria-label="重新战斗"
+        title="重新战斗"
       >
-        重新战斗
-      </button>
-      <button
-        type="button"
-        className="secondary-observer-button"
-        onClick={onNewSeed}
-      >
-        新种子再战
+        <span aria-hidden="true">↻</span>
       </button>
     </section>
   );
@@ -419,15 +410,13 @@ function ObserverControls({
 function BattleObserverPlayer({
   battle,
   onBattleCompleted,
-  onNewSeed,
 }: {
   battle: ObservedBattle;
   onBattleCompleted?: () => void;
-  onNewSeed: () => void;
 }) {
   const { events, leftCharacter, rightCharacter, rounds, seed, winner } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [hasRecorded, setHasRecorded] = useState(false);
   const visualState = useMemo(() => {
     const initialState: VisualBattleState = {
@@ -473,16 +462,9 @@ function BattleObserverPlayer({
     setIsPlaying(false);
   }
 
-  function showNextEvent(): void {
-    const nextCount = Math.min(visibleEventCount + 1, events.length);
-    setIsPlaying(false);
-    setVisibleEventCount(nextCount);
-    if (nextCount >= events.length) finishBattleIfNeeded();
-  }
-
   function restartReplay(): void {
-    setIsPlaying(false);
     setVisibleEventCount(0);
+    setIsPlaying(true);
   }
 
   const winnerName = winner === "left"
@@ -520,9 +502,7 @@ function BattleObserverPlayer({
           hasFinishedReplay={hasFinishedReplay}
           onPlay={playFromCurrentPosition}
           onPause={pausePlayback}
-          onNext={showNextEvent}
           onRestart={restartReplay}
-          onNewSeed={onNewSeed}
         />
 
         {hasFinishedReplay ? (
@@ -568,7 +548,7 @@ function BattleObserverPlayer({
               })}
             </ol>
           ) : (
-            <p className="battle-log-empty">点击“自动战斗”或“下一次行动”开始战斗。</p>
+            <p className="battle-log-empty">战斗即将开始。</p>
           )}
         </section>
       </div>
@@ -578,14 +558,12 @@ function BattleObserverPlayer({
 
 function TeamBattleObserverPlayer({
   battle,
-  onNewSeed,
 }: {
   battle: ObservedTeamBattle;
-  onNewSeed: () => void;
 }) {
   const { events, leftTeam, rightTeam, rounds, seed, winner } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
@@ -624,15 +602,9 @@ function TeamBattleObserverPlayer({
     setIsPlaying(false);
   }
 
-  function showNextEvent(): void {
-    const nextCount = Math.min(visibleEventCount + 1, events.length);
-    setIsPlaying(false);
-    setVisibleEventCount(nextCount);
-  }
-
   function restartReplay(): void {
-    setIsPlaying(false);
     setVisibleEventCount(0);
+    setIsPlaying(true);
   }
 
   const winnerName = winner === "left"
@@ -669,9 +641,7 @@ function TeamBattleObserverPlayer({
           hasFinishedReplay={hasFinishedReplay}
           onPlay={playFromCurrentPosition}
           onPause={pausePlayback}
-          onNext={showNextEvent}
           onRestart={restartReplay}
-          onNewSeed={onNewSeed}
         />
 
         {hasFinishedReplay ? (
@@ -713,7 +683,7 @@ function TeamBattleObserverPlayer({
               })}
             </ol>
           ) : (
-            <p className="battle-log-empty">点击“自动战斗”或“下一次行动”开始战斗。</p>
+            <p className="battle-log-empty">战斗即将开始。</p>
           )}
         </section>
       </div>
@@ -725,7 +695,6 @@ export function BattleObserver() {
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const hydrate = useGameStore((state) => state.hydrate);
   const preparedTeamBattle = useGameStore((state) => state.preparedTeamBattle);
-  const rematchTeamBattle = useGameStore((state) => state.rematchTeamBattle);
 
   useEffect(() => {
     hydrate();
@@ -760,13 +729,6 @@ export function BattleObserver() {
       <TeamBattleObserverPlayer
         key={`${observedTeamBattle.seed}:${observedTeamBattle.leftTeam.members.map((member) => member.id).join(":")}:${observedTeamBattle.rightTeam.members.map((member) => member.id).join(":")}`}
         battle={observedTeamBattle}
-        onNewSeed={() =>
-          rematchTeamBattle(
-            `team-battle-${nanoid(12)}`,
-            observedTeamBattle.leftTeam,
-            observedTeamBattle.rightTeam,
-          )
-        }
       />
     );
   }
