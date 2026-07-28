@@ -223,6 +223,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(observer, /Ⅱ/);
   assert.match(observer, /const \[isPlaying, setIsPlaying\] = useState\(true\)/);
   assert.match(observer, /PLAYBACK_SPEEDS = \[0\.5, 1, 2, 4\]/);
+  assert.match(observer, /BASE_ACTION_INTERVAL_MS = 1000/);
   assert.match(observer, /BASE_ACTION_INTERVAL_MS \/ playbackSpeed/);
   assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);

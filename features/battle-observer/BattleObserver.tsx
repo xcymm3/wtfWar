@@ -44,7 +44,7 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
 };
 
 const PLAYBACK_SPEEDS = [0.5, 1, 2, 4] as const;
-const BASE_ACTION_INTERVAL_MS = 600;
+const BASE_ACTION_INTERVAL_MS = 1000;
 type PlaybackSpeed = typeof PLAYBACK_SPEEDS[number];
 
 type VisualCombatant = {
