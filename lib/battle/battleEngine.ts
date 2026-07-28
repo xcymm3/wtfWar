@@ -206,5 +206,5 @@ export function simulateBattle(input: SimulateBattleInput): BattleRuntimeState {
     }
   }
 
-  return finishBattle(state, getTimeoutWinner(state));
+  return finishBattle(state, "draw");
 }

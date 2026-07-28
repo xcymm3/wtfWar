@@ -302,13 +302,13 @@ test("stuns exactly one action opportunity and then clears the status", () => {
   assert.equal(stunConsumption.target.isStunned, false);
 });
 
-test("declares a draw when symmetric combat reaches the 30-round limit", () => {
+test("declares a draw when symmetric combat reaches the 50-round limit", () => {
   const leftCharacter = createCharacter("left", {
-    attack: 5,
+    attack: 3,
     maxHealth: 180,
   });
   const rightCharacter = createCharacter("right", {
-    attack: 5,
+    attack: 3,
     maxHealth: 180,
   });
 
@@ -319,9 +319,9 @@ test("declares a draw when symmetric combat reaches the 30-round limit", () => {
   });
 
   assert.equal(result.status, "finished");
-  assert.equal(result.round, 30);
+  assert.equal(result.round, 50);
   assert.equal(result.winner, "draw");
   assert.equal(result.left.health, 30);
   assert.equal(result.right.health, 30);
-  assert.equal(result.events.length, 60);
+  assert.equal(result.events.length, 100);
 });

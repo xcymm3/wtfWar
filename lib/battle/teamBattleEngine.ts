@@ -1031,5 +1031,5 @@ export function simulateTeamBattle(
     }
   }
 
-  return finishBattle(state, getTimeoutWinner(state));
+  return finishBattle(state, "draw");
 }

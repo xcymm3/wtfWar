@@ -5,7 +5,7 @@ export const BATTLE_RULES = {
   maxAttack: 30,
   minHealth: 80,
   maxHealth: 180,
-  maxRounds: 30,
+  maxRounds: 50,
   minCooldown: 1,
   maxCooldown: 5,
   minDamageMultiplier: 0.8,
