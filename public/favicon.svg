@@ -1,6 +1,34 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M22 19.2727C22 20.779 20.779 22 19.2727 22H14.7273C13.221 22 12 20.779 12 19.2727V12H19.2727C20.779 12 22 13.221 22 14.7273V19.2727Z" fill="#68C4FF"/>
-<path d="M20 2C21.1046 2 22 2.89543 22 4V7C22 8.10457 21.1046 9 20 9H17C15.8954 9 15 8.10457 15 7V4C15 2.89543 15.8954 2 17 2H20Z" fill="#0C79D8"/>
-<path d="M7 15C8.10457 15 9 15.8954 9 17V20C9 21.1046 8.10457 22 7 22H4C2.89543 22 2 21.1046 2 20V17C2 15.8954 2.89543 15 4 15H7Z" fill="#0C79D8"/>
-<path d="M12 12H4.72727C3.22104 12 2 10.779 2 9.27273V4.72727C2 3.22104 3.22104 2 4.72727 2H9.27273C10.779 2 12 3.22104 12 4.72727V12Z" fill="#2E9EFF"/>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="57" y2="61" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#21120D"/>
+      <stop offset=".52" stop-color="#10131B"/>
+      <stop offset="1" stop-color="#0A0D12"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="20" y1="18" x2="46" y2="47" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE09A"/>
+      <stop offset=".48" stop-color="#F7AD27"/>
+      <stop offset="1" stop-color="#9D5C08"/>
+    </linearGradient>
+    <linearGradient id="blade" x1="22" y1="15" x2="44" y2="49" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6D5"/>
+      <stop offset=".5" stop-color="#D8E7F2"/>
+      <stop offset="1" stop-color="#8095A5"/>
+    </linearGradient>
+    <filter id="glow" x="8" y="8" width="48" height="48" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="17" fill="url(#bg)" stroke="#6B4B22" stroke-width="2"/>
+  <path d="M10 34C10 22.402 19.402 13 31 13V51C19.402 51 10 41.598 10 30V34Z" fill="#C63F48" opacity=".24"/>
+  <path d="M54 30C54 41.598 44.598 51 33 51V13C44.598 13 54 22.402 54 34V30Z" fill="#3877BD" opacity=".27"/>
+  <circle cx="32" cy="32" r="20" stroke="url(#ring)" stroke-width="3" filter="url(#glow)"/>
+  <circle cx="32" cy="32" r="14" stroke="#F3B432" stroke-width="1.5" stroke-dasharray="2.5 3" opacity=".8"/>
+  <path d="M20 18L24 20L43 42L43.5 47L39 44L20 22V18Z" fill="url(#blade)" stroke="#FFF2C9" stroke-linejoin="round"/>
+  <path d="M44 18L40 20L21 42L20.5 47L25 44L44 22V18Z" fill="url(#blade)" stroke="#FFF2C9" stroke-linejoin="round"/>
+  <path d="M20 41L27 45" stroke="#E5A420" stroke-width="3" stroke-linecap="round"/>
+  <path d="M44 41L37 45" stroke="#E5A420" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="4" fill="#F6B52C"/>
+  <circle cx="32" cy="32" r="1.6" fill="#FFF5CF"/>
 </svg>
