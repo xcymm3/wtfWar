@@ -77,6 +77,7 @@ export function CharacterLibrary() {
   const [query, setQuery] = useState("");
   const [professionFilter, setProfessionFilter] = useState<ProfessionFilter>("all");
   const [remoteLibraryNotice, setRemoteLibraryNotice] = useState<string | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
   useEffect(() => {
     hydrate();
@@ -142,6 +143,7 @@ export function CharacterLibrary() {
   function handleRemove(character: Character): void {
     if (window.confirm(`确定从角色库中删除“${character.name}”吗？`)) {
       removeCharacter(character.id);
+      setSelectedCharacter(null);
     }
   }
 
@@ -229,50 +231,23 @@ export function CharacterLibrary() {
                   draggable
                   onDragStart={(event) => beginTeamCharacterDrag(event, character.id)}
                   className={`character-card profession-${character.profession}`}
-                  title="拖到上方阵容"
+                  title="拖到上方阵容；点击“…”查看详情"
                 >
-                  <div className="character-card-topline">
-                    <span><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]} · {REALM_LABELS[realm]}</span>
-                    <time dateTime={character.updatedAt}>更新于 {formatUpdatedAt(character.updatedAt)}</time>
+                  <div className="character-card-summary">
+                    <span className="character-summary-profession"><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]}</span>
+                    <span className="character-summary-realm">战斗力 {REALM_LABELS[realm]}</span>
+                    <strong className="character-summary-name">{character.name}</strong>
+                    <span className="character-summary-stat">攻击 <b>{effectiveStats.attack}</b></span>
+                    <span className="character-summary-stat">血量 <b>{effectiveStats.maxHealth}</b></span>
                   </div>
-                  <h2>{character.name}</h2>
-                  <p className="character-prompt">{character.originalPrompt}</p>
-
-                  <dl className="character-stats">
-                    <div><dt>攻击</dt><dd>{effectiveStats.attack}</dd></div>
-                    <div><dt>生命</dt><dd>{effectiveStats.maxHealth}</dd></div>
-                  </dl>
-
-                  <div className="skill-list" aria-label={`${character.name} 的技能`}>
-                    {character.skills.map((skill) => (
-                      <section key={skill.id} className="skill-item">
-                        <div><span>{SKILL_TYPE_LABELS[skill.type]}</span><strong>{skill.name}</strong></div>
-                        <p>{getSkillEffect(skill)} · 冷却 {skill.cooldown} 回合</p>
-                      </section>
-                    ))}
-                  </div>
-
-                  <div className="character-actions">
-                    <button
-                      type="button"
-                      className="team-add-button team-add-left"
-                      onClick={() => handleAddToTeam("left", character.id)}
-                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
-                    >
-                      红方
-                    </button>
-                    <button
-                      type="button"
-                      className="team-add-button team-add-right"
-                      onClick={() => handleAddToTeam("right", character.id)}
-                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
-                    >
-                      蓝方
-                    </button>
-                    <button type="button" className="delete-button" onClick={() => handleRemove(character)}>
-                      删除角色
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="character-more-button"
+                    aria-label={`查看 ${character.name} 的完整详情`}
+                    onClick={() => setSelectedCharacter(character)}
+                  >
+                    …
+                  </button>
                 </article>
               );
             })}
@@ -284,6 +259,76 @@ export function CharacterLibrary() {
             <Link href="/create" className="empty-create-link">创建角色</Link>
           </section>
         )}
+
+        {selectedCharacter ? (() => {
+          const selectedStats = getEffectiveCombatStats(selectedCharacter);
+          const selectedRealm = selectedCharacter.realm ?? "mortal";
+          const hasTeam = teamCharacterIds.left.includes(selectedCharacter.id) || teamCharacterIds.right.includes(selectedCharacter.id);
+
+          return (
+            <dialog
+              open
+              className="character-detail-dialog"
+              aria-labelledby="character-detail-title"
+              onCancel={(event) => {
+                event.preventDefault();
+                setSelectedCharacter(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setSelectedCharacter(null);
+                }
+              }}
+            >
+              <div className="character-detail-dialog-header">
+                <div>
+                  <span><ProfessionIcon profession={selectedCharacter.profession} compact />{PROFESSION_LABELS[selectedCharacter.profession]} · {REALM_LABELS[selectedRealm]}</span>
+                  <h2 id="character-detail-title">{selectedCharacter.name}</h2>
+                </div>
+                <button type="button" className="character-detail-close" aria-label="关闭角色详情" onClick={() => setSelectedCharacter(null)}>×</button>
+              </div>
+
+              <p className="character-detail-prompt">{selectedCharacter.originalPrompt}</p>
+
+              <dl className="character-stats character-detail-stats">
+                <div><dt>攻击</dt><dd>{selectedStats.attack}</dd></div>
+                <div><dt>生命</dt><dd>{selectedStats.maxHealth}</dd></div>
+              </dl>
+
+              <div className="skill-list" aria-label={`${selectedCharacter.name} 的技能`}>
+                {selectedCharacter.skills.map((skill) => (
+                  <section key={skill.id} className="skill-item">
+                    <div><span>{SKILL_TYPE_LABELS[skill.type]}</span><strong>{skill.name}</strong></div>
+                    <p>{getSkillEffect(skill)} · 冷却 {skill.cooldown} 回合</p>
+                  </section>
+                ))}
+              </div>
+
+              <div className="character-actions character-detail-actions">
+                <button
+                  type="button"
+                  className="team-add-button team-add-left"
+                  onClick={() => handleAddToTeam("left", selectedCharacter.id)}
+                  disabled={hasTeam}
+                >
+                  加入红方
+                </button>
+                <button
+                  type="button"
+                  className="team-add-button team-add-right"
+                  onClick={() => handleAddToTeam("right", selectedCharacter.id)}
+                  disabled={hasTeam}
+                >
+                  加入蓝方
+                </button>
+                <button type="button" className="delete-button" onClick={() => handleRemove(selectedCharacter)}>
+                  删除角色
+                </button>
+              </div>
+              <time className="character-detail-updated" dateTime={selectedCharacter.updatedAt}>更新于 {formatUpdatedAt(selectedCharacter.updatedAt)}</time>
+            </dialog>
+          );
+        })() : null}
       </div>
     </main>
   );
