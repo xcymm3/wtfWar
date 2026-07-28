@@ -179,16 +179,7 @@ export function CharacterLibrary() {
     <main className="library-shell">
       <div className="library-frame">
         <header className="library-header">
-          <div>
-            <h1>角色库</h1>
-          </div>
-          <div className="library-header-actions">
-            <div className="library-count" aria-label={`当前共有 ${characters.length} 名角色`}>
-              <strong>{characters.length}</strong>
-              <span>名已保存角色</span>
-            </div>
-            <Link href="/create" className="create-character-link">创建角色</Link>
-          </div>
+          <h1>对战阵容选择</h1>
         </header>
 
         {remoteLibraryNotice ? <p className="form-error" role="alert">{remoteLibraryNotice}</p> : null}
@@ -196,6 +187,10 @@ export function CharacterLibrary() {
         <TeamBuilder characters={characters} />
 
         <section className="library-controls" aria-label="角色库筛选">
+          <div className="library-toolbar">
+            <span className="library-count" aria-label={`当前角色数：${characters.length}`}>当前角色数：{characters.length}</span>
+            <Link href="/create" className="create-character-link">创建角色</Link>
+          </div>
           <label className="search-field">
             <span className="sr-only">搜索角色</span>
             <input
