@@ -77,6 +77,36 @@ body {
   overflow-wrap: anywhere;
 }
 
+.library-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 14px;
+}
+
+.library-help-button {
+  min-height: 34px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(29, 27, 23, 0.72);
+  color: var(--muted);
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.library-help-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.library-help-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .library-intro {
   max-width: 44rem;
   margin: 1rem 0 0;
@@ -610,6 +640,35 @@ body {
   margin-top: 12px;
   color: var(--muted);
   font-size: 0.75rem;
+}
+
+.library-help-dialog {
+  width: min(580px, calc(100% - 32px));
+}
+
+.game-help-list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.game-help-list li {
+  border-left: 2px solid var(--accent);
+  background: rgba(16, 16, 16, 0.26);
+  padding: 11px 12px;
+}
+
+.game-help-list strong {
+  font-size: 0.92rem;
+}
+
+.game-help-list p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
 }
 
 .character-card-topline {
@@ -3072,6 +3131,11 @@ body {
 
   .library-count {
     width: auto;
+  }
+
+  .library-header {
+    flex-direction: row;
+    align-items: center;
   }
 
   .library-header-actions,

@@ -82,6 +82,7 @@ export function CharacterLibrary() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [remoteLibraryNotice, setRemoteLibraryNotice] = useState<string | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -179,7 +180,10 @@ export function CharacterLibrary() {
     <main className="library-shell">
       <div className="library-frame">
         <header className="library-header">
-          <h1>对战阵容选择</h1>
+          <div className="library-title-row">
+            <h1>阵容选择</h1>
+            <button type="button" className="library-help-button" onClick={() => setIsHelpOpen(true)}>帮助</button>
+          </div>
         </header>
 
         {remoteLibraryNotice ? <p className="form-error" role="alert">{remoteLibraryNotice}</p> : null}
@@ -379,6 +383,43 @@ export function CharacterLibrary() {
             </dialog>
           );
         })() : null}
+
+        {isHelpOpen ? (
+          <dialog
+            open
+            className="character-detail-dialog library-help-dialog"
+            aria-labelledby="game-help-title"
+            onCancel={(event) => {
+              event.preventDefault();
+              setIsHelpOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsHelpOpen(false);
+            }}
+          >
+            <div className="character-detail-dialog-header">
+              <div>
+                <span>War AI</span>
+                <h2 id="game-help-title">游戏玩法</h2>
+              </div>
+              <button type="button" className="character-detail-close" aria-label="关闭帮助" onClick={() => setIsHelpOpen(false)}>×</button>
+            </div>
+            <ol className="game-help-list">
+              <li>
+                <strong>AI 创建角色</strong>
+                <p>点击“创建角色”，输入名称、角色设定和战斗力；AI 会生成职业、属性和技能。同名角色不能重复保存。</p>
+              </li>
+              <li>
+                <strong>选择战斗力</strong>
+                <p>战斗力分为凡人、武林高手、超能力者、修仙者和神灵。阶位越高，最终攻击与血量越高。</p>
+              </li>
+              <li>
+                <strong>开始游戏</strong>
+                <p>在角色卡上加入红方或蓝方，也可拖动角色调整站位。每队最多 5 人，前排先战；双方各有至少一人后，点击“开始观战”。</p>
+              </li>
+            </ol>
+          </dialog>
+        ) : null}
       </div>
     </main>
   );
