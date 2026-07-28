@@ -1,4 +1,4 @@
-# Dimensional Arena Beta 架构
+# 次元竞技场 Beta 架构
 
 ## 边界
 

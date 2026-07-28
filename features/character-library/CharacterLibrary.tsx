@@ -70,7 +70,6 @@ export function CharacterLibrary() {
   const hasHydrated = useGameStore((state) => state.hasHydrated);
   const characters = useGameStore((state) => state.characters);
   const hydrate = useGameStore((state) => state.hydrate);
-  const removeCharacter = useGameStore((state) => state.removeCharacter);
   const teamCharacterIds = useGameStore((state) => state.teamCharacterIds);
   const addCharacterToTeam = useGameStore((state) => state.addCharacterToTeam);
   const addPresetCharacters = useGameStore((state) => state.addPresetCharacters);
@@ -152,13 +151,6 @@ export function CharacterLibrary() {
         return first.name.localeCompare(second.name, "zh-CN") * direction;
       });
   }, [characters, professionFilter, query, sortDirection, sortKey]);
-
-  function handleRemove(character: Character): void {
-    if (window.confirm(`确定从角色库中删除“${character.name}”吗？`)) {
-      removeCharacter(character.id);
-      setSelectedCharacter(null);
-    }
-  }
 
   function handleAddToTeam(side: "left" | "right", characterId: string): void {
     try {
@@ -374,11 +366,6 @@ export function CharacterLibrary() {
                 ))}
               </div>
 
-              <div className="character-actions character-detail-actions">
-                <button type="button" className="delete-button" onClick={() => handleRemove(selectedCharacter)}>
-                  删除角色
-                </button>
-              </div>
               <time className="character-detail-updated" dateTime={selectedCharacter.updatedAt}>更新于 {formatUpdatedAt(selectedCharacter.updatedAt)}</time>
             </dialog>
           );
@@ -399,7 +386,7 @@ export function CharacterLibrary() {
           >
             <div className="character-detail-dialog-header">
               <div>
-                <span>Dimensional Arena</span>
+                <span>次元竞技场</span>
                 <h2 id="game-help-title">游戏玩法</h2>
               </div>
               <button type="button" className="character-detail-close" aria-label="关闭帮助" onClick={() => setIsHelpOpen(false)}>×</button>

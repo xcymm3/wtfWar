@@ -69,7 +69,7 @@ test("server-renders the character library loading boundary", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Dimensional Arena<\/title>/i);
+  assert.match(html, /<title>次元竞技场<\/title>/i);
   assert.match(html, /正在读取本地角色库/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
@@ -166,7 +166,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /addPresetCharacters/);
   assert.match(library, /TeamBuilder/);
   assert.match(library, /beginTeamCharacterDrag/);
-  assert.match(library, /删除/);
+  assert.doesNotMatch(library, /删除角色/);
   assert.match(library, /创建角色/);
   assert.match(presets, /护卫/);
   assert.match(presets, /公主/);
@@ -232,7 +232,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);
-  assert.match(layout, /title:\s*"Dimensional Arena"/);
+  assert.match(layout, /title:\s*"次元竞技场"/);
   assert.doesNotMatch(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 80px minmax\(0, 1fr\)/);

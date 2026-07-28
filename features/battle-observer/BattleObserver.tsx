@@ -764,7 +764,7 @@ export function BattleObserver() {
   return (
     <main className="observer-shell">
       <section className="observer-empty">
-        <p className="library-kicker">Dimensional Arena · 观战</p>
+        <p className="library-kicker">次元竞技场 · 观战</p>
         <h1>还没有可观战的对局</h1>
         <p>请先在角色库布置双方阵容。</p>
         <Link href="/" className="empty-create-link">返回角色库</Link>
