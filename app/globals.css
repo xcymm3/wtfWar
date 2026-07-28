@@ -407,7 +407,7 @@ body {
 .character-card {
   min-height: 66px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   border-top-width: 1px;
@@ -476,6 +476,26 @@ body {
   color: var(--foreground);
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
+}
+
+.character-card-actions {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  align-items: center;
+  gap: 6px;
+}
+
+.character-card-team-button {
+  min-width: 42px;
+  min-height: 38px;
+  padding: 0 8px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.character-card-team-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .character-more-button,
@@ -579,6 +599,8 @@ body {
 }
 
 .character-detail-actions {
+  display: flex;
+  justify-content: flex-end;
   margin-top: 20px;
   padding-top: 0;
 }

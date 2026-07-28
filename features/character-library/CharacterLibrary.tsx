@@ -284,14 +284,32 @@ export function CharacterLibrary() {
                     <span className="character-summary-stat">攻击 <b>{effectiveStats.attack}</b></span>
                     <span className="character-summary-stat">血量 <b>{effectiveStats.maxHealth}</b></span>
                   </div>
-                  <button
-                    type="button"
-                    className="character-more-button"
-                    aria-label={`查看 ${character.name} 的完整详情`}
-                    onClick={() => setSelectedCharacter(character)}
-                  >
-                    …
-                  </button>
+                  <div className="character-card-actions">
+                    <button
+                      type="button"
+                      className="team-add-button team-add-left character-card-team-button"
+                      onClick={() => handleAddToTeam("left", character.id)}
+                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                    >
+                      红方
+                    </button>
+                    <button
+                      type="button"
+                      className="team-add-button team-add-right character-card-team-button"
+                      onClick={() => handleAddToTeam("right", character.id)}
+                      disabled={teamCharacterIds.left.includes(character.id) || teamCharacterIds.right.includes(character.id)}
+                    >
+                      蓝方
+                    </button>
+                    <button
+                      type="button"
+                      className="character-more-button"
+                      aria-label={`查看 ${character.name} 的完整详情`}
+                      onClick={() => setSelectedCharacter(character)}
+                    >
+                      …
+                    </button>
+                  </div>
                 </article>
               );
             })}
@@ -307,7 +325,6 @@ export function CharacterLibrary() {
         {selectedCharacter ? (() => {
           const selectedStats = getEffectiveCombatStats(selectedCharacter);
           const selectedRealm = selectedCharacter.realm ?? "mortal";
-          const hasTeam = teamCharacterIds.left.includes(selectedCharacter.id) || teamCharacterIds.right.includes(selectedCharacter.id);
 
           return (
             <dialog
@@ -349,22 +366,6 @@ export function CharacterLibrary() {
               </div>
 
               <div className="character-actions character-detail-actions">
-                <button
-                  type="button"
-                  className="team-add-button team-add-left"
-                  onClick={() => handleAddToTeam("left", selectedCharacter.id)}
-                  disabled={hasTeam}
-                >
-                  加入红方
-                </button>
-                <button
-                  type="button"
-                  className="team-add-button team-add-right"
-                  onClick={() => handleAddToTeam("right", selectedCharacter.id)}
-                  disabled={hasTeam}
-                >
-                  加入蓝方
-                </button>
                 <button type="button" className="delete-button" onClick={() => handleRemove(selectedCharacter)}>
                   删除角色
                 </button>
