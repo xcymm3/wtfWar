@@ -35,10 +35,10 @@ export const REALMS = [
 export type Realm = (typeof REALMS)[number];
 
 export const REALM_LABELS: Record<Realm, string> = {
-  mortal: "凡人",
-  martial_master: "武林高手",
-  superpowered: "超能力者",
-  cultivator: "修仙者",
+  mortal: "菜鸟",
+  martial_master: "凡人",
+  superpowered: "高手",
+  cultivator: "超凡",
   deity: "神灵",
 };
 

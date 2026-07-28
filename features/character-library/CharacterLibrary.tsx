@@ -411,7 +411,7 @@ export function CharacterLibrary() {
               </li>
               <li>
                 <strong>选择战斗力</strong>
-                <p>战斗力分为凡人、武林高手、超能力者、修仙者和神灵。阶位越高，最终攻击与血量越高。</p>
+                <p>战斗力分为菜鸟、凡人、高手、超凡和神灵。阶位越高，最终攻击与血量越高。</p>
               </li>
               <li>
                 <strong>开始游戏</strong>
