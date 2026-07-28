@@ -1,4 +1,4 @@
-# War AI
+# Dimensional Arena
 
 一个由自然语言创建角色、使用确定性回合规则进行 1v1 文字战斗的 Web Beta 项目。
 

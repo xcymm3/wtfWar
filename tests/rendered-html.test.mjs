@@ -69,7 +69,7 @@ test("server-renders the character library loading boundary", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>War AI<\/title>/i);
+  assert.match(html, /<title>Dimensional Arena<\/title>/i);
   assert.match(html, /正在读取本地角色库/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton/i);
 });
@@ -232,7 +232,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);
-  assert.match(layout, /title:\s*"War AI"/);
+  assert.match(layout, /title:\s*"Dimensional Arena"/);
   assert.doesNotMatch(layout, /BottomNavigation/);
   assert.match(styles, /\.character-grid/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\) 80px minmax\(0, 1fr\)/);

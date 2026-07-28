@@ -235,7 +235,7 @@ export function CharacterCreator() {
       <div className="creator-frame">
         <header className="creator-header">
           <div>
-            <p className="library-kicker">War AI · 手动创角</p>
+            <p className="library-kicker">Dimensional Arena · 手动创角</p>
             <p>让你想的角色成真！！你只需要输入名称+设定+战斗力，就可以自动生成一个角色！注意：同名角色只能有一个</p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>

@@ -195,7 +195,7 @@ export function BattlePreparation() {
     return (
       <main className="preparation-shell">
         <section className="preparation-empty">
-          <p className="library-kicker">War AI · 对战准备</p>
+          <p className="library-kicker">Dimensional Arena · 对战准备</p>
           <h1>还没有可出战的角色</h1>
           <p>请先回到角色库创建角色或加入预设角色，再为双方布置队伍。</p>
           <Link href="/" className="empty-create-link">返回角色库</Link>
@@ -209,7 +209,7 @@ export function BattlePreparation() {
       <div className="preparation-frame">
         <header className="preparation-header">
           <div>
-            <p className="library-kicker">War AI · 对战准备</p>
+            <p className="library-kicker">Dimensional Arena · 对战准备</p>
             <h1>布置队伍与战斗种子</h1>
             <p>
               每队可排入 1–5 名角色；位置越靠前，越会先承受攻击。双方人数可不同，不设战力或阶位上限。

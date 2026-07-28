@@ -399,7 +399,7 @@ export function CharacterLibrary() {
           >
             <div className="character-detail-dialog-header">
               <div>
-                <span>War AI</span>
+                <span>Dimensional Arena</span>
                 <h2 id="game-help-title">游戏玩法</h2>
               </div>
               <button type="button" className="character-detail-close" aria-label="关闭帮助" onClick={() => setIsHelpOpen(false)}>×</button>

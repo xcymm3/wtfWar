@@ -389,7 +389,7 @@ export function formatProfessionBalanceReport(
     0,
   );
   const lines = [
-    "# War AI 职业平衡基线",
+    "# Dimensional Arena 职业平衡基线",
     "",
     `每个有序职业对局模拟 ${result.matchesPerPair} 场，共 ${result.totalMatches} 场；职业统计共计 ${totalProfileGames} 个参赛席位。`,
     "",

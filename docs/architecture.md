@@ -1,4 +1,4 @@
-# War AI Beta 架构
+# Dimensional Arena Beta 架构
 
 ## 边界
 
