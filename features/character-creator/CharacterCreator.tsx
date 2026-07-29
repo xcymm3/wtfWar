@@ -170,7 +170,7 @@ export function CharacterCreator() {
         const message = typeof payload.error === "string" ? payload.error : "角色生成失败。";
         const requestId = typeof payload.requestId === "string" ? payload.requestId : null;
         throw new Error(
-          `${message}。尝试修改描述可以解决${requestId ? `（请求 ID：${requestId}）` : ""}`,
+          `${message}${requestId ? `（请求 ID：${requestId}）` : ""}`,
         );
       }
 

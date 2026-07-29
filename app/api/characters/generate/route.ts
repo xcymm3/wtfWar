@@ -409,7 +409,7 @@ export async function POST(request: Request) {
       : new ModelGenerationError("model_network_error", true);
     const status = modelError.code === "model_timeout" ? 504 : 502;
     return jsonResponse(
-      { error: "角色生成服务暂时无法给出合规角色，请稍后重试或改用手动创角。" },
+      { error: "暂时无法生成角色，请尝试修改描述或稍后重试" },
       requestId,
       status,
     );

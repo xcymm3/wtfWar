@@ -148,13 +148,14 @@ test("aborts timed-out model calls and records each retry", async () => {
 
   try {
     const response = await POST(createRequest());
-    const payload = await response.json() as { requestId?: unknown };
+    const payload = await response.json() as { error?: unknown; requestId?: unknown };
     const timeoutLogs = captured.logs.filter(
       (entry) => entry.event === "model_generation.failed" && entry.errorCode === "model_timeout",
     );
 
     assert.equal(response.status, 504);
     assert.equal(response.headers.get("x-request-id"), payload.requestId);
+    assert.equal(payload.error, "暂时无法生成角色，请尝试修改描述或稍后重试");
     assert.equal(timeoutLogs.length, 2);
     assert.equal(timeoutLogs.every((entry) => entry.requestId === payload.requestId), true);
   } finally {
