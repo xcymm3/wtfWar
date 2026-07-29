@@ -247,6 +247,7 @@ test("feeds schema failures into the retry prompt", async () => {
     assert.equal(response.status, 200);
     assert.equal(callCount, 2);
     assert.match(requestMessages[1]!, /其中一个技能的 type 设为 damage、critical 或 area_damage/);
+    assert.match(requestMessages[1]!, /冰晶护盾/);
   } finally {
     globalThis.fetch = originalFetch;
     captured.restore();

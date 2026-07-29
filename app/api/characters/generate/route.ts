@@ -48,6 +48,7 @@ class ModelGenerationError extends Error {
     readonly retryable: boolean,
     readonly upstreamStatus?: number,
     readonly retryInstruction?: string,
+    readonly retryDraft?: string,
   ) {
     super(code);
     this.name = "ModelGenerationError";
@@ -133,11 +134,26 @@ function normalizeModelGenerationError(
   return new ModelGenerationError("model_network_error", true);
 }
 
+function createInvalidModelResponseError(
+  upstreamStatus: number | undefined,
+  error: unknown,
+  content?: string,
+): ModelGenerationError {
+  return new ModelGenerationError(
+    "model_invalid_response",
+    true,
+    upstreamStatus,
+    getModelValidationRetryInstruction(error),
+    content?.slice(0, 6_000),
+  );
+}
+
 async function generateModelAttempt(
   name: string,
   prompt: string,
   realm: Realm,
   retryInstruction: string | undefined,
+  retryDraft: string | undefined,
   configuration: ModelConfiguration,
   requestId: string,
   attempt: number,
@@ -164,7 +180,7 @@ async function generateModelAttempt(
           { role: "system", content: getCharacterGenerationSystemPrompt() },
           {
             role: "user",
-            content: `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}`,
+            content: `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
           },
         ],
       }),
@@ -192,27 +208,32 @@ async function generateModelAttempt(
       throw new ModelGenerationError("model_invalid_response", true, response.status);
     }
 
-    const rawDraft = JSON.parse(extractJsonContent(content));
-    if (!isRecord(rawDraft)) {
-      throw new ModelGenerationError("model_invalid_response", true, response.status);
+    try {
+      const rawDraft = JSON.parse(extractJsonContent(content));
+      if (!isRecord(rawDraft)) {
+        throw new TypeError("Model response must be a JSON object.");
+      }
+      // The caller owns name and realm; do not let a model echo change them.
+      const draft = generatedCharacterDraftSchema.parse({ ...rawDraft, name, realm });
+      const character = finalizeGeneratedCharacter(draft, prompt);
+      const metric = {
+        requestId,
+        model: configuration.model,
+        attempt,
+        status: "succeeded" as const,
+        durationMs: Date.now() - startedAt,
+        upstreamStatus,
+        promptTokens: usage?.prompt_tokens,
+        completionTokens: usage?.completion_tokens,
+        totalTokens: usage?.total_tokens,
+      };
+      logModelGenerationAttempt(metric);
+      await recordModelGenerationAttempt(metric);
+      return character;
+    } catch (error) {
+      if (error instanceof ModelGenerationError) throw error;
+      throw createInvalidModelResponseError(response.status, error, content);
     }
-    // The caller owns name and realm; do not let a model echo change them.
-    const draft = generatedCharacterDraftSchema.parse({ ...rawDraft, name, realm });
-    const character = finalizeGeneratedCharacter(draft, prompt);
-    const metric = {
-      requestId,
-      model: configuration.model,
-      attempt,
-      status: "succeeded" as const,
-      durationMs: Date.now() - startedAt,
-      upstreamStatus,
-      promptTokens: usage?.prompt_tokens,
-      completionTokens: usage?.completion_tokens,
-      totalTokens: usage?.total_tokens,
-    };
-    logModelGenerationAttempt(metric);
-    await recordModelGenerationAttempt(metric);
-    return character;
   } catch (error) {
     const modelError = normalizeModelGenerationError(error, controller);
     const metric = {
@@ -244,6 +265,7 @@ async function generateWithModel(
 ) {
   let lastError: ModelGenerationError | undefined;
   let retryInstruction: string | undefined;
+  let retryDraft: string | undefined;
 
   // Agnes does not support grammar-constrained JSON. A single retry lets the
   // prompt-based JSON path recover from transient provider or draft failures.
@@ -254,6 +276,7 @@ async function generateWithModel(
         prompt,
         realm,
         retryInstruction,
+        retryDraft,
         configuration,
         requestId,
         attempt,
@@ -264,6 +287,7 @@ async function generateWithModel(
         : new ModelGenerationError("model_network_error", true);
       lastError = modelError;
       retryInstruction = modelError.retryInstruction;
+      retryDraft = modelError.retryDraft;
       if (!modelError.retryable) break;
     }
   }
