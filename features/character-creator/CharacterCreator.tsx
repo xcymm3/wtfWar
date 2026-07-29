@@ -156,7 +156,6 @@ export function CharacterCreator() {
       });
       const payload = await response.json() as {
         character?: unknown;
-        source?: unknown;
         error?: unknown;
       };
 
@@ -171,11 +170,7 @@ export function CharacterCreator() {
       setAttack(generated.attack);
       setMaxHealth(generated.maxHealth);
       setGeneratedSkills(generated.skills);
-      setGenerationNotice(
-        payload.source === "model"
-          ? "AI 已根据角色名称和描述判定职业，并生成属性和技能。"
-          : "已按角色名称、描述与战斗规则判定职业，并生成属性和技能。",
-      );
+      setGenerationNotice("AI 已根据角色名称和描述判定职业，并生成属性和技能。");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : "角色生成失败。",

@@ -4,7 +4,7 @@
 
 - 浏览器负责角色库、本地战斗记录和确定性战斗模拟。
 - `localStorage` 是 Beta 阶段唯一的持久化方案；不会保存模型密钥。
-- 服务端通过 `/api/characters/generate` 代理可选的模型请求；模型只生成结构化角色数据，服务端仍会按同一套 schema 校验。未配置模型密钥时，接口会明确标记并使用本地规则生成作为可用回退。
+- 服务端通过 `/api/characters/generate` 代理模型请求；模型只生成结构化角色数据，服务端仍会按同一套 schema 校验。未配置模型密钥时，接口返回服务未配置，用户可改用手动创角。
 - 战斗胜负由本地确定性规则引擎计算，不由模型决定。
 
 ## 模块
@@ -17,7 +17,7 @@
 - `lib/store/gameStore.ts`：Zustand 角色库状态，负责从本地存储恢复角色、在新增/编辑/删除后持久化数据，并保存当前会话的红蓝方选择；v2 会把选择扩展为双方有序队伍。
 - `lib/characters/professionRules.ts`：职业属性范围的代码化定义；手动创角、AI 创角和数据校验必须共同使用它。
 - `features/character-creator/`：手动创角表单，保存前通过 Zod 校验职业范围和技能规则。
-- `lib/characters/promptCharacterGeneration.ts`：自然语言创角的请求校验、模型草稿转换和本地规则回退；无论来源如何都必须生成合法角色卡。
+- `lib/characters/promptCharacterGeneration.ts`：自然语言创角的请求校验和模型草稿转换；模型输出必须转换为合法角色卡。
 - `features/battle-preparation/`：对战准备页，校验双方选择、生成可编辑种子，并在当前会话保存待观战的对战配置。
 - `features/battle-observer/`：观战页只重放确定性引擎产出的结构化事件，用血量、护盾、眩晕和冷却快照驱动界面，不重新判定胜负。
 - `tests/battleEngine.test.ts`：使用 Node 内置测试断言，覆盖战斗引擎的可复现性、伤害、护盾、治疗、眩晕、冷却与回合上限判定；`pnpm test` 会先运行这组测试，再验证生产构建后的主页渲染。

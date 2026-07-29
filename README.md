@@ -4,7 +4,7 @@
 
 Beta 阶段使用浏览器 `localStorage` 保存角色和最近战报，不依赖数据库或账号系统。
 
-角色可由一句自然语言设想自动生成。默认情况下会使用本地规则生成一张合规角色卡；配置模型密钥后，浏览器只请求本站的服务端接口，由服务端代理调用模型，密钥不会暴露到浏览器。
+角色可由一句自然语言设想自动生成。浏览器只请求本站的服务端接口，由服务端代理调用模型，密钥不会暴露到浏览器。
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ pnpm dev
 pnpm build
 ```
 
-## 可选：配置模型自动创角
+## 配置 AI 自动创角
 
 复制 `.env.example` 为 `.env.local`，填入服务端模型配置后重启开发服务：
 
@@ -26,9 +26,10 @@ pnpm build
 OPENAI_API_KEY=...
 OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4.1-mini
+MODEL_REQUEST_TIMEOUT_MS=15000
 ```
 
-接口使用兼容 Chat Completions 的配置。未配置时，自动创角仍可用，但页面会明确提示使用的是本地规则生成。
+接口使用兼容 Chat Completions 的配置。未配置模型密钥时，AI 自动创角会提示服务尚未配置，用户可以改用手动创角。每次模型调用会生成请求 ID，并向服务端日志和 `model_generation_events` 表记录耗时、状态、上游状态码及 token 用量；这些指标不向前端展示。
 
 ## Neon 角色库
 

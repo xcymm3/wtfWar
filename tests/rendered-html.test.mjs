@@ -98,7 +98,7 @@ test("server-renders the battle observer loading boundary", async () => {
   assert.match(html, /正在加载战斗配置/);
 });
 
-test("generates a validated local character through the production API route", async () => {
+test("requires configured AI service through the production API route", async () => {
   const response = await render("/api/characters/generate", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -107,13 +107,10 @@ test("generates a validated local character through the production API route", a
       prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
     }),
   });
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 503);
 
   const payload = await response.json();
-  assert.equal(payload.source, "local");
-  assert.equal(payload.character.profession, "mage");
-  assert.equal(payload.character.skills.length, 2);
-  assert.ok(payload.character.skills.some((skill) => skill.type === "damage"));
+  assert.match(payload.error, /尚未配置/);
 });
 
 test("keeps the character library wired to the local game store", async () => {
@@ -191,7 +188,6 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /<dt>攻击<\/dt>/);
   assert.match(library, /ProfessionIcon/);
   assert.doesNotMatch(library, /基础攻击|有效攻击|基础生命|有效生命/);
-  assert.match(generator, /generateLocalCharacter/);
   assert.match(generator, /角色名称/);
   assert.doesNotMatch(generator, /preferredProfession/);
   assert.match(generator, /realm/);
