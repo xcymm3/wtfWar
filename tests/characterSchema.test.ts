@@ -121,3 +121,65 @@ test("accepts v2 group and passive skills while rejecting two passive slots", ()
   };
   assert.equal(characterSchema.safeParse(twoPassives).success, false);
 });
+
+test("enforces the effect ranges used by AI-generated skills", () => {
+  const baseCharacter = createCharacter();
+  const cases = [
+    {
+      name: "weak area damage",
+      skills: [
+        { ...baseCharacter.skills[0], type: "area_damage" as const, damageMultiplier: 0.4 },
+        baseCharacter.skills[1],
+      ] as Character["skills"],
+    },
+    {
+      name: "weak shield",
+      skills: [
+        baseCharacter.skills[0],
+        { ...baseCharacter.skills[1], shieldAmount: 9 },
+      ] as Character["skills"],
+    },
+    {
+      name: "excessive lifesteal",
+      skills: [
+        baseCharacter.skills[0],
+        {
+          ...baseCharacter.skills[1],
+          id: "manual-warrior-leech",
+          name: "Leech",
+          type: "lifesteal_passive" as const,
+          activation: "passive" as const,
+          target: "self" as const,
+          cooldown: 0,
+          damageMultiplier: 0.7,
+          shieldAmount: undefined,
+        },
+      ] as Character["skills"],
+    },
+    {
+      name: "excessive growth",
+      skills: [
+        baseCharacter.skills[0],
+        {
+          ...baseCharacter.skills[1],
+          id: "manual-warrior-growth",
+          name: "Growth",
+          type: "growth_passive" as const,
+          activation: "passive" as const,
+          target: "self" as const,
+          cooldown: 0,
+          damageMultiplier: 0.6,
+          shieldAmount: undefined,
+        },
+      ] as Character["skills"],
+    },
+  ];
+
+  for (const { name, skills } of cases) {
+    const character = {
+      ...baseCharacter,
+      skills,
+    };
+    assert.equal(characterSchema.safeParse(character).success, false, name);
+  }
+});

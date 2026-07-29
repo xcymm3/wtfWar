@@ -126,12 +126,31 @@ const normalizedSkillSchema = z.object({
       });
     }
   }
-  if (["lifesteal_passive", "growth_passive"].includes(skill.type) && skill.damageMultiplier === undefined) {
-    context.addIssue({
-      code: "custom",
-      path: ["damageMultiplier"],
-      message: "This skill requires damageMultiplier.",
-    });
+  if (skill.type === "lifesteal_passive") {
+    if (
+      skill.damageMultiplier === undefined ||
+      skill.damageMultiplier < 0.2 ||
+      skill.damageMultiplier > 0.6
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["damageMultiplier"],
+        message: "lifesteal_passive requires damageMultiplier between 0.2 and 0.6.",
+      });
+    }
+  }
+  if (skill.type === "growth_passive") {
+    if (
+      skill.damageMultiplier === undefined ||
+      skill.damageMultiplier < 0.2 ||
+      skill.damageMultiplier > 0.5
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["damageMultiplier"],
+        message: "growth_passive requires damageMultiplier between 0.2 and 0.5.",
+      });
+    }
   }
   if (skill.type === "damage" && skill.damageMultiplier !== undefined && skill.damageMultiplier > BATTLE_RULES.maxDamageMultiplier) {
     context.addIssue({
@@ -148,7 +167,11 @@ const normalizedSkillSchema = z.object({
     });
   }
   if (skill.type === "area_damage") {
-    if (skill.damageMultiplier === undefined || skill.damageMultiplier > 0.9) {
+    if (
+      skill.damageMultiplier === undefined ||
+      skill.damageMultiplier < BATTLE_RULES.minAreaDamageMultiplier ||
+      skill.damageMultiplier > BATTLE_RULES.maxAreaDamageMultiplier
+    ) {
       context.addIssue({
         code: "custom",
         path: ["damageMultiplier"],
@@ -156,12 +179,14 @@ const normalizedSkillSchema = z.object({
       });
     }
   }
-  if (skill.type === "shield" && skill.shieldAmount === undefined) {
-    context.addIssue({
-      code: "custom",
-      path: ["shieldAmount"],
-      message: "shield skill requires shieldAmount.",
-    });
+  if (skill.type === "shield") {
+    if (skill.shieldAmount === undefined || skill.shieldAmount < 10) {
+      context.addIssue({
+        code: "custom",
+        path: ["shieldAmount"],
+        message: "shield skill requires shieldAmount between 10 and 45.",
+      });
+    }
   }
   if (skill.type === "heal") {
     if (skill.healAmount === undefined || skill.healAmount < 10) {

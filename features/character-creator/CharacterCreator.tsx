@@ -130,6 +130,11 @@ export function CharacterCreator() {
     clearGeneratedProfile();
   }
 
+  function changeRealm(nextRealm: Realm): void {
+    setRealm(nextRealm);
+    clearGeneratedProfile();
+  }
+
   async function handleGenerate(): Promise<void> {
     if (name.trim().length === 0) {
       setError("请先填写角色名称。");
@@ -152,25 +157,30 @@ export function CharacterCreator() {
         body: JSON.stringify({
           name: name.trim(),
           prompt: originalPrompt.trim(),
+          realm,
         }),
       });
       const payload = await response.json() as {
         character?: unknown;
         error?: unknown;
+        requestId?: unknown;
       };
 
       if (!response.ok) {
+        const message = typeof payload.error === "string" ? payload.error : "角色生成失败。";
+        const requestId = typeof payload.requestId === "string" ? payload.requestId : null;
         throw new Error(
-          typeof payload.error === "string" ? payload.error : "角色生成失败。",
+          requestId ? `${message}（请求 ID：${requestId}）` : message,
         );
       }
 
       const generated = characterSchema.parse(payload.character) as Character;
       setProfession(generated.profession);
+      setRealm(generated.realm ?? realm);
       setAttack(generated.attack);
       setMaxHealth(generated.maxHealth);
       setGeneratedSkills(generated.skills);
-      setGenerationNotice("AI 已根据角色名称和描述判定职业，并生成属性和技能。");
+      setGenerationNotice("AI 已根据角色名称、描述和战斗力生成职业、属性和技能。");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : "角色生成失败。",
@@ -274,7 +284,7 @@ export function CharacterCreator() {
                   key={item}
                   type="button"
                   className={realm === item ? "is-active" : ""}
-                  onClick={() => setRealm(item)}
+                  onClick={() => changeRealm(item)}
                 >
                   {REALM_LABELS[item]}
                 </button>

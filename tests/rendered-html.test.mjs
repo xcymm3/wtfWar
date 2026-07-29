@@ -105,6 +105,7 @@ test("requires configured AI service through the production API route", async ()
     body: JSON.stringify({
       name: "霜语",
       prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
+      realm: "mortal",
     }),
   });
   assert.equal(response.status, 503);

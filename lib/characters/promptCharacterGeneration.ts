@@ -140,6 +140,7 @@ export const generatedCharacterDraftSchema = z.object({
 export const characterGenerationRequestSchema = z.object({
   name: z.string().trim().min(1).max(24),
   prompt: z.string().trim().min(8).max(500),
+  realm: z.enum(REALMS),
 });
 
 export type GeneratedCharacterDraft = z.infer<typeof generatedCharacterDraftSchema>;
@@ -215,7 +216,7 @@ export function finalizeGeneratedCharacter(
 }
 
 export function getCharacterGenerationSystemPrompt(): string {
-  return `你是“次元竞技场”的角色设计器。根据用户提供的角色名称和角色描述生成一个可用于团队回合制战斗的角色；职业、属性和技能必须综合两项信息判断，仅输出 JSON 对象，不要 Markdown。
-JSON 必须含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，应根据角色世界观强度选择战斗力阶位：菜鸟、凡人、高手、超凡、神灵（由低到高）。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；至少一个 type 为 damage、critical、area_damage、cleave_passive、charge_strike_passive 或 assassin_passive。每个技能都含 name、description、usageText、type、cooldown；usageText 是战报中放在技能名前的动作短语，如“易掌为拳，使出”，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 另含 damageMultiplier，且必须为 2；area_damage 另含 damageMultiplier（0.45-0.9）；shield 另含 shieldAmount（10-45）；heal 另含 healAmount（10-45），目标始终是己方前排；area_heal 另含 healAmount（5-25）；control 另含 stunChance，且必须为 1；area_control 另含 stunChance，且必须为 1，冷却必须为 5；invincible 无额外字段，冷却 3-5，本回合免疫伤害；lifesteal_passive 与 growth_passive 另含 damageMultiplier；revive_passive 与 assassin_passive 无额外字段。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害；lifesteal_passive 在每次造成伤害后回血；growth_passive 在每次行动结束后成长；revive_passive 会在首次阵亡时半血复活；assassin_passive 会让单体攻击和控制优先锁定敌方最后存活者，但自身攻击降低 20%。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
+  return `你是“次元竞技场”的角色设计器。根据用户提供的角色名称、角色描述和指定战斗力阶位生成一个可用于团队回合制战斗的角色；职业、属性和技能必须综合这些信息判断，仅输出 JSON 对象，不要 Markdown。
+JSON 顶层只能含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，且必须严格使用用户指定的值（菜鸟、凡人、高手、超凡、神灵由低到高）。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；这是硬性要求：至少一个 type 必须为 damage、critical、area_damage、cleave_passive、charge_strike_passive 或 assassin_passive，不能只生成控制、护盾、治疗、无敌或辅助被动。每个技能只能含 name、description、usageText、type、cooldown 和该 type 下文要求的字段，不得包含 id、activation、target 或其他 type 的字段；usageText 是战报中放在技能名前的动作短语，如“易掌为拳，使出”，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 另含 damageMultiplier，且必须为 2；area_damage 另含 damageMultiplier（0.45-0.9）；shield 另含 shieldAmount（10-45）；heal 另含 healAmount（10-45），目标始终是己方前排；area_heal 另含 healAmount（5-25）；control 另含 stunChance，且必须为 1；area_control 另含 stunChance，且必须为 1，冷却必须为 5；invincible 无额外字段，冷却 3-5，本回合免疫伤害；lifesteal_passive 另含 damageMultiplier（0.2-0.6）；growth_passive 另含 damageMultiplier（0.2-0.5）；revive_passive 与 assassin_passive 无额外字段。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害；lifesteal_passive 在每次造成伤害后回血；growth_passive 在每次行动结束后成长；revive_passive 会在首次阵亡时半血复活；assassin_passive 会让单体攻击和控制优先锁定敌方最后存活者，但自身攻击降低 20%。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 16-25、105-145；ranger 20-30、85-120。冷却 1-5。所有中文文本简洁，技能名不重复。`;
 }

@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { finalizeGeneratedCharacter } from "../lib/characters/promptCharacterGeneration";
+import {
+  characterGenerationRequestSchema,
+  finalizeGeneratedCharacter,
+  getCharacterGenerationSystemPrompt,
+} from "../lib/characters/promptCharacterGeneration";
 import { characterSchema } from "../lib/schemas/character";
 
 test("converts a valid AI draft into a storable character", () => {
@@ -65,4 +69,26 @@ test("rejects AI drafts that violate character rules", () => {
     }, "invalid draft"),
     /different types/i,
   );
+});
+
+test("tells the model the legal passive multiplier ranges", () => {
+  const prompt = getCharacterGenerationSystemPrompt();
+
+  assert.match(prompt, /lifesteal_passive.*0\.2-0\.6/);
+  assert.match(prompt, /growth_passive.*0\.2-0\.5/);
+  assert.match(prompt, /不得包含 id、activation、target/);
+  assert.match(prompt, /严格使用用户指定的值/);
+  assert.match(prompt, /不能只生成控制、护盾、治疗、无敌或辅助被动/);
+});
+
+test("requires the selected combat realm with each generation request", () => {
+  assert.equal(characterGenerationRequestSchema.safeParse({
+    name: "霜语",
+    prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
+  }).success, false);
+  assert.equal(characterGenerationRequestSchema.safeParse({
+    name: "霜语",
+    prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
+    realm: "cultivator",
+  }).success, true);
 });

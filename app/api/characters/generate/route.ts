@@ -9,8 +9,9 @@ import {
   logModelGenerationRequestFailure,
   recordModelGenerationAttempt,
 } from "@/lib/observability/modelGenerationMetrics";
+import type { Realm } from "@/types/character";
 
-const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 15_000;
+const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 30_000;
 const MAX_MODEL_REQUEST_TIMEOUT_MS = 60_000;
 
 type ModelConfiguration = {
@@ -31,6 +32,10 @@ type ModelResponse = {
   usage?: ModelUsage;
 };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 type ModelGenerationErrorCode =
   | "model_invalid_response"
   | "model_network_error"
@@ -42,10 +47,37 @@ class ModelGenerationError extends Error {
     readonly code: ModelGenerationErrorCode,
     readonly retryable: boolean,
     readonly upstreamStatus?: number,
+    readonly retryInstruction?: string,
   ) {
     super(code);
     this.name = "ModelGenerationError";
   }
+}
+
+function getModelValidationRetryInstruction(error: unknown): string {
+  if (error instanceof SyntaxError) {
+    return "上一次输出不是可解析的 JSON。请只输出一个完整 JSON 对象，并严格遵守字段与数值范围。";
+  }
+
+  const issues = typeof error === "object" && error !== null && "issues" in error
+    ? (error as { issues?: unknown }).issues
+    : undefined;
+  if (Array.isArray(issues)) {
+    const messages = issues
+      .map((issue) => (typeof issue === "object" && issue !== null && "message" in issue
+        ? String((issue as { message: unknown }).message)
+        : null))
+      .filter((message): message is string => message !== null)
+      .slice(0, 3);
+    if (messages.length > 0) {
+      if (messages.some((message) => message.includes("offensive active or passive skill"))) {
+        return "上一次没有攻击来源。下一版必须将其中一个技能的 type 设为 damage、critical 或 area_damage；不得同时选择 area_control 和 shield。请输出完整合规 JSON。";
+      }
+      return `上一次输出未通过规则校验：${messages.join("；")}。请从头生成完整合规 JSON。`;
+    }
+  }
+
+  return "上一次输出未通过格式或战斗规则校验。请从头生成完整 JSON，并逐项检查字段、范围和技能组合。";
 }
 
 function extractJsonContent(content: string): string {
@@ -90,7 +122,12 @@ function normalizeModelGenerationError(
   }
 
   if (error instanceof SyntaxError || (error instanceof Error && error.name === "ZodError")) {
-    return new ModelGenerationError("model_invalid_response", true);
+    return new ModelGenerationError(
+      "model_invalid_response",
+      true,
+      undefined,
+      getModelValidationRetryInstruction(error),
+    );
   }
 
   return new ModelGenerationError("model_network_error", true);
@@ -99,6 +136,8 @@ function normalizeModelGenerationError(
 async function generateModelAttempt(
   name: string,
   prompt: string,
+  realm: Realm,
+  retryInstruction: string | undefined,
   configuration: ModelConfiguration,
   requestId: string,
   attempt: number,
@@ -125,7 +164,7 @@ async function generateModelAttempt(
           { role: "system", content: getCharacterGenerationSystemPrompt() },
           {
             role: "user",
-            content: `角色名称：${name}\n角色描述：${prompt}`,
+            content: `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}`,
           },
         ],
       }),
@@ -153,10 +192,13 @@ async function generateModelAttempt(
       throw new ModelGenerationError("model_invalid_response", true, response.status);
     }
 
-    const draft = generatedCharacterDraftSchema.parse(
-      JSON.parse(extractJsonContent(content)),
-    );
-    const character = finalizeGeneratedCharacter({ ...draft, name }, prompt);
+    const rawDraft = JSON.parse(extractJsonContent(content));
+    if (!isRecord(rawDraft)) {
+      throw new ModelGenerationError("model_invalid_response", true, response.status);
+    }
+    // The caller owns name and realm; do not let a model echo change them.
+    const draft = generatedCharacterDraftSchema.parse({ ...rawDraft, name, realm });
+    const character = finalizeGeneratedCharacter(draft, prompt);
     const metric = {
       requestId,
       model: configuration.model,
@@ -196,21 +238,32 @@ async function generateModelAttempt(
 async function generateWithModel(
   name: string,
   prompt: string,
+  realm: Realm,
   configuration: ModelConfiguration,
   requestId: string,
 ) {
   let lastError: ModelGenerationError | undefined;
+  let retryInstruction: string | undefined;
 
   // Agnes does not support grammar-constrained JSON. A single retry lets the
   // prompt-based JSON path recover from transient provider or draft failures.
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
-      return await generateModelAttempt(name, prompt, configuration, requestId, attempt);
+      return await generateModelAttempt(
+        name,
+        prompt,
+        realm,
+        retryInstruction,
+        configuration,
+        requestId,
+        attempt,
+      );
     } catch (error) {
       const modelError = error instanceof ModelGenerationError
         ? error
         : new ModelGenerationError("model_network_error", true);
       lastError = modelError;
+      retryInstruction = modelError.retryInstruction;
       if (!modelError.retryable) break;
     }
   }
@@ -264,6 +317,7 @@ export async function POST(request: Request) {
     const character = await generateWithModel(
       parsedRequest.data.name,
       parsedRequest.data.prompt,
+      parsedRequest.data.realm,
       configuration,
       requestId,
     );

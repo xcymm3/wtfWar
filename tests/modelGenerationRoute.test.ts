@@ -29,6 +29,7 @@ function createRequest(): Request {
     body: JSON.stringify({
       name: "霜语",
       prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
+      realm: "cultivator",
     }),
   });
 }
@@ -98,11 +99,12 @@ test("returns a request ID and logs a successful model attempt", async () => {
 
   try {
     const response = await POST(createRequest());
-    const payload = await response.json() as { requestId?: unknown };
+    const payload = await response.json() as { character?: { realm?: unknown }; requestId?: unknown };
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("x-request-id"), payload.requestId);
     assert.equal(typeof payload.requestId, "string");
+    assert.equal(payload.character?.realm, "cultivator");
     const successLog = captured.logs.find((entry) => entry.event === "model_generation.succeeded");
     assert.ok(successLog);
     assert.equal(successLog.requestId, payload.requestId);
@@ -152,6 +154,104 @@ test("aborts timed-out model calls and records each retry", async () => {
     globalThis.fetch = originalFetch;
     captured.restore();
     restoreTimeout();
+    restoreBaseUrl();
+    restoreApiKey();
+  }
+});
+
+test("feeds schema failures into the retry prompt", async () => {
+  const restoreApiKey = setEnvironment("OPENAI_API_KEY", "test-key");
+  const restoreBaseUrl = setEnvironment("OPENAI_BASE_URL", "https://model.test/v1");
+  const restoreModel = setEnvironment("OPENAI_MODEL", "test-model");
+  const restoreTimeout = setEnvironment("MODEL_REQUEST_TIMEOUT_MS", "1000");
+  const captured = captureLogs();
+  const requestMessages: string[] = [];
+  let callCount = 0;
+  globalThis.fetch = async (_input, init) => {
+    callCount += 1;
+    const requestBody = JSON.parse(String(init?.body)) as {
+      messages: Array<{ content: string }>;
+    };
+    requestMessages.push(requestBody.messages[1]!.content);
+
+    if (callCount === 1) {
+      return Response.json({
+        choices: [{
+          message: {
+            content: JSON.stringify({
+              name: "霜语",
+              profession: "mage",
+              realm: "cultivator",
+              attack: 18,
+              maxHealth: 112,
+              skills: [
+                {
+                  name: "寒霜领域",
+                  description: "冻结敌方所有存活角色。",
+                  usageText: "挥手降霜",
+                  type: "area_control",
+                  cooldown: 5,
+                  stunChance: 1,
+                },
+                {
+                  name: "冰晶护盾",
+                  description: "为自身施加冰晶护盾。",
+                  usageText: "凝聚冰晶",
+                  type: "shield",
+                  cooldown: 3,
+                  shieldAmount: 30,
+                },
+              ],
+            }),
+          },
+        }],
+      });
+    }
+
+    return Response.json({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            name: "霜语",
+            profession: "mage",
+            realm: "cultivator",
+            attack: 18,
+            maxHealth: 112,
+            skills: [
+              {
+                name: "冰棱术",
+                description: "向敌方前排发射冰棱。",
+                usageText: "抬手施展",
+                type: "damage",
+                cooldown: 3,
+                damageMultiplier: 1.4,
+              },
+              {
+                name: "寒霜禁锢",
+                description: "使敌方前排下一次行动必定跳过。",
+                usageText: "凝结寒霜",
+                type: "control",
+                cooldown: 4,
+                stunChance: 1,
+              },
+            ],
+          }),
+        },
+      }],
+    });
+  };
+
+  try {
+    const response = await POST(createRequest());
+
+    assert.equal(response.status, 200);
+    assert.equal(callCount, 2);
+    assert.match(requestMessages[1]!, /其中一个技能的 type 设为 damage、critical 或 area_damage/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    captured.restore();
+    restoreTimeout();
+    restoreModel();
     restoreBaseUrl();
     restoreApiKey();
   }
