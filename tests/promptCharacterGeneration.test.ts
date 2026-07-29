@@ -5,6 +5,8 @@ import {
   characterGenerationRequestSchema,
   finalizeGeneratedCharacter,
   getCharacterGenerationSystemPrompt,
+  getModelCharacterDetailJsonSchema,
+  modelGeneratedCharacterDraftSchema,
 } from "../lib/characters/promptCharacterGeneration";
 import { characterSchema } from "../lib/schemas/character";
 
@@ -77,8 +79,26 @@ test("tells the model the legal passive multiplier ranges", () => {
   assert.match(prompt, /lifesteal_passive.*0\.2-0\.6/);
   assert.match(prompt, /growth_passive.*0\.2-0\.5/);
   assert.match(prompt, /不得包含 id、activation、target/);
-  assert.match(prompt, /严格使用用户指定的值/);
-  assert.match(prompt, /不能只生成控制、护盾、治疗、无敌或辅助被动/);
+  assert.match(prompt, /不得输出 name、realm 或 profession/);
+  assert.match(prompt, /第一个技能必须保持调用方指定的攻击 type/);
+});
+
+test("constrains model output to legal combat fields and offensive skill pairs", () => {
+  assert.equal(modelGeneratedCharacterDraftSchema.safeParse({
+    name: "模型不应输出的名称",
+    profession: "tank",
+    attack: 12,
+    maxHealth: 170,
+    skills: [],
+  }).success, false);
+
+  const schema = getModelCharacterDetailJsonSchema("tank", "damage");
+  const properties = schema.properties as Record<string, unknown>;
+  const skills = properties.skills as { prefixItems: unknown[] };
+  assert.match(JSON.stringify(skills.prefixItems[0]), /"const":"damage"/);
+  assert.doesNotMatch(JSON.stringify(skills.prefixItems[1]), /"const":"damage"/);
+  assert.match(JSON.stringify(skills.prefixItems[1]), /"cleave_passive"/);
+  assert.match(JSON.stringify(schema), /"minimum":145/);
 });
 
 test("requires the selected combat realm with each generation request", () => {

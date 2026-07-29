@@ -194,7 +194,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(generator, /realm/);
   assert.match(generator, /charge_strike_passive/);
   assert.match(generationRoute, /OPENAI_API_KEY/);
-  assert.doesNotMatch(generationRoute, /response_format/);
+  assert.match(generationRoute, /response_format/);
+  assert.match(generationRoute, /json_schema/);
   assert.match(charactersRoute, /createRemoteCharacter/);
   assert.match(charactersRoute, /DuplicateCharacterNameError/);
   assert.match(repository, /ensurePresetCharacters/);

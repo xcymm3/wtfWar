@@ -64,38 +64,45 @@ test("returns a request ID and logs a successful model attempt", async () => {
   const restoreModel = setEnvironment("OPENAI_MODEL", "test-model");
   const restoreTimeout = setEnvironment("MODEL_REQUEST_TIMEOUT_MS", "1000");
   const captured = captureLogs();
-  globalThis.fetch = async () => Response.json({
-    choices: [{
-      message: {
-        content: JSON.stringify({
-          name: "霜语",
-          profession: "mage",
-          realm: "mortal",
-          attack: 18,
-          maxHealth: 112,
-          skills: [
-            {
-              name: "冰棱术",
-              description: "向敌方前排发射冰棱。",
-              usageText: "抬手施展",
-              type: "damage",
-              cooldown: 3,
-              damageMultiplier: 1.4,
-            },
-            {
-              name: "寒霜禁锢",
-              description: "使敌方前排下一次行动必定跳过。",
-              usageText: "凝结寒霜",
-              type: "control",
-              cooldown: 4,
-              stunChance: 1,
-            },
-          ],
-        }),
-      },
-    }],
-    usage: { prompt_tokens: 120, completion_tokens: 80, total_tokens: 200 },
-  });
+  let callCount = 0;
+  globalThis.fetch = async () => {
+    callCount += 1;
+    if (callCount === 1) {
+      return Response.json({
+        choices: [{ message: { content: JSON.stringify({ profession: "mage", offensiveSkillType: "damage" }) } }],
+        usage: { prompt_tokens: 20, completion_tokens: 10, total_tokens: 30 },
+      });
+    }
+    return Response.json({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            attack: 18,
+            maxHealth: 112,
+            skills: [
+              {
+                name: "冰棱术",
+                description: "向敌方前排发射冰棱。",
+                usageText: "抬手施展",
+                type: "damage",
+                cooldown: 3,
+                damageMultiplier: 1.4,
+              },
+              {
+                name: "寒霜禁锢",
+                description: "使敌方前排下一次行动必定跳过。",
+                usageText: "凝结寒霜",
+                type: "control",
+                cooldown: 4,
+                stunChance: 1,
+              },
+            ],
+          }),
+        },
+      }],
+      usage: { prompt_tokens: 100, completion_tokens: 70, total_tokens: 170 },
+    });
+  };
 
   try {
     const response = await POST(createRequest());
@@ -174,14 +181,17 @@ test("feeds schema failures into the retry prompt", async () => {
     };
     requestMessages.push(requestBody.messages[1]!.content);
 
-    if (callCount === 1) {
+    if (callCount === 1 || callCount === 3) {
+      return Response.json({
+        choices: [{ message: { content: JSON.stringify({ profession: "mage", offensiveSkillType: "damage" }) } }],
+      });
+    }
+
+    if (callCount === 2) {
       return Response.json({
         choices: [{
           message: {
             content: JSON.stringify({
-              name: "霜语",
-              profession: "mage",
-              realm: "cultivator",
               attack: 18,
               maxHealth: 112,
               skills: [
@@ -212,9 +222,6 @@ test("feeds schema failures into the retry prompt", async () => {
       choices: [{
         message: {
           content: JSON.stringify({
-            name: "霜语",
-            profession: "mage",
-            realm: "cultivator",
             attack: 18,
             maxHealth: 112,
             skills: [
@@ -245,9 +252,9 @@ test("feeds schema failures into the retry prompt", async () => {
     const response = await POST(createRequest());
 
     assert.equal(response.status, 200);
-    assert.equal(callCount, 2);
-    assert.match(requestMessages[1]!, /其中一个技能的 type 设为 damage、critical 或 area_damage/);
-    assert.match(requestMessages[1]!, /冰晶护盾/);
+    assert.equal(callCount, 4);
+    assert.match(requestMessages[3]!, /其中一个技能的 type 设为 damage、critical 或 area_damage/);
+    assert.match(requestMessages[3]!, /冰晶护盾/);
   } finally {
     globalThis.fetch = originalFetch;
     captured.restore();

@@ -6,8 +6,20 @@ import {
   PROFESSIONS,
   REALMS,
   type Character,
+  type Profession,
   type Skill,
 } from "@/types/character";
+
+export const OFFENSIVE_SKILL_TYPES = [
+  "damage",
+  "critical",
+  "area_damage",
+  "cleave_passive",
+  "charge_strike_passive",
+  "assassin_passive",
+] as const;
+
+export type OffensiveSkillType = (typeof OFFENSIVE_SKILL_TYPES)[number];
 
 const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
@@ -137,6 +149,103 @@ export const generatedCharacterDraftSchema = z.object({
   skills: z.tuple([generatedSkillDraftSchema, generatedSkillDraftSchema]),
 }).strict();
 
+/** The model owns only combat choices; request data owns the name and realm. */
+export const modelGeneratedCharacterDraftSchema = generatedCharacterDraftSchema.omit({
+  name: true,
+  realm: true,
+});
+
+/** First-stage model output: select constraints, never invent combat values. */
+export const modelCharacterPlanSchema = z.object({
+  profession: z.enum(PROFESSIONS),
+  offensiveSkillType: z.enum(OFFENSIVE_SKILL_TYPES),
+}).strict();
+
+export const modelCharacterPlanJsonSchema = z.toJSONSchema(modelCharacterPlanSchema);
+
+const professionSchemaConstraints = {
+  tank: { attack: [5, 15], maxHealth: [145, 180] },
+  warrior: { attack: [14, 22], maxHealth: [120, 160] },
+  mage: { attack: [13, 23], maxHealth: [95, 130] },
+  assassin: { attack: [16, 25], maxHealth: [105, 145] },
+  ranger: { attack: [20, 30], maxHealth: [85, 120] },
+} as const;
+
+export const modelGeneratedCharacterDetailSchema = modelGeneratedCharacterDraftSchema.omit({
+  profession: true,
+});
+const modelGeneratedCharacterDetailBaseJsonSchema = z.toJSONSchema(
+  modelGeneratedCharacterDetailSchema,
+);
+
+function getRecord(value: unknown, label: string): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`Invalid generated character JSON Schema: ${label}.`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function getSkillType(skillSchema: Record<string, unknown>): string {
+  const properties = getRecord(skillSchema.properties, "skill properties");
+  const type = getRecord(properties.type, "skill type");
+  if (typeof type.const !== "string") {
+    throw new Error("Invalid generated character JSON Schema: skill type.");
+  }
+  return type.const;
+}
+
+function getCompatibleCompanionSkillSchemas(
+  offensiveSkillType: OffensiveSkillType,
+  skillSchemas: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  const offensiveSkillIsPassive = offensiveSkillType.endsWith("_passive");
+  return skillSchemas.filter((skillSchema) => {
+    const type = getSkillType(skillSchema);
+    if (type === offensiveSkillType) return false;
+    return !offensiveSkillIsPassive || !type.endsWith("_passive");
+  });
+}
+
+/**
+ * Agnes supports OpenAI-compatible JSON Schema output. The plan fixes the
+ * profession and first offensive skill before this schema is sent, so every
+ * schema-valid detail response has a legal combat foundation.
+ */
+export function getModelCharacterDetailJsonSchema(
+  profession: Profession,
+  offensiveSkillType: OffensiveSkillType,
+): Record<string, unknown> {
+  const schema = structuredClone(modelGeneratedCharacterDetailBaseJsonSchema) as Record<string, unknown>;
+  const properties = getRecord(schema.properties, "detail properties");
+  const skills = getRecord(properties.skills, "detail skills");
+  const prefixItems = skills.prefixItems;
+  if (!Array.isArray(prefixItems) || prefixItems.length !== 2) {
+    throw new Error("Invalid generated character JSON Schema: skill tuple.");
+  }
+
+  const firstSkill = getRecord(prefixItems[0], "first skill");
+  const skillSchemas = firstSkill.oneOf;
+  if (!Array.isArray(skillSchemas)) {
+    throw new Error("Invalid generated character JSON Schema: skill variants.");
+  }
+  const typedSkillSchemas = skillSchemas.map((skillSchema) => getRecord(skillSchema, "skill variant"));
+  const offensiveSkillSchema = typedSkillSchemas.find(
+    (skillSchema) => getSkillType(skillSchema) === offensiveSkillType,
+  );
+  if (!offensiveSkillSchema) {
+    throw new Error("Invalid generated character JSON Schema: offensive skill.");
+  }
+
+  const ranges = professionSchemaConstraints[profession];
+  properties.attack = { type: "integer", minimum: ranges.attack[0], maximum: ranges.attack[1] };
+  properties.maxHealth = { type: "integer", minimum: ranges.maxHealth[0], maximum: ranges.maxHealth[1] };
+  skills.prefixItems = [
+    offensiveSkillSchema,
+    { oneOf: getCompatibleCompanionSkillSchemas(offensiveSkillType, typedSkillSchemas) },
+  ];
+  return schema;
+}
+
 export const characterGenerationRequestSchema = z.object({
   name: z.string().trim().min(1).max(24),
   prompt: z.string().trim().min(8).max(500),
@@ -216,7 +325,11 @@ export function finalizeGeneratedCharacter(
 }
 
 export function getCharacterGenerationSystemPrompt(): string {
-  return `你是“次元竞技场”的角色设计器。根据用户提供的角色名称、角色描述和指定战斗力阶位生成一个可用于团队回合制战斗的角色；职业、属性和技能必须综合这些信息判断，仅输出 JSON 对象，不要 Markdown。
-JSON 顶层只能含 name、profession、realm、attack、maxHealth、skills。profession 仅可为 tank、warrior、mage、assassin、ranger。realm 仅可为 mortal、martial_master、superpowered、cultivator、deity，且必须严格使用用户指定的值（菜鸟、凡人、高手、超凡、神灵由低到高）。skills 必须正好两个，组合只能是两个主动技能或一个主动技能加一个被动技能，两个 type 不同，不能使用 buff；这是硬性要求：至少一个 type 必须为 damage、critical、area_damage、cleave_passive、charge_strike_passive 或 assassin_passive，不能只生成控制、护盾、治疗、无敌或辅助被动。每个技能只能含 name、description、usageText、type、cooldown 和该 type 下文要求的字段，不得包含 id、activation、target 或其他 type 的字段；usageText 是战报中放在技能名前的动作短语，如“易掌为拳，使出”，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 另含 damageMultiplier，且必须为 2；area_damage 另含 damageMultiplier（0.45-0.9）；shield 另含 shieldAmount（10-45）；heal 另含 healAmount（10-45），目标始终是己方前排；area_heal 另含 healAmount（5-25）；control 另含 stunChance，且必须为 1；area_control 另含 stunChance，且必须为 1，冷却必须为 5；invincible 无额外字段，冷却 3-5，本回合免疫伤害；lifesteal_passive 另含 damageMultiplier（0.2-0.6）；growth_passive 另含 damageMultiplier（0.2-0.5）；revive_passive 与 assassin_passive 无额外字段。cleave_passive 的 cooldown 必须为 0，会让普通攻击命中敌方全体但降低有效攻击；charge_strike_passive 的 cooldown 必须为 0，另含 chargeTurns（2-5），每满该次数行动对敌方前排释放固定高伤害；lifesteal_passive 在每次造成伤害后回血；growth_passive 在每次行动结束后成长；revive_passive 会在首次阵亡时半血复活；assassin_passive 会让单体攻击和控制优先锁定敌方最后存活者，但自身攻击降低 20%。area_damage 攻击敌方所有存活角色，area_heal 恢复己方所有存活角色。
+  return `你是“次元竞技场”的角色设计器。调用方已固定职业和第一个攻击技能 type；根据用户提供的角色名称、角色描述和指定战斗力阶位补全可用于团队回合制战斗的属性和两个技能，仅输出 JSON 对象，不要 Markdown。
+JSON 顶层只能含 attack、maxHealth、skills，不得输出 name、realm 或 profession。skills 必须正好两个：第一个技能必须保持调用方指定的攻击 type，第二个技能必须使用调用方 JSON Schema 允许的不同 type。每个技能只能含 name、description、usageText、type、cooldown 和该 type 要求的字段，不得包含 id、activation、target 或其他 type 的字段；usageText 是战报中放在技能名前的动作短语，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 的 damageMultiplier 必须为 2；area_damage 的 damageMultiplier 为 0.45-0.9；shield 的 shieldAmount 为 10-45；heal 的 healAmount 为 10-45；area_heal 的 healAmount 为 5-25；control 与 area_control 的 stunChance 必须为 1；area_control 的冷却必须为 5；invincible 冷却 3-5；charge_strike_passive 的 chargeTurns 为 2-5；lifesteal_passive 的 damageMultiplier 为 0.2-0.6；growth_passive 的 damageMultiplier 为 0.2-0.5。所有中文文本简洁，技能名不重复。
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 16-25、105-145；ranger 20-30、85-120。冷却 1-5。所有中文文本简洁，技能名不重复。`;
+}
+
+export function getCharacterPlanSystemPrompt(): string {
+  return `你是“次元竞技场”的角色规划器。根据角色名称、角色描述和指定战斗力阶位，只选择 profession 与 offensiveSkillType，不要生成属性或技能文本。profession 仅可为 tank、warrior、mage、assassin、ranger。offensiveSkillType 仅可为 damage、critical、area_damage、cleave_passive、charge_strike_passive、assassin_passive。选择应符合角色设定；仅输出 JSON 对象，不要 Markdown。`;
 }

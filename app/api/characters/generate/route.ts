@@ -2,7 +2,12 @@ import {
   characterGenerationRequestSchema,
   finalizeGeneratedCharacter,
   generatedCharacterDraftSchema,
+  getCharacterPlanSystemPrompt,
   getCharacterGenerationSystemPrompt,
+  getModelCharacterDetailJsonSchema,
+  modelCharacterPlanJsonSchema,
+  modelCharacterPlanSchema,
+  modelGeneratedCharacterDetailSchema,
 } from "@/lib/characters/promptCharacterGeneration";
 import {
   logModelGenerationAttempt,
@@ -30,6 +35,12 @@ type ModelUsage = {
 type ModelResponse = {
   choices?: Array<{ message?: { content?: string | null } }>;
   usage?: ModelUsage;
+};
+
+type ModelCompletion = {
+  content: string;
+  usage?: ModelUsage;
+  upstreamStatus: number;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -165,56 +176,95 @@ async function generateModelAttempt(
   let usage: ModelUsage | undefined;
 
   try {
-    const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${configuration.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: configuration.model,
-        temperature: 0.2,
-        max_tokens: 1000,
-        messages: [
-          { role: "system", content: getCharacterGenerationSystemPrompt() },
-          {
-            role: "user",
-            content: `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
+    const completeJson = async (
+      systemContent: string,
+      userContent: string,
+      schemaName: string,
+      schema: Record<string, unknown>,
+      maxTokens: number,
+    ): Promise<ModelCompletion> => {
+      const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${configuration.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: configuration.model,
+          temperature: 0.2,
+          max_tokens: maxTokens,
+          response_format: {
+            type: "json_schema",
+            json_schema: { name: schemaName, strict: true, schema },
           },
-        ],
-      }),
-    });
-    upstreamStatus = response.status;
+          messages: [
+            { role: "system", content: systemContent },
+            { role: "user", content: userContent },
+          ],
+        }),
+      });
+      upstreamStatus = response.status;
 
-    if (!response.ok) {
-      throw new ModelGenerationError(
-        "model_upstream_error",
-        response.status === 429 || response.status >= 500,
-        response.status,
-      );
-    }
+      if (!response.ok) {
+        throw new ModelGenerationError(
+          "model_upstream_error",
+          response.status === 429 || response.status >= 500,
+          response.status,
+        );
+      }
 
-    let payload: ModelResponse;
-    try {
-      payload = await response.json() as ModelResponse;
-    } catch {
-      throw new ModelGenerationError("model_invalid_response", true, response.status);
-    }
+      let payload: ModelResponse;
+      try {
+        payload = await response.json() as ModelResponse;
+      } catch {
+        throw new ModelGenerationError("model_invalid_response", true, response.status);
+      }
 
-    usage = payload.usage;
-    const content = payload.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new ModelGenerationError("model_invalid_response", true, response.status);
-    }
+      const content = payload.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new ModelGenerationError("model_invalid_response", true, response.status);
+      }
+      return { content, usage: payload.usage, upstreamStatus: response.status };
+    };
+
+    const planCompletion = await completeJson(
+      getCharacterPlanSystemPrompt(),
+      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}`,
+      "character_combat_plan",
+      modelCharacterPlanJsonSchema,
+      100,
+    );
+    const plan = modelCharacterPlanSchema.parse(
+      JSON.parse(extractJsonContent(planCompletion.content)),
+    );
+    const detailCompletion = await completeJson(
+      getCharacterGenerationSystemPrompt(),
+      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}\n指定职业：${plan.profession}\n第一个攻击技能 type：${plan.offensiveSkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
+      "character_combat_detail",
+      getModelCharacterDetailJsonSchema(plan.profession, plan.offensiveSkillType),
+      1000,
+    );
+    usage = {
+      prompt_tokens: (planCompletion.usage?.prompt_tokens ?? 0) + (detailCompletion.usage?.prompt_tokens ?? 0),
+      completion_tokens: (planCompletion.usage?.completion_tokens ?? 0) + (detailCompletion.usage?.completion_tokens ?? 0),
+      total_tokens: (planCompletion.usage?.total_tokens ?? 0) + (detailCompletion.usage?.total_tokens ?? 0),
+    };
+    upstreamStatus = detailCompletion.upstreamStatus;
+    const content = detailCompletion.content;
 
     try {
       const rawDraft = JSON.parse(extractJsonContent(content));
       if (!isRecord(rawDraft)) {
         throw new TypeError("Model response must be a JSON object.");
       }
-      // The caller owns name and realm; do not let a model echo change them.
-      const draft = generatedCharacterDraftSchema.parse({ ...rawDraft, name, realm });
+      const modelDraft = modelGeneratedCharacterDetailSchema.parse(rawDraft);
+      const draft = generatedCharacterDraftSchema.parse({
+        ...modelDraft,
+        name,
+        realm,
+        profession: plan.profession,
+      });
       const character = finalizeGeneratedCharacter(draft, prompt);
       const metric = {
         requestId,
@@ -232,7 +282,7 @@ async function generateModelAttempt(
       return character;
     } catch (error) {
       if (error instanceof ModelGenerationError) throw error;
-      throw createInvalidModelResponseError(response.status, error, content);
+      throw createInvalidModelResponseError(detailCompletion.upstreamStatus, error, content);
     }
   } catch (error) {
     const modelError = normalizeModelGenerationError(error, controller);
