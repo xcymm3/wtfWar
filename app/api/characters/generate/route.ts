@@ -120,6 +120,14 @@ function getModelConfiguration(): ModelConfiguration | null {
   };
 }
 
+function usesJsonObjectResponseFormat(baseUrl: string): boolean {
+  try {
+    return new URL(baseUrl).hostname === "api.deepseek.com";
+  } catch {
+    return false;
+  }
+}
+
 function normalizeModelGenerationError(
   error: unknown,
 ): ModelGenerationError {
@@ -179,6 +187,12 @@ async function generateModelAttempt(
     ): Promise<ModelCompletion> => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), configuration.timeoutMs);
+      const responseFormat = usesJsonObjectResponseFormat(configuration.baseUrl)
+        ? { type: "json_object" }
+        : {
+          type: "json_schema",
+          json_schema: { name: schemaName, strict: true, schema },
+        };
       try {
         const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
           method: "POST",
@@ -191,10 +205,7 @@ async function generateModelAttempt(
             model: configuration.model,
             temperature: 0.2,
             max_tokens: maxTokens,
-            response_format: {
-              type: "json_schema",
-              json_schema: { name: schemaName, strict: true, schema },
-            },
+          response_format: responseFormat,
             messages: [
               { role: "system", content: systemContent },
               { role: "user", content: userContent },

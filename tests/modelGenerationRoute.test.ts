@@ -133,6 +133,32 @@ test("returns a request ID and logs a successful model attempt", async () => {
   }
 });
 
+test("uses JSON object mode for the DeepSeek API", async () => {
+  const restoreApiKey = setEnvironment("OPENAI_API_KEY", "test-key");
+  const restoreBaseUrl = setEnvironment("OPENAI_BASE_URL", "https://api.deepseek.com");
+  const restoreModel = setEnvironment("OPENAI_MODEL", "deepseek-v4-flash");
+  const restoreTimeout = setEnvironment("MODEL_REQUEST_TIMEOUT_MS", "1000");
+  const responseFormats: unknown[] = [];
+  globalThis.fetch = async (_input, init) => {
+    const body = JSON.parse(String(init?.body)) as { response_format?: unknown };
+    responseFormats.push(body.response_format);
+    return Response.json({ error: { message: "invalid request" } }, { status: 400 });
+  };
+
+  try {
+    const response = await POST(createRequest());
+
+    assert.equal(response.status, 502);
+    assert.deepEqual(responseFormats, [{ type: "json_object" }]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    restoreTimeout();
+    restoreModel();
+    restoreBaseUrl();
+    restoreApiKey();
+  }
+});
+
 test("aborts timed-out model calls and records each retry", async () => {
   const restoreApiKey = setEnvironment("OPENAI_API_KEY", "test-key");
   const restoreBaseUrl = setEnvironment("OPENAI_BASE_URL", "https://model.test/v1");
