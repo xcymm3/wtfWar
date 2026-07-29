@@ -16,6 +16,8 @@ export type CombatantState = {
   health: number;
   shield: number;
   isStunned: boolean;
+  isInvincible: boolean;
+  hasRevived: boolean;
   chargeProgress: number;
   cooldowns: Record<string, number>;
 };
@@ -58,6 +60,8 @@ export function createCombatantState(character: Character): CombatantState {
     health: effectiveStats.maxHealth,
     shield: 0,
     isStunned: false,
+    isInvincible: false,
+    hasRevived: false,
     chargeProgress: 0,
     cooldowns: Object.fromEntries(
       characterSnapshot.skills.map((skill) => [skill.id, 0]),

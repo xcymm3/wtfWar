@@ -54,7 +54,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     maxHealth: 136,
     skills: [
       { id: "preset-spearman-pierce", name: "穿刺", description: "向前突刺，造成可靠伤害。", type: "damage", cooldown: 2, damageMultiplier: 1.4 },
-      { id: "preset-spearman-formation-break", name: "破阵", description: "扰乱对手节奏，使其可能错过行动。", type: "control", cooldown: 4, stunChance: 0.35 },
+      { id: "preset-spearman-formation-break", name: "破阵", description: "扰乱对手节奏，使其下一次行动跳过。", type: "control", cooldown: 4, stunChance: 1 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,
@@ -68,7 +68,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     maxHealth: 112,
     skills: [
       { id: "preset-warlock-arcane-burst", name: "奥术爆发", description: "释放聚集的奥术能量。", type: "damage", cooldown: 3, damageMultiplier: 1.6 },
-      { id: "preset-warlock-frost-bind", name: "冰霜束缚", description: "冰霜可能冻结对手下一次行动。", type: "control", cooldown: 4, stunChance: 0.4 },
+      { id: "preset-warlock-frost-bind", name: "冰霜束缚", description: "冰霜冻结对手下一次行动。", type: "control", cooldown: 4, stunChance: 1 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,
@@ -82,7 +82,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     maxHealth: 122,
     skills: [
       { id: "preset-healer-radiant-bolt", name: "圣光箭", description: "释放一道用于自保的光能攻击。", type: "damage", cooldown: 2, damageMultiplier: 1.1 },
-      { id: "preset-healer-restoration", name: "复苏", description: "以治疗魔法恢复自身生命。", type: "heal", cooldown: 4, healAmount: 38 },
+      { id: "preset-healer-restoration", name: "复苏", description: "以治疗魔法恢复己方前排生命。", type: "heal", cooldown: 4, healAmount: 38 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,
@@ -96,7 +96,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     maxHealth: 118,
     skills: [
       { id: "preset-samurai-iaido", name: "居合", description: "以瞬间拔刀造成高额伤害。", type: "damage", cooldown: 3, damageMultiplier: 1.7 },
-      { id: "preset-samurai-intimidation", name: "威压", description: "凌厉气势可能令对手迟疑。", type: "control", cooldown: 4, stunChance: 0.3 },
+      { id: "preset-samurai-intimidation", name: "威压", description: "凌厉气势令对手下一次行动跳过。", type: "control", cooldown: 4, stunChance: 1 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,
@@ -124,7 +124,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     maxHealth: 106,
     skills: [
       { id: "preset-witch-hex-bolt", name: "咒能弹", description: "射出带有咒力的远程攻击。", type: "damage", cooldown: 2, damageMultiplier: 1.4 },
-      { id: "preset-witch-binding-hex", name: "束缚咒", description: "诅咒可能令对手下一次行动落空。", type: "control", cooldown: 4, stunChance: 0.35 },
+      { id: "preset-witch-binding-hex", name: "束缚咒", description: "诅咒令对手下一次行动落空。", type: "control", cooldown: 4, stunChance: 1 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,

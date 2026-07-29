@@ -38,8 +38,15 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
   control: "控制",
   area_damage: "群体伤害",
   area_heal: "群体治疗",
+  critical: "暴击",
+  area_control: "群体控制",
+  invincible: "无敌",
   cleave_passive: "横扫被动",
   charge_strike_passive: "蓄力被动",
+  lifesteal_passive: "吸血被动",
+  growth_passive: "成长被动",
+  revive_passive: "复活被动",
+  assassin_passive: "刺客被动",
   buff: "增益",
 };
 
@@ -190,6 +197,8 @@ function TeamCombatantName({
 }
 
 function getTeamTargetResult(target: TeamBattleEvent["targets"][number]): string {
+  if (target.targetInvincible) return "被无敌完全抵消";
+  if (target.targetRevived) return `造成 ${target.damage} 点伤害，但触发了复活`;
   if (target.rawDamage > 0) {
     return `造成 ${target.damage} 点伤害${target.shieldAbsorbed > 0 ? `（护盾吸收 ${target.shieldAbsorbed}）` : ""}`;
   }
@@ -237,6 +246,7 @@ function formatTeamBattleLog(
             </span>
           );
         })}
+        {event.actorHealing > 0 ? `；并为自己恢复 ${event.actorHealing} 点生命` : ""}
         。
       </>
     );
@@ -245,7 +255,13 @@ function formatTeamBattleLog(
   const targetName = charactersById.get(target.characterId)?.name ?? "未知角色";
   const targetLabel = <TeamCombatantName name={targetName} side={target.side} />;
   if (target.rawDamage > 0) {
-    return <>{actorLabel} {action}攻击{relation}{targetLabel}，{getTeamTargetResult(target)}。</>;
+    return (
+      <>
+        {actorLabel} {action}攻击{relation}{targetLabel}，{getTeamTargetResult(target)}
+        {event.actorHealing > 0 ? `，并恢复 ${event.actorHealing} 点生命` : ""}
+        。
+      </>
+    );
   }
   if (target.healing > 0 || target.shieldGranted > 0) {
     return <>{actorLabel} {action}，为{relation}{targetLabel} {getTeamTargetResult(target)}。</>;

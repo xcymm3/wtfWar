@@ -27,10 +27,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function getLegacySkillTarget(value: unknown): string {
   switch (value) {
     case "damage":
+    case "critical":
     case "control":
       return "enemy_front";
     case "area_damage":
+    case "area_control":
       return "enemies_all";
+    case "heal":
+      return "ally_front";
     case "area_heal":
       return "allies_all";
     default:
@@ -49,7 +53,7 @@ function migrateLegacyCharacter(value: unknown): {
     ? value.skills.map((skill) => {
       if (!isRecord(skill)) return skill;
       const isPassive =
-        skill.type === "cleave_passive" || skill.type === "charge_strike_passive";
+        typeof skill.type === "string" && skill.type.endsWith("_passive");
       const hasCanonicalFields =
         skill.activation !== undefined &&
         skill.target !== undefined &&

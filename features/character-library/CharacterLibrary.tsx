@@ -27,8 +27,15 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
   control: "控制",
   area_damage: "群体伤害",
   area_heal: "群体治疗",
+  critical: "暴击",
+  area_control: "群体控制",
+  invincible: "无敌",
   cleave_passive: "横扫被动",
   charge_strike_passive: "蓄力被动",
+  lifesteal_passive: "吸血被动",
+  growth_passive: "成长被动",
+  revive_passive: "复活被动",
+  assassin_passive: "刺客被动",
   buff: "增益",
 };
 
@@ -43,19 +50,35 @@ function getSkillEffect(skill: Skill): string {
     case "shield":
       return `获得 ${skill.shieldAmount ?? 0} 护盾`;
     case "heal":
-      return `恢复 ${skill.healAmount ?? 0} 生命`;
+      return `治疗前排 ${skill.healAmount ?? 0} 生命`;
     case "control":
-      return `${Math.round((skill.stunChance ?? 0) * 100)}% 概率眩晕`;
+      return "眩晕敌方前排";
     case "area_damage":
       return `全体伤害倍率 ×${skill.damageMultiplier ?? 0}`;
     case "area_heal":
       return `全队恢复 ${skill.healAmount ?? 0} 生命`;
+    case "critical":
+      return "双倍伤害并恢复自身生命";
+    case "area_control":
+      return "眩晕敌方全体";
+    case "invincible":
+      return "本回合免疫伤害";
     case "cleave_passive":
       return "普通攻击改为横扫，但攻击降低";
     case "charge_strike_passive":
       return `每 ${skill.chargeTurns ?? 0} 次行动蓄力一击`;
+    case "lifesteal_passive":
+      return `造成伤害后恢复 ${skill.damageMultiplier ?? 0}×攻击`;
+    case "growth_passive":
+      return `每次行动后提高 ${skill.damageMultiplier ?? 0}×攻击`;
+    case "revive_passive":
+      return "首次阵亡时半血复活";
+    case "assassin_passive":
+      return "攻击降低 20%，单体优先后排";
     case "buff":
       return "Beta 阶段暂未开放";
+    default:
+      return "特殊技能效果";
   }
 }
 

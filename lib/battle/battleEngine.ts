@@ -126,6 +126,8 @@ function resolveSkillAction(
       throw new Error("Passive skills are resolved by the v2 battle engine.");
     case "buff":
       throw new Error("Buff skills are not supported in the Beta battle engine.");
+    default:
+      throw new Error("This skill type requires the team battle engine.");
   }
 }
 

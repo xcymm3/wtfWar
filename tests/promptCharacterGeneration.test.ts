@@ -94,3 +94,28 @@ test("uses the role name when inferring a profession", () => {
   assert.equal(character.profession, "mage");
   assert.equal(character.name, "冰霜术士");
 });
+
+test("matches keyword prompts to the new active and passive skill types", () => {
+  const cases = [
+    { name: "破军", prompt: "以暴击和绝杀著称的武者。", expectedType: "critical" },
+    { name: "霜狱", prompt: "擅长群控与眩晕全体的寒冰法师。", expectedType: "area_control" },
+    { name: "金身", prompt: "能开启无敌金身挡下致命一击的守卫。", expectedType: "invincible" },
+    { name: "血牙", prompt: "靠吸血续战的凶狠斗士。", expectedType: "lifesteal_passive" },
+    { name: "战狂", prompt: "越战越强、战意不断成长的狂战士。", expectedType: "growth_passive" },
+    { name: "不死鸟", prompt: "倒下后还能复活重生的异能者。", expectedType: "revive_passive" },
+    { name: "夜枭", prompt: "最擅长切后和狙杀后排的暗影猎手。", expectedType: "assassin_passive" },
+  ] as const;
+
+  for (const testCase of cases) {
+    const character = generateLocalCharacter({
+      name: testCase.name,
+      prompt: testCase.prompt,
+    });
+
+    assert.equal(
+      character.skills.some((skill) => skill.type === testCase.expectedType),
+      true,
+      testCase.expectedType,
+    );
+  }
+});

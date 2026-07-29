@@ -49,12 +49,19 @@ export const ACTIVE_SKILL_TYPES = [
   "control",
   "area_damage",
   "area_heal",
+  "critical",
+  "area_control",
+  "invincible",
   "buff",
 ] as const;
 
 export const PASSIVE_SKILL_TYPES = [
   "cleave_passive",
   "charge_strike_passive",
+  "lifesteal_passive",
+  "growth_passive",
+  "revive_passive",
+  "assassin_passive",
 ] as const;
 
 export const SKILL_TYPES = [
@@ -68,6 +75,7 @@ export type SkillType = (typeof SKILL_TYPES)[number];
 
 export const SKILL_TARGETS = [
   "self",
+  "ally_front",
   "enemy_front",
   "enemies_all",
   "allies_all",

@@ -50,6 +50,8 @@ export type TeamBattleTargetResult = TeamBattleCombatantSnapshot & {
   healing: number;
   shieldGranted: number;
   targetStunned: boolean;
+  targetInvincible: boolean;
+  targetRevived: boolean;
 };
 
 /** One resolved v2 action, including the entire live formation after it ends. */
@@ -59,6 +61,7 @@ export type TeamBattleEvent = {
   skill: Pick<Skill, "id" | "name" | "type"> | null;
   targets: TeamBattleTargetResult[];
   formations: Record<BattleSide, TeamBattleCombatantSnapshot[]>;
+  actorHealing: number;
   narration: string;
 };
 

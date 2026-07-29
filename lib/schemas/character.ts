@@ -15,13 +15,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function getLegacyTarget(type: unknown): "self" | "enemy_front" | "enemies_all" | "allies_all" {
+function getLegacyTarget(type: unknown): "self" | "ally_front" | "enemy_front" | "enemies_all" | "allies_all" {
   switch (type) {
     case "damage":
+    case "critical":
     case "control":
       return "enemy_front";
     case "area_damage":
+    case "area_control":
       return "enemies_all";
+    case "heal":
+      return "ally_front";
     case "area_heal":
       return "allies_all";
     default:
@@ -33,7 +37,7 @@ function normalizeLegacySkill(value: unknown): unknown {
   if (!isRecord(value)) return value;
 
   const type = value.type;
-  const isPassive = type === "cleave_passive" || type === "charge_strike_passive";
+  const isPassive = typeof type === "string" && type.endsWith("_passive");
 
   return {
     ...value,
@@ -64,10 +68,10 @@ const normalizedSkillSchema = z.object({
   activation: z.enum(["active", "passive"]),
   target: z.enum(SKILL_TARGETS),
   cooldown: z.number().int().min(0).max(BATTLE_RULES.maxCooldown),
-  damageMultiplier: z.number().min(0.45).max(BATTLE_RULES.maxDamageMultiplier).optional(),
+  damageMultiplier: z.number().min(0.2).max(2).optional(),
   shieldAmount: z.number().int().positive().max(45).optional(),
   healAmount: z.number().int().positive().max(45).optional(),
-  stunChance: z.number().min(0).max(0.5).optional(),
+  stunChance: z.number().min(0).max(1).optional(),
   chargeTurns: z.number().int().min(2).max(5).optional(),
 }).superRefine((skill, context) => {
   const isActiveType = (ACTIVE_SKILL_TYPES as readonly string[]).includes(skill.type);
@@ -118,9 +122,30 @@ const normalizedSkillSchema = z.object({
       context.addIssue({
         code: "custom",
         path: ["damageMultiplier"],
-        message: "damage skill requires damageMultiplier between 0.8 and 1.8.",
+        message: "damage requires damageMultiplier between 0.8 and 1.8.",
       });
     }
+  }
+  if (["lifesteal_passive", "growth_passive"].includes(skill.type) && skill.damageMultiplier === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["damageMultiplier"],
+      message: "This skill requires damageMultiplier.",
+    });
+  }
+  if (skill.type === "damage" && skill.damageMultiplier !== undefined && skill.damageMultiplier > BATTLE_RULES.maxDamageMultiplier) {
+    context.addIssue({
+      code: "custom",
+      path: ["damageMultiplier"],
+      message: "damage requires damageMultiplier between 0.8 and 1.8.",
+    });
+  }
+  if (skill.type === "critical" && skill.damageMultiplier !== 2) {
+    context.addIssue({
+      code: "custom",
+      path: ["damageMultiplier"],
+      message: "critical requires damageMultiplier of 2.",
+    });
   }
   if (skill.type === "area_damage") {
     if (skill.damageMultiplier === undefined || skill.damageMultiplier > 0.9) {
@@ -156,12 +181,18 @@ const normalizedSkillSchema = z.object({
       });
     }
   }
-  if (skill.type === "control" && skill.stunChance === undefined) {
+  if (["control", "area_control"].includes(skill.type) && skill.stunChance !== 1) {
     context.addIssue({
       code: "custom",
       path: ["stunChance"],
-      message: "control skill requires stunChance.",
+      message: "Control skills must have 100% stun chance.",
     });
+  }
+  if (skill.type === "area_control" && skill.cooldown < 5) {
+    context.addIssue({ code: "custom", path: ["cooldown"], message: "area_control requires at least 5 cooldown." });
+  }
+  if (skill.type === "invincible" && skill.cooldown < 3) {
+    context.addIssue({ code: "custom", path: ["cooldown"], message: "invincible requires at least 3 cooldown." });
   }
   if (skill.type === "charge_strike_passive" && skill.chargeTurns === undefined) {
     context.addIssue({
@@ -213,7 +244,7 @@ const normalizedCharacterSchema = z.object({
   const activeSkills = character.skills.filter((skill) => skill.activation === "active");
   const passiveSkills = character.skills.filter((skill) => skill.activation === "passive");
   const hasOffensiveSource = character.skills.some(
-    (skill) => ["damage", "area_damage", "cleave_passive", "charge_strike_passive"].includes(skill.type),
+    (skill) => ["damage", "critical", "area_damage", "cleave_passive", "charge_strike_passive", "assassin_passive"].includes(skill.type),
   );
 
   if (!hasOffensiveSource) {

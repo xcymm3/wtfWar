@@ -47,7 +47,7 @@ function createCharacter(id = "warrior-one"): Character {
         activation: "active",
         target: "enemy_front",
         cooldown: 3,
-        stunChance: 0.3,
+        stunChance: 1,
       },
     ],
     createdAt: TIMESTAMP,

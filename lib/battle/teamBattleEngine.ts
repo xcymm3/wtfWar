@@ -35,10 +35,21 @@ type ShieldSkill = Skill & { type: "shield"; shieldAmount: number };
 type HealSkill = Skill & { type: "heal"; healAmount: number };
 type AreaHealSkill = Skill & { type: "area_heal"; healAmount: number };
 type ControlSkill = Skill & { type: "control"; stunChance: number };
+type CriticalSkill = Skill & { type: "critical"; damageMultiplier: number };
+type AreaControlSkill = Skill & { type: "area_control"; stunChance: number };
+type InvincibleSkill = Skill & { type: "invincible" };
 type CleavePassiveSkill = Skill & { type: "cleave_passive" };
 type ChargeStrikePassiveSkill = Skill & {
   type: "charge_strike_passive";
   chargeTurns: number;
+};
+type DamageResolution = {
+  target: CombatantState;
+  rawDamage: number;
+  healthDamage: number;
+  shieldAbsorbed: number;
+  targetInvincible: boolean;
+  targetRevived: boolean;
 };
 
 export type TeamBattleRuntimeState = {
@@ -56,6 +67,62 @@ export type TeamBattleRuntimeState = {
 
 function getOpponentSide(side: BattleSide): BattleSide {
   return side === "left" ? "right" : "left";
+}
+
+function applyDamageWithInvincibility(target: CombatantState, amount: number): DamageResolution {
+  if (target.isInvincible) {
+    return {
+      target,
+      rawDamage: amount,
+      healthDamage: 0,
+      shieldAbsorbed: 0,
+      targetInvincible: true,
+      targetRevived: false,
+    };
+  }
+  const resolution = applyDamage(target, amount);
+  if (resolution.target.health > 0 || target.hasRevived || !getPassive(target, "revive_passive")) {
+    return { ...resolution, targetInvincible: false, targetRevived: false };
+  }
+  const revived = { ...resolution.target, health: Math.floor(target.effectiveStats.maxHealth / 2), hasRevived: true };
+  return {
+    ...resolution,
+    target: revived,
+    healthDamage: target.health,
+    targetInvincible: false,
+    targetRevived: true,
+  };
+}
+
+function getPassive(combatant: CombatantState, type: Skill["type"]): Skill | undefined {
+  return combatant.character.skills.find((skill) => skill.type === type);
+}
+
+function applyGrowth(state: TeamBattleRuntimeState, side: BattleSide, id: string): TeamBattleRuntimeState {
+  const actor = getCombatant(state, side, id);
+  const skill = getPassive(actor, "growth_passive");
+  if (!skill?.damageMultiplier) return state;
+  const attack = actor.effectiveStats.attack + Math.floor(actor.effectiveStats.attack * skill.damageMultiplier);
+  return replaceCombatant(state, side, id, { ...actor, effectiveStats: { ...actor.effectiveStats, attack } });
+}
+
+function applyLifesteal(
+  state: TeamBattleRuntimeState,
+  side: BattleSide,
+  id: string,
+): { state: TeamBattleRuntimeState; healing: number } {
+  const actor = getCombatant(state, side, id);
+  const skill = getPassive(actor, "lifesteal_passive");
+  if (!skill?.damageMultiplier) return { state, healing: 0 };
+
+  const healed = applyHealing(
+    actor,
+    Math.floor(actor.effectiveStats.attack * skill.damageMultiplier),
+  );
+  return {
+    state: replaceCombatant(state, side, id, healed.target),
+    healing: healed.healing,
+  };
 }
 
 function assertTeamPreparation(input: TeamBattlePreparation): void {
@@ -125,13 +192,14 @@ function getChargeStrikePassive(
 
 function createTeamCombatantState(character: CombatantState["character"]): CombatantState {
   const combatant = createCombatantState(character);
-  if (!getCleavePassive(combatant)) return combatant;
+  const multiplier = getCleavePassive(combatant) ? 0.65 : getPassive(combatant, "assassin_passive") ? 0.8 : 1;
+  if (multiplier === 1) return combatant;
 
   return {
     ...combatant,
     effectiveStats: {
       ...combatant.effectiveStats,
-      attack: Math.floor(combatant.effectiveStats.attack * 0.65),
+      attack: Math.floor(combatant.effectiveStats.attack * multiplier),
     },
   };
 }
@@ -172,6 +240,37 @@ function getFrontCombatant(
   side: BattleSide,
 ): CombatantState | null {
   return getTeam(state, side).find((combatant) => combatant.health > 0) ?? null;
+}
+
+function getLastLivingCombatant(
+  state: TeamBattleRuntimeState,
+  side: BattleSide,
+): CombatantState | null {
+  return getTeam(state, side).filter((combatant) => combatant.health > 0).at(-1) ?? null;
+}
+
+function getSingleTargetEnemy(
+  state: TeamBattleRuntimeState,
+  actorSide: BattleSide,
+  actor: CombatantState,
+): CombatantState | null {
+  const targetSide = getOpponentSide(actorSide);
+  return getPassive(actor, "assassin_passive")
+    ? getLastLivingCombatant(state, targetSide)
+    : getFrontCombatant(state, targetSide);
+}
+
+function clearRoundInvincibility(state: TeamBattleRuntimeState): TeamBattleRuntimeState {
+  const clearTeam = (team: CombatantState[]) =>
+    team.map((combatant) => (
+      combatant.isInvincible ? { ...combatant, isInvincible: false } : combatant
+    ));
+
+  return {
+    ...state,
+    left: clearTeam(state.left),
+    right: clearTeam(state.right),
+  };
 }
 
 function replaceCombatant(
@@ -227,6 +326,7 @@ function appendEvent(
   skill: Pick<Skill, "id" | "name" | "type"> | null,
   targets: TeamBattleTargetResult[],
   narration: string,
+  actorHealing = 0,
 ): TeamBattleRuntimeState {
   const actor = getCombatant(state, actorSide, actorId);
 
@@ -247,6 +347,7 @@ function appendEvent(
             createCombatantSnapshot(state, "right", combatant),
           ),
         },
+        actorHealing,
         narration,
       },
     ],
@@ -272,10 +373,11 @@ function chooseTeamBattleAction(
   enemies: CombatantState[],
   random: SeededRandom,
 ): BattleAction {
+  const frontAlly = allies.find((ally) => ally.health > 0) ?? actor;
   const availableSkills = actor.character.skills.filter(
     (skill) =>
       skill.activation !== "passive" &&
-      ["damage", "shield", "heal", "control", "area_damage", "area_heal"].includes(skill.type) &&
+      ["damage", "shield", "heal", "control", "area_damage", "area_heal", "critical", "area_control", "invincible"].includes(skill.type) &&
       isSkillAvailable(actor, skill.id),
   );
 
@@ -284,9 +386,14 @@ function chooseTeamBattleAction(
     (skill) => skill.healAmount ?? 0,
     random,
   );
-  const selfHealSkill = selectHighestValueSkill(
+  const frontHealSkill = selectHighestValueSkill(
     availableSkills.filter((skill) => skill.type === "heal"),
     (skill) => skill.healAmount ?? 0,
+    random,
+  );
+  const invincibleSkill = selectHighestValueSkill(
+    availableSkills.filter((skill) => skill.type === "invincible"),
+    () => 1,
     random,
   );
   const expectedAreaHealing = areaHealSkill
@@ -300,25 +407,36 @@ function chooseTeamBattleAction(
         0,
       )
     : 0;
-  const expectedSelfHealing = selfHealSkill
+  const expectedFrontHealing = frontHealSkill
     ? Math.min(
-      actor.effectiveStats.maxHealth - actor.health,
-      scaleSkillAmountByRealm(actor.character, selfHealSkill.healAmount ?? 0),
+      frontAlly.effectiveStats.maxHealth - frontAlly.health,
+      scaleSkillAmountByRealm(actor.character, frontHealSkill.healAmount ?? 0),
     )
     : 0;
   const injuredAllies = allies.filter(
     (ally) => ally.health > 0 && ally.health < ally.effectiveStats.maxHealth,
   );
+  const lowHealthFront = frontAlly.health <= frontAlly.effectiveStats.maxHealth * LOW_HEALTH_RATIO;
+  const lowHealthActor = actor.health <= actor.effectiveStats.maxHealth * LOW_HEALTH_RATIO;
 
   if (areaHealSkill && injuredAllies.length >= 2 && expectedAreaHealing > 0) {
     return { type: "skill", skillId: areaHealSkill.id };
   }
 
-  if (actor.health <= actor.effectiveStats.maxHealth * LOW_HEALTH_RATIO) {
-    if (areaHealSkill && expectedAreaHealing >= expectedSelfHealing) {
+  if (lowHealthFront || lowHealthActor) {
+    if (areaHealSkill && expectedAreaHealing >= expectedFrontHealing && expectedAreaHealing > 0) {
       return { type: "skill", skillId: areaHealSkill.id };
     }
-    if (selfHealSkill) return { type: "skill", skillId: selfHealSkill.id };
+    if (frontHealSkill && expectedFrontHealing > 0) {
+      return { type: "skill", skillId: frontHealSkill.id };
+    }
+    if (
+      invincibleSkill &&
+      !actor.isInvincible &&
+      frontAlly.character.id === actor.character.id
+    ) {
+      return { type: "skill", skillId: invincibleSkill.id };
+    }
 
     if (actor.shield < BATTLE_RULES.maxShield) {
       const shieldSkill = selectHighestValueSkill(
@@ -330,8 +448,8 @@ function chooseTeamBattleAction(
     }
   }
 
-  const damageSkill = selectHighestValueSkill(
-    availableSkills.filter((skill) => skill.type === "damage"),
+  const singleTargetDamageSkill = selectHighestValueSkill(
+    availableSkills.filter((skill) => skill.type === "damage" || skill.type === "critical"),
     (skill) => skill.damageMultiplier ?? 0,
     random,
   );
@@ -340,21 +458,35 @@ function chooseTeamBattleAction(
     (skill) => (skill.damageMultiplier ?? 0) * enemies.length,
     random,
   );
-  if (target.health <= actor.effectiveStats.attack * 2 && damageSkill) {
-    return { type: "skill", skillId: damageSkill.id };
+  if (
+    singleTargetDamageSkill &&
+    target.health <= actor.effectiveStats.attack * (singleTargetDamageSkill.damageMultiplier ?? 0)
+  ) {
+    return { type: "skill", skillId: singleTargetDamageSkill.id };
   }
   if (
     areaDamageSkill &&
     enemies.length > 0 &&
-    (!damageSkill ||
+    (!singleTargetDamageSkill ||
       (areaDamageSkill.damageMultiplier ?? 0) * enemies.length >=
-        (damageSkill.damageMultiplier ?? 0))
+        (singleTargetDamageSkill.damageMultiplier ?? 0))
   ) {
     return { type: "skill", skillId: areaDamageSkill.id };
   }
-  if (damageSkill) return { type: "skill", skillId: damageSkill.id };
+  if (singleTargetDamageSkill) {
+    return { type: "skill", skillId: singleTargetDamageSkill.id };
+  }
   if (areaDamageSkill && enemies.length > 0) {
     return { type: "skill", skillId: areaDamageSkill.id };
+  }
+
+  if (enemies.length >= 2 && enemies.some((enemy) => !enemy.isStunned)) {
+    const areaControlSkill = selectHighestValueSkill(
+      availableSkills.filter((skill) => skill.type === "area_control"),
+      () => 1,
+      random,
+    );
+    if (areaControlSkill) return { type: "skill", skillId: areaControlSkill.id };
   }
 
   if (!target.isStunned) {
@@ -397,7 +529,7 @@ function resolveNormalAttack(
     ? getTeam(state, targetSide)
       .filter((target) => target.health > 0)
       .map((target) => target.character.id)
-    : [getFrontCombatant(state, targetSide)?.character.id].filter(
+    : [getSingleTargetEnemy(state, actorSide, actor)?.character.id].filter(
       (targetId): targetId is string => Boolean(targetId),
     );
   if (targetIds.length === 0) {
@@ -410,10 +542,12 @@ function resolveNormalAttack(
     rawDamage: number;
     damage: number;
     shieldAbsorbed: number;
+    targetInvincible: boolean;
+    targetRevived: boolean;
   }> = [];
   for (const targetId of targetIds) {
     const target = getCombatant(nextState, targetSide, targetId);
-    const resolution = applyDamage(target, actor.effectiveStats.attack);
+    const resolution = applyDamageWithInvincibility(target, actor.effectiveStats.attack);
     nextState = replaceCombatant(
       nextState,
       targetSide,
@@ -425,6 +559,8 @@ function resolveNormalAttack(
       rawDamage: resolution.rawDamage,
       damage: resolution.healthDamage,
       shieldAbsorbed: resolution.shieldAbsorbed,
+      targetInvincible: resolution.targetInvincible,
+      targetRevived: resolution.targetRevived,
     });
   }
   const targets = resolutions.map((resolution) =>
@@ -439,10 +575,16 @@ function resolveNormalAttack(
         healing: 0,
         shieldGranted: 0,
         targetStunned: false,
+        targetInvincible: resolution.targetInvincible,
+        targetRevived: resolution.targetRevived,
       },
     ),
   );
 
+  const lifesteal = resolutions.some((resolution) => resolution.damage > 0)
+    ? applyLifesteal(nextState, actorSide, actorId)
+    : { state: nextState, healing: 0 };
+  nextState = lifesteal.state;
   return appendEvent(
     nextState,
     actorSide,
@@ -454,6 +596,7 @@ function resolveNormalAttack(
     cleavePassive
       ? `${actor.character.name} 的 ${cleavePassive.name} 生效，横扫敌方 ${targets.length} 名存活角色。`
       : `${actor.character.name} 攻击敌方 ${targetIds.length} 名角色，造成 ${targets[0]?.damage ?? 0} 点伤害。`,
+    lifesteal.healing,
   );
 }
 
@@ -484,7 +627,7 @@ function resolveChargeStrikeAction(
   const target = getFrontCombatant(state, targetSide);
   if (!target) throw new Error("A charge strike requires a living front target.");
 
-  const resolution = applyDamage(
+  const resolution = applyDamageWithInvincibility(
     target,
     actor.effectiveStats.attack * chargeTurns,
   );
@@ -511,6 +654,8 @@ function resolveChargeStrikeAction(
       healing: 0,
       shieldGranted: 0,
       targetStunned: false,
+      targetInvincible: resolution.targetInvincible,
+      targetRevived: resolution.targetRevived,
     },
   );
 
@@ -533,7 +678,7 @@ function resolveDamageSkill(
 ): TeamBattleRuntimeState {
   const targetSide = getOpponentSide(actorSide);
   const actor = getCombatant(state, actorSide, actorId);
-  const target = getFrontCombatant(state, targetSide);
+  const target = getSingleTargetEnemy(state, actorSide, actor);
   if (!target) throw new Error("A damage skill requires a living front target.");
 
   const rawDamage = calculateDamageSkillDamage(
@@ -541,7 +686,7 @@ function resolveDamageSkill(
     skill.damageMultiplier,
     random,
   );
-  const damageResolution = applyDamage(target, rawDamage);
+  const damageResolution = applyDamageWithInvincibility(target, rawDamage);
   let nextState = replaceCombatant(
     state,
     targetSide,
@@ -550,6 +695,10 @@ function resolveDamageSkill(
   );
   const actorAfterSkill = setSkillCooldown(actor, skill.id, skill.cooldown);
   nextState = replaceCombatant(nextState, actorSide, actorId, actorAfterSkill);
+  const lifesteal = damageResolution.healthDamage > 0
+    ? applyLifesteal(nextState, actorSide, actorId)
+    : { state: nextState, healing: 0 };
+  nextState = lifesteal.state;
   const targetResult = createTargetResult(
     nextState,
     targetSide,
@@ -561,6 +710,8 @@ function resolveDamageSkill(
       healing: 0,
       shieldGranted: 0,
       targetStunned: false,
+      targetInvincible: damageResolution.targetInvincible,
+      targetRevived: damageResolution.targetRevived,
     },
   );
 
@@ -571,6 +722,7 @@ function resolveDamageSkill(
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
     `${formatSkillUse(actor.character.name, skill)}攻击敌方 ${target.character.name}，造成 ${damageResolution.healthDamage} 点伤害。`,
+    lifesteal.healing,
   );
 }
 
@@ -596,6 +748,8 @@ function resolveAreaDamageSkill(
     rawDamage: number;
     damage: number;
     shieldAbsorbed: number;
+    targetInvincible: boolean;
+    targetRevived: boolean;
   }> = [];
   for (const targetId of targetIds) {
     const target = getCombatant(nextState, targetSide, targetId);
@@ -608,7 +762,7 @@ function resolveAreaDamageSkill(
         max: BATTLE_RULES.maxAreaDamageMultiplier,
       },
     );
-    const damageResolution = applyDamage(target, rawDamage);
+    const damageResolution = applyDamageWithInvincibility(target, rawDamage);
     nextState = replaceCombatant(
       nextState,
       targetSide,
@@ -620,11 +774,17 @@ function resolveAreaDamageSkill(
       rawDamage: damageResolution.rawDamage,
       damage: damageResolution.healthDamage,
       shieldAbsorbed: damageResolution.shieldAbsorbed,
+      targetInvincible: damageResolution.targetInvincible,
+      targetRevived: damageResolution.targetRevived,
     });
   }
 
   const actorAfterSkill = setSkillCooldown(actor, skill.id, skill.cooldown);
   nextState = replaceCombatant(nextState, actorSide, actorId, actorAfterSkill);
+  const lifesteal = resolutions.some((resolution) => resolution.damage > 0)
+    ? applyLifesteal(nextState, actorSide, actorId)
+    : { state: nextState, healing: 0 };
+  nextState = lifesteal.state;
   const targets = resolutions.map((resolution) =>
     createTargetResult(
       nextState,
@@ -637,6 +797,8 @@ function resolveAreaDamageSkill(
         healing: 0,
         shieldGranted: 0,
         targetStunned: false,
+        targetInvincible: resolution.targetInvincible,
+        targetRevived: resolution.targetRevived,
       },
     ),
   );
@@ -648,6 +810,7 @@ function resolveAreaDamageSkill(
     { id: skill.id, name: skill.name, type: skill.type },
     targets,
     `${formatSkillUse(actor.character.name, skill)}攻击敌方全体，影响 ${targets.length} 名角色。`,
+    lifesteal.healing,
   );
 }
 
@@ -680,6 +843,8 @@ function resolveShieldSkill(
     healing: 0,
     shieldGranted: shieldResolution.shieldGranted,
     targetStunned: false,
+    targetInvincible: false,
+    targetRevived: false,
   });
 
   return appendEvent(
@@ -699,23 +864,29 @@ function resolveHealSkill(
   skill: HealSkill,
 ): TeamBattleRuntimeState {
   const actor = getCombatant(state, actorSide, actorId);
+  const target = getFrontCombatant(state, actorSide);
+  if (!target) throw new Error("A heal skill requires a living allied front target.");
   const healResolution = applyHealing(
-    actor,
+    target,
     scaleSkillAmountByRealm(actor.character, skill.healAmount),
   );
+  let nextState = replaceCombatant(state, actorSide, target.character.id, healResolution.target);
+  const actorAfterHealing = getCombatant(nextState, actorSide, actorId);
   const actorAfterSkill = setSkillCooldown(
-    healResolution.target,
+    actorAfterHealing,
     skill.id,
     skill.cooldown,
   );
-  const nextState = replaceCombatant(state, actorSide, actorId, actorAfterSkill);
-  const targetResult = createTargetResult(nextState, actorSide, actorAfterSkill, {
+  nextState = replaceCombatant(nextState, actorSide, actorId, actorAfterSkill);
+  const targetResult = createTargetResult(nextState, actorSide, healResolution.target, {
     rawDamage: 0,
     damage: 0,
     shieldAbsorbed: 0,
     healing: healResolution.healing,
     shieldGranted: 0,
     targetStunned: false,
+    targetInvincible: false,
+    targetRevived: false,
   });
 
   return appendEvent(
@@ -724,7 +895,7 @@ function resolveHealSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    `${formatSkillUse(actor.character.name, skill)}，恢复 ${healResolution.healing} 点生命。`,
+    `${formatSkillUse(actor.character.name, skill)}，为己方 ${target.character.name} 恢复 ${healResolution.healing} 点生命。`,
   );
 }
 
@@ -773,6 +944,8 @@ function resolveAreaHealSkill(
         healing: resolution.healing,
         shieldGranted: 0,
         targetStunned: false,
+        targetInvincible: false,
+        targetRevived: false,
       },
     ),
   );
@@ -792,14 +965,13 @@ function resolveControlSkill(
   actorSide: BattleSide,
   actorId: string,
   skill: ControlSkill,
-  random: SeededRandom,
 ): TeamBattleRuntimeState {
   const targetSide = getOpponentSide(actorSide);
   const actor = getCombatant(state, actorSide, actorId);
-  const target = getFrontCombatant(state, targetSide);
+  const target = getSingleTargetEnemy(state, actorSide, actor);
   if (!target) throw new Error("A control skill requires a living front target.");
 
-  const stunResolution = applyStun(target, random.chance(skill.stunChance));
+  const stunResolution = applyStun(target, true);
   let nextState = replaceCombatant(
     state,
     targetSide,
@@ -819,6 +991,8 @@ function resolveControlSkill(
       healing: 0,
       shieldGranted: 0,
       targetStunned: stunResolution.targetStunned,
+      targetInvincible: false,
+      targetRevived: false,
     },
   );
 
@@ -828,9 +1002,129 @@ function resolveControlSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [targetResult],
-    stunResolution.targetStunned
-      ? `${formatSkillUse(actor.character.name, skill)}，使敌方 ${target.character.name} 陷入眩晕。`
-      : `${formatSkillUse(actor.character.name, skill)}，但未能眩晕敌方 ${target.character.name}。`,
+    `${formatSkillUse(actor.character.name, skill)}，使敌方 ${target.character.name} 陷入眩晕。`,
+  );
+}
+
+function resolveInvincibleSkill(
+  state: TeamBattleRuntimeState,
+  actorSide: BattleSide,
+  actorId: string,
+  skill: InvincibleSkill,
+): TeamBattleRuntimeState {
+  const actor = getCombatant(state, actorSide, actorId);
+  const nextActor = setSkillCooldown({ ...actor, isInvincible: true }, skill.id, skill.cooldown);
+  const nextState = replaceCombatant(state, actorSide, actorId, nextActor);
+  return appendEvent(
+    nextState,
+    actorSide,
+    actorId,
+    { id: skill.id, name: skill.name, type: skill.type },
+    [],
+    `${formatSkillUse(actor.character.name, skill)}，本回合免疫伤害。`,
+  );
+}
+
+function resolveAreaControlSkill(
+  state: TeamBattleRuntimeState,
+  actorSide: BattleSide,
+  actorId: string,
+  skill: AreaControlSkill,
+): TeamBattleRuntimeState {
+  const targetSide = getOpponentSide(actorSide);
+  const actor = getCombatant(state, actorSide, actorId);
+  let nextState = state;
+  const targets: TeamBattleTargetResult[] = [];
+  for (const target of getTeam(state, targetSide).filter((item) => item.health > 0)) {
+    const stunResolution = applyStun(target, true);
+    nextState = replaceCombatant(nextState, targetSide, target.character.id, stunResolution.target);
+    targets.push(createTargetResult(nextState, targetSide, stunResolution.target, {
+      rawDamage: 0,
+      damage: 0,
+      shieldAbsorbed: 0,
+      healing: 0,
+      shieldGranted: 0,
+      targetStunned: stunResolution.targetStunned,
+      targetInvincible: false,
+      targetRevived: false,
+    }));
+  }
+  nextState = replaceCombatant(nextState, actorSide, actorId, setSkillCooldown(actor, skill.id, skill.cooldown));
+  return appendEvent(
+    nextState,
+    actorSide,
+    actorId,
+    { id: skill.id, name: skill.name, type: skill.type },
+    targets,
+    `${formatSkillUse(actor.character.name, skill)}，眩晕敌方全体。`,
+  );
+}
+
+function resolveCriticalSkill(
+  state: TeamBattleRuntimeState,
+  actorSide: BattleSide,
+  actorId: string,
+  skill: CriticalSkill,
+  random: SeededRandom,
+): TeamBattleRuntimeState {
+  const targetSide = getOpponentSide(actorSide);
+  const actor = getCombatant(state, actorSide, actorId);
+  const target = getSingleTargetEnemy(state, actorSide, actor);
+  if (!target) throw new Error("A critical skill requires a living target.");
+
+  const criticalRandomMultiplier =
+    BATTLE_RULES.minDamageRandomMultiplier +
+    random.next() *
+      (BATTLE_RULES.maxDamageRandomMultiplier -
+        BATTLE_RULES.minDamageRandomMultiplier);
+  const rawDamage = Math.max(
+    1,
+    Math.floor(actor.effectiveStats.attack * skill.damageMultiplier * criticalRandomMultiplier),
+  );
+  const damageResolution = applyDamageWithInvincibility(target, rawDamage);
+  let nextState = replaceCombatant(
+    state,
+    targetSide,
+    target.character.id,
+    damageResolution.target,
+  );
+  let actorAfterSkill = setSkillCooldown(actor, skill.id, skill.cooldown);
+  let actorHealing = 0;
+  if (damageResolution.healthDamage > 0) {
+    const criticalHealing = applyHealing(actorAfterSkill, damageResolution.healthDamage);
+    actorAfterSkill = criticalHealing.target;
+    actorHealing += criticalHealing.healing;
+  }
+  nextState = replaceCombatant(nextState, actorSide, actorId, actorAfterSkill);
+  const lifesteal = damageResolution.healthDamage > 0
+    ? applyLifesteal(nextState, actorSide, actorId)
+    : { state: nextState, healing: 0 };
+  nextState = lifesteal.state;
+  actorHealing += lifesteal.healing;
+  const targetResult = createTargetResult(
+    nextState,
+    targetSide,
+    damageResolution.target,
+    {
+      rawDamage: damageResolution.rawDamage,
+      damage: damageResolution.healthDamage,
+      shieldAbsorbed: damageResolution.shieldAbsorbed,
+      healing: 0,
+      shieldGranted: 0,
+      targetStunned: false,
+      targetInvincible: damageResolution.targetInvincible,
+      targetRevived: damageResolution.targetRevived,
+    },
+  );
+
+  return appendEvent(
+    nextState,
+    actorSide,
+    actorId,
+    { id: skill.id, name: skill.name, type: skill.type },
+    [targetResult],
+    `${formatSkillUse(actor.character.name, skill)}攻击敌方 ${target.character.name}，造成 ${damageResolution.healthDamage} 点伤害。`,
+    actorHealing,
   );
 }
 
@@ -856,18 +1150,31 @@ function resolveSkillAction(
       return resolveHealSkill(state, actorSide, actorId, skill as HealSkill);
     case "control":
       if (skill.stunChance === undefined) throw new Error("Control skill is missing its stun chance.");
-      return resolveControlSkill(state, actorSide, actorId, skill as ControlSkill, random);
+      return resolveControlSkill(state, actorSide, actorId, skill as ControlSkill);
     case "area_damage":
       if (skill.damageMultiplier === undefined) throw new Error("Area damage skill is missing its multiplier.");
       return resolveAreaDamageSkill(state, actorSide, actorId, skill as AreaDamageSkill, random);
     case "area_heal":
       if (skill.healAmount === undefined) throw new Error("Area heal skill is missing its amount.");
       return resolveAreaHealSkill(state, actorSide, actorId, skill as AreaHealSkill);
+    case "critical":
+      if (skill.damageMultiplier === undefined) throw new Error("Critical skill is missing its multiplier.");
+      return resolveCriticalSkill(state, actorSide, actorId, skill as CriticalSkill, random);
+    case "area_control":
+      return resolveAreaControlSkill(state, actorSide, actorId, skill as AreaControlSkill);
+    case "invincible":
+      return resolveInvincibleSkill(state, actorSide, actorId, skill as InvincibleSkill);
     case "cleave_passive":
     case "charge_strike_passive":
+    case "lifesteal_passive":
+    case "growth_passive":
+    case "revive_passive":
+    case "assassin_passive":
       throw new Error("Passive skills resolve automatically during an action opportunity.");
     case "buff":
       throw new Error("Buff skills are not supported.");
+    default:
+      throw new Error("This skill type is not implemented yet.");
   }
 }
 
@@ -930,7 +1237,11 @@ function resolveActionOpportunity(
     );
   }
 
-  const target = getFrontCombatant(stateAfterStun, getOpponentSide(actorSide));
+  const target = getSingleTargetEnemy(
+    stateAfterStun,
+    actorSide,
+    getCombatant(stateAfterStun, actorSide, actorId),
+  );
   if (!target) return stateAfterStun;
   const actorAfterStun = getCombatant(stateAfterStun, actorSide, actorId);
   const chargeStrikePassive = getChargeStrikePassive(actorAfterStun);
@@ -952,9 +1263,10 @@ function resolveActionOpportunity(
     random,
   );
 
-  return action.type === "normal_attack"
+  const nextState = action.type === "normal_attack"
     ? resolveNormalAttack(stateAfterStun, actorSide, actorId)
     : resolveSkillAction(stateAfterStun, actorSide, actorId, action.skillId, random);
+  return applyGrowth(nextState, actorSide, actorId);
 }
 
 function getKnockoutWinner(state: TeamBattleRuntimeState): BattleWinner | null {
@@ -1009,7 +1321,7 @@ export function simulateTeamBattle(
 
   for (let round = 1; round <= BATTLE_RULES.maxRounds; round += 1) {
     const turnOrder: BattleSide[] = ["left", "right"];
-    state = { ...state, round, turnOrder, actionIndex: 0 };
+    state = { ...clearRoundInvincibility(state), round, turnOrder, actionIndex: 0 };
 
     const formationSize = Math.max(state.left.length, state.right.length);
     for (let positionIndex = 0; positionIndex < formationSize; positionIndex += 1) {

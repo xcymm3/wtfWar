@@ -122,7 +122,7 @@ export const PROFESSION_BALANCE_PROFILES: readonly ProfessionProfile[] = [
         cooldown: 2,
       }),
       createSkill("warrior-roar", "震慑怒吼", "control", {
-        stunChance: 0.3,
+        stunChance: 1,
         cooldown: 3,
       }),
     ]),
@@ -135,7 +135,7 @@ export const PROFESSION_BALANCE_PROFILES: readonly ProfessionProfile[] = [
         cooldown: 3,
       }),
       createSkill("mage-frost", "冰霜禁锢", "control", {
-        stunChance: 0.45,
+        stunChance: 1,
         cooldown: 4,
       }),
     ]),
@@ -148,7 +148,7 @@ export const PROFESSION_BALANCE_PROFILES: readonly ProfessionProfile[] = [
         cooldown: 3,
       }),
       createSkill("assassin-smoke", "烟幕突袭", "control", {
-        stunChance: 0.35,
+        stunChance: 1,
         cooldown: 3,
       }),
     ]),
@@ -377,6 +377,8 @@ function formatSkillEffect(stats: SkillBalanceStats): string {
       return "被动效果已计入普通攻击";
     case "charge_strike_passive":
       return "被动效果已计入蓄力攻击";
+    default:
+      return "特殊效果";
   }
 }
 
