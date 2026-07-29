@@ -78,7 +78,7 @@ test("accepts manual roles only when profession and skill rules are satisfied", 
   assert.equal(characterSchema.safeParse(missingDamageEffect).success, false);
 });
 
-test("accepts v2 group and passive skills while rejecting two passive slots", () => {
+test("accepts v2 group skills and two passive slots", () => {
   const teamCharacter = {
     ...createCharacter(),
     realm: "deity" as const,
@@ -110,16 +110,28 @@ test("accepts v2 group and passive skills while rejecting two passive slots", ()
   const twoPassives = {
     ...teamCharacter,
     skills: [
-      teamCharacter.skills[1],
       {
-        ...teamCharacter.skills[1],
-        id: "manual-warrior-cleave",
-        name: "横扫",
-        type: "cleave_passive" as const,
+        id: "manual-warrior-growth",
+        name: "成长",
+        description: "每次行动后提高攻击。",
+        type: "growth_passive" as const,
+        activation: "passive" as const,
+        target: "self" as const,
+        cooldown: 0,
+        damageMultiplier: 0.3,
+      },
+      {
+        id: "manual-warrior-revive",
+        name: "复苏",
+        description: "首次阵亡时半血复活。",
+        type: "revive_passive" as const,
+        activation: "passive" as const,
+        target: "self" as const,
+        cooldown: 0,
       },
     ],
   };
-  assert.equal(characterSchema.safeParse(twoPassives).success, false);
+  assert.equal(characterSchema.safeParse(twoPassives).success, true);
 });
 
 test("enforces the effect ranges used by AI-generated skills", () => {

@@ -69,7 +69,7 @@ test("returns a request ID and logs a successful model attempt", async () => {
     callCount += 1;
     if (callCount === 1) {
       return Response.json({
-        choices: [{ message: { content: JSON.stringify({ profession: "mage", offensiveSkillType: "damage" }) } }],
+        choices: [{ message: { content: JSON.stringify({ profession: "mage", primarySkillType: "damage", secondarySkillType: "control" }) } }],
         usage: { prompt_tokens: 20, completion_tokens: 10, total_tokens: 30 },
       });
     }
@@ -183,7 +183,7 @@ test("feeds schema failures into the retry prompt", async () => {
 
     if (callCount === 1 || callCount === 3) {
       return Response.json({
-        choices: [{ message: { content: JSON.stringify({ profession: "mage", offensiveSkillType: "damage" }) } }],
+        choices: [{ message: { content: JSON.stringify({ profession: "mage", primarySkillType: "damage", secondarySkillType: "control" }) } }],
       });
     }
 
@@ -196,20 +196,20 @@ test("feeds schema failures into the retry prompt", async () => {
               maxHealth: 112,
               skills: [
                 {
-                  name: "寒霜领域",
-                  description: "冻结敌方所有存活角色。",
-                  usageText: "挥手降霜",
-                  type: "area_control",
-                  cooldown: 5,
-                  stunChance: 1,
+                  name: "冰棱术",
+                  description: "向敌方前排发射冰棱。",
+                  usageText: "抬手施展",
+                  type: "damage",
+                  cooldown: 3,
+                  damageMultiplier: 1.4,
                 },
                 {
-                  name: "冰晶护盾",
-                  description: "为自身施加冰晶护盾。",
-                  usageText: "凝聚冰晶",
-                  type: "shield",
-                  cooldown: 3,
-                  shieldAmount: 30,
+                  name: "第二冰棱",
+                  description: "再向敌方前排发射冰棱。",
+                  usageText: "凝神施展",
+                  type: "damage",
+                  cooldown: 2,
+                  damageMultiplier: 1.2,
                 },
               ],
             }),
@@ -253,8 +253,8 @@ test("feeds schema failures into the retry prompt", async () => {
 
     assert.equal(response.status, 200);
     assert.equal(callCount, 4);
-    assert.match(requestMessages[3]!, /其中一个技能的 type 设为 damage、critical 或 area_damage/);
-    assert.match(requestMessages[3]!, /冰晶护盾/);
+    assert.match(requestMessages[3]!, /two skills must have different types/);
+    assert.match(requestMessages[3]!, /第二冰棱/);
   } finally {
     globalThis.fetch = originalFetch;
     captured.restore();

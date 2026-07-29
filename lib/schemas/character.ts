@@ -266,26 +266,7 @@ const normalizedCharacterSchema = z.object({
     });
   }
 
-  const activeSkills = character.skills.filter((skill) => skill.activation === "active");
-  const passiveSkills = character.skills.filter((skill) => skill.activation === "passive");
-  const hasOffensiveSource = character.skills.some(
-    (skill) => ["damage", "critical", "area_damage", "cleave_passive", "charge_strike_passive", "assassin_passive"].includes(skill.type),
-  );
-
-  if (!hasOffensiveSource) {
-    context.addIssue({
-      code: "custom",
-      path: ["skills"],
-      message: "A character must have an offensive active or passive skill.",
-    });
-  }
-  if (passiveSkills.length > 1 || activeSkills.length === 0) {
-    context.addIssue({
-      code: "custom",
-      path: ["skills"],
-      message: "A character must have one or two active skills and at most one passive skill.",
-    });
-  }
+  // Every character has a normal attack, so two passive skills remain viable.
   if (character.skills.some((skill) => skill.type === "buff")) {
     context.addIssue({
       code: "custom",

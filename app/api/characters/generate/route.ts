@@ -82,9 +82,6 @@ function getModelValidationRetryInstruction(error: unknown): string {
       .filter((message): message is string => message !== null)
       .slice(0, 3);
     if (messages.length > 0) {
-      if (messages.some((message) => message.includes("offensive active or passive skill"))) {
-        return "上一次没有攻击来源。下一版必须将其中一个技能的 type 设为 damage、critical 或 area_damage；不得同时选择 area_control 和 shield。请输出完整合规 JSON。";
-      }
       return `上一次输出未通过规则校验：${messages.join("；")}。请从头生成完整合规 JSON。`;
     }
   }
@@ -125,11 +122,10 @@ function getModelConfiguration(): ModelConfiguration | null {
 
 function normalizeModelGenerationError(
   error: unknown,
-  controller: AbortController,
 ): ModelGenerationError {
   if (error instanceof ModelGenerationError) return error;
 
-  if (controller.signal.aborted) {
+  if (error instanceof Error && error.name === "AbortError") {
     return new ModelGenerationError("model_timeout", true);
   }
 
@@ -169,8 +165,6 @@ async function generateModelAttempt(
   requestId: string,
   attempt: number,
 ) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), configuration.timeoutMs);
   const startedAt = Date.now();
   let upstreamStatus: number | undefined;
   let usage: ModelUsage | undefined;
@@ -183,49 +177,60 @@ async function generateModelAttempt(
       schema: Record<string, unknown>,
       maxTokens: number,
     ): Promise<ModelCompletion> => {
-      const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${configuration.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: configuration.model,
-          temperature: 0.2,
-          max_tokens: maxTokens,
-          response_format: {
-            type: "json_schema",
-            json_schema: { name: schemaName, strict: true, schema },
-          },
-          messages: [
-            { role: "system", content: systemContent },
-            { role: "user", content: userContent },
-          ],
-        }),
-      });
-      upstreamStatus = response.status;
-
-      if (!response.ok) {
-        throw new ModelGenerationError(
-          "model_upstream_error",
-          response.status === 429 || response.status >= 500,
-          response.status,
-        );
-      }
-
-      let payload: ModelResponse;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), configuration.timeoutMs);
       try {
-        payload = await response.json() as ModelResponse;
-      } catch {
-        throw new ModelGenerationError("model_invalid_response", true, response.status);
-      }
+        const response = await fetch(`${configuration.baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${configuration.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: configuration.model,
+            temperature: 0.2,
+            max_tokens: maxTokens,
+            response_format: {
+              type: "json_schema",
+              json_schema: { name: schemaName, strict: true, schema },
+            },
+            messages: [
+              { role: "system", content: systemContent },
+              { role: "user", content: userContent },
+            ],
+          }),
+        });
+        upstreamStatus = response.status;
 
-      const content = payload.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new ModelGenerationError("model_invalid_response", true, response.status);
+        if (!response.ok) {
+          throw new ModelGenerationError(
+            "model_upstream_error",
+            response.status === 429 || response.status >= 500,
+            response.status,
+          );
+        }
+
+        let payload: ModelResponse;
+        try {
+          payload = await response.json() as ModelResponse;
+        } catch {
+          throw new ModelGenerationError("model_invalid_response", true, response.status);
+        }
+
+        const content = payload.choices?.[0]?.message?.content;
+        if (!content) {
+          throw new ModelGenerationError("model_invalid_response", true, response.status);
+        }
+        return { content, usage: payload.usage, upstreamStatus: response.status };
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new ModelGenerationError("model_timeout", true);
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeout);
       }
-      return { content, usage: payload.usage, upstreamStatus: response.status };
     };
 
     const planCompletion = await completeJson(
@@ -240,9 +245,13 @@ async function generateModelAttempt(
     );
     const detailCompletion = await completeJson(
       getCharacterGenerationSystemPrompt(),
-      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}\n指定职业：${plan.profession}\n第一个攻击技能 type：${plan.offensiveSkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
+      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}\n指定职业：${plan.profession}\n第一个技能 type：${plan.primarySkillType}\n第二个技能 type：${plan.secondarySkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
       "character_combat_detail",
-      getModelCharacterDetailJsonSchema(plan.profession, plan.offensiveSkillType),
+      getModelCharacterDetailJsonSchema(
+        plan.profession,
+        plan.primarySkillType,
+        plan.secondarySkillType,
+      ),
       1000,
     );
     usage = {
@@ -285,7 +294,7 @@ async function generateModelAttempt(
       throw createInvalidModelResponseError(detailCompletion.upstreamStatus, error, content);
     }
   } catch (error) {
-    const modelError = normalizeModelGenerationError(error, controller);
+    const modelError = normalizeModelGenerationError(error);
     const metric = {
       requestId,
       model: configuration.model,
@@ -301,8 +310,6 @@ async function generateModelAttempt(
     logModelGenerationAttempt(metric);
     await recordModelGenerationAttempt(metric);
     throw modelError;
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
