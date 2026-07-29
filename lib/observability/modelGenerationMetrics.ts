@@ -1,7 +1,10 @@
 import { nanoid } from "nanoid";
+import { sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { modelGenerationEvents } from "@/db/schema";
+
+const MODEL_GENERATION_EVENT_RETENTION_LIMIT = 10_000;
 
 type ModelGenerationStatus = "succeeded" | "failed";
 
@@ -54,7 +57,8 @@ export async function recordModelGenerationAttempt(
   attempt: ModelGenerationAttempt,
 ): Promise<void> {
   try {
-    await getDb().insert(modelGenerationEvents).values({
+    const db = getDb();
+    await db.insert(modelGenerationEvents).values({
       id: nanoid(),
       requestId: attempt.requestId,
       model: attempt.model,
@@ -67,6 +71,18 @@ export async function recordModelGenerationAttempt(
       totalTokens: attempt.totalTokens,
       errorCode: attempt.errorCode,
     });
+    await db.execute(sql`
+      DELETE FROM model_generation_events
+      WHERE id IN (
+        SELECT id
+        FROM (
+          SELECT id
+          FROM model_generation_events
+          ORDER BY created_at DESC, id DESC
+          OFFSET ${MODEL_GENERATION_EVENT_RETENTION_LIMIT}
+        ) AS stale_model_generation_events
+      )
+    `);
   } catch (error) {
     // Metrics must not turn a successful character generation into a failure.
     writeStructuredLog("error", "model_generation.metric_persist_failed", {

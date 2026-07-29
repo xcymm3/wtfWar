@@ -29,7 +29,7 @@ OPENAI_MODEL=gpt-4.1-mini
 MODEL_REQUEST_TIMEOUT_MS=60000
 ```
 
-接口使用兼容 Chat Completions 的配置。未配置模型密钥时，AI 自动创角会提示服务尚未配置，用户可以改用手动创角。每次模型调用会生成请求 ID，并向服务端日志和 `model_generation_events` 表记录耗时、状态、上游状态码及 token 用量；这些指标不向前端展示。
+接口使用兼容 Chat Completions 的配置。未配置模型密钥时，AI 自动创角会提示服务尚未配置，用户可以改用手动创角。每次模型生成尝试会生成请求 ID，并向服务端日志和 `model_generation_events` 表记录耗时、状态、上游状态码及 token 用量；这些指标不向前端展示。该表只保留最新 10,000 条记录，超出的最旧记录会在写入后自动清理。
 
 ## Neon 角色库
 
