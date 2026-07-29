@@ -11,7 +11,7 @@ import {
 } from "@/lib/observability/modelGenerationMetrics";
 import type { Realm } from "@/types/character";
 
-const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 60_000;
 const MAX_MODEL_REQUEST_TIMEOUT_MS = 60_000;
 
 type ModelConfiguration = {
