@@ -227,6 +227,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /BASE_ACTION_INTERVAL_MS \/ playbackSpeed/);
   assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
+  assert.match(observer, /倒下了！/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);

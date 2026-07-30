@@ -208,6 +208,20 @@ function getTeamTargetResult(target: TeamBattleEvent["targets"][number]): string
   return "未造成数值变化";
 }
 
+function TeamDefeatNotice({
+  target,
+  name,
+}: {
+  target: TeamBattleEvent["targets"][number];
+  name: string;
+}) {
+  if (target.rawDamage <= 0 || target.health > 0 || target.targetRevived) {
+    return null;
+  }
+
+  return <><TeamCombatantName name={name} side={target.side} />倒下了！</>;
+}
+
 function formatTeamBattleLog(
   event: TeamBattleEvent,
   charactersById: Map<string, Character>,
@@ -243,6 +257,9 @@ function formatTeamBattleLog(
             <span key={candidate.characterId}>
               {index > 0 ? "；" : ""}
               <TeamCombatantName name={targetName} side={candidate.side} /> {getTeamTargetResult(candidate)}
+              {candidate.rawDamage > 0 && candidate.health === 0 && !candidate.targetRevived
+                ? <>，<TeamDefeatNotice target={candidate} name={targetName} /></>
+                : null}
             </span>
           );
         })}
@@ -259,7 +276,7 @@ function formatTeamBattleLog(
       <>
         {actorLabel} {action}攻击{relation}{targetLabel}，{getTeamTargetResult(target)}
         {event.actorHealing > 0 ? `，并恢复 ${event.actorHealing} 点生命` : ""}
-        。
+        。<TeamDefeatNotice target={target} name={targetName} />
       </>
     );
   }
@@ -581,7 +598,12 @@ function BattleObserverPlayer({
                             ? "眩晕跳过"
                             : "普通攻击"}
                       </strong>
-                      <p>{event.narration}</p>
+                      <p>
+                        {event.narration}
+                        {event.damage > 0 && event.targetHealth === 0
+                          ? ` ${event.target === "left" ? leftCharacter.name : rightCharacter.name}倒下了！`
+                          : ""}
+                      </p>
                     </div>
                     <em>{event.actor === "left" ? "红方" : "蓝方"}</em>
                   </li>

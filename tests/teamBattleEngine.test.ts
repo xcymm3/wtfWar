@@ -618,6 +618,30 @@ test("revive passive brings a defeated target back at half health", () => {
   assert.equal(reviveHit.targets[0]?.health, 20);
 });
 
+test("records a zero-health target for the battle report when an attack defeats it", () => {
+  const preparation: TeamBattlePreparation = {
+    rulesVersion: 2,
+    seed: "report-defeat-notice",
+    leftTeam: {
+      side: "left",
+      members: [createCharacter("left-attacker", 30, 100)],
+    },
+    rightTeam: {
+      side: "right",
+      members: [createCharacter("right-defeated", 1, 10)],
+    },
+    preparedAt: TIMESTAMP,
+  };
+
+  const result = simulateTeamBattle(preparation);
+  const defeatEvent = result.events.find((event) =>
+    event.targets.some((target) => target.characterId === "right-defeated" && target.health === 0),
+  );
+
+  assert.ok(defeatEvent);
+  assert.equal(defeatEvent.targets[0]?.targetRevived, false);
+});
+
 test("assassin passive lowers attack and retargets single-target skills to the rear", () => {
   const strike = createSkill("left-assassin-strike", "damage", {
     activation: "active",

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { characters } from "@/db/schema";
@@ -33,7 +33,19 @@ export async function ensurePresetCharacters(): Promise<void> {
 
   await db.insert(characters)
     .values(presets)
-    .onConflictDoNothing({ target: characters.id });
+    .onConflictDoUpdate({
+      target: characters.id,
+      set: {
+        name: sql`excluded.name`,
+        normalizedName: sql`excluded.normalized_name`,
+        data: sql`excluded.data`,
+        isPreset: sql`excluded.is_preset`,
+        updatedAt: sql`now()`,
+      },
+      // Existing preset IDs are system-owned; this applies balance and skill updates
+      // without touching user-created characters.
+      setWhere: sql`${characters.data} IS DISTINCT FROM excluded.data`,
+    });
 }
 
 export async function getRemoteCharacters(): Promise<Character[]> {
