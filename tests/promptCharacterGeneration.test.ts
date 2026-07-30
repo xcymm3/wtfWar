@@ -84,6 +84,7 @@ test("tells the model the legal passive multiplier ranges", () => {
   assert.match(prompt, /JSON 结构示例/);
   assert.match(prompt, /第一个和第二个技能都必须保持调用方分别指定的 type/);
   assert.match(prompt, /两个被动技能可以合法组合/);
+  assert.match(prompt, /所有被动技能.*cooldown 必须固定为 0/);
 });
 
 test("constrains model output to legal combat fields and distinct skill pairs", () => {

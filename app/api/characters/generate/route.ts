@@ -76,9 +76,16 @@ function getModelValidationRetryInstruction(error: unknown): string {
     : undefined;
   if (Array.isArray(issues)) {
     const messages = issues
-      .map((issue) => (typeof issue === "object" && issue !== null && "message" in issue
-        ? String((issue as { message: unknown }).message)
-        : null))
+      .map((issue) => {
+        if (typeof issue !== "object" || issue === null || !("message" in issue)) {
+          return null;
+        }
+        const path = "path" in issue && Array.isArray(issue.path)
+          ? issue.path.map(String).join(".")
+          : "";
+        const message = String((issue as { message: unknown }).message);
+        return path ? `${path}: ${message}` : message;
+      })
       .filter((message): message is string => message !== null)
       .slice(0, 3);
     if (messages.length > 0) {

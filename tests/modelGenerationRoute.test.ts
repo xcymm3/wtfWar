@@ -280,7 +280,7 @@ test("feeds schema failures into the retry prompt", async () => {
 
     assert.equal(response.status, 200);
     assert.equal(callCount, 4);
-    assert.match(requestMessages[3]!, /two skills must have different types/);
+    assert.match(requestMessages[3]!, /skills: The two skills must have different types/);
     assert.match(requestMessages[3]!, /第二冰棱/);
   } finally {
     globalThis.fetch = originalFetch;
