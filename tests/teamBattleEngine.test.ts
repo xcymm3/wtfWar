@@ -421,8 +421,8 @@ test("area control stuns every living enemy for their next action", () => {
   assert.equal(skippedActors.some((event) => event.actor.characterId === "right-back"), true);
 });
 
-test("invincible blocks damage for the current round and then expires", () => {
-  const invincible = createSkill("left-invincible", "invincible", {
+test("invincible blocks damage until the protected combatant's next action", () => {
+  const invincible = createSkill("right-invincible", "invincible", {
     activation: "active",
     target: "self",
     cooldown: 3,
@@ -430,31 +430,24 @@ test("invincible blocks damage for the current round and then expires", () => {
   const preparation: TeamBattlePreparation = {
     rulesVersion: 2,
     seed: "invincible-expiry",
-    leftTeam: {
-      side: "left",
-      members: [
-        createCharacter("left-guardian", 1, 100, [invincible, createSkill("left-wait")]),
-      ],
-    },
+    leftTeam: { side: "left", members: [createCharacter("left-hitter", 70, 100)] },
     rightTeam: {
       side: "right",
-      members: [
-        createCharacter("right-hitter", 70, 100),
-      ],
+      members: [createCharacter("right-guardian", 1, 100, [invincible, createSkill("right-wait")])],
     },
     preparedAt: TIMESTAMP,
   };
 
   const result = simulateTeamBattle(preparation);
   const invincibleEvent = result.events.find((event) => event.skill?.id === invincible.id);
-  const rightAttacks = result.events.filter((event) => event.actor.characterId === "right-hitter");
+  const leftAttacks = result.events.filter((event) => event.actor.characterId === "left-hitter");
 
   assert.ok(invincibleEvent);
-  assert.equal(invincibleEvent.round, 2);
-  assert.equal(rightAttacks[0]?.targets[0]?.health, 30);
-  assert.equal(rightAttacks[1]?.targets[0]?.targetInvincible, true);
-  assert.equal(rightAttacks[1]?.targets[0]?.health, 30);
-  assert.equal((rightAttacks[2]?.targets[0]?.health ?? 30) < 30, true);
+  assert.equal(invincibleEvent.round, 1);
+  assert.equal(leftAttacks[0]?.targets[0]?.health, 30);
+  assert.equal(leftAttacks[1]?.targets[0]?.targetInvincible, true);
+  assert.equal(leftAttacks[1]?.targets[0]?.health, 30);
+  assert.equal((leftAttacks[2]?.targets[0]?.health ?? 30) < 30, true);
 });
 
 test("critical skills heal the actor after dealing damage", () => {
@@ -576,8 +569,10 @@ test("growth passive increases attack after each completed action", () => {
   );
 
   assert.ok(leftAttacks.length >= 2);
-  assert.equal(leftAttacks[0]?.targets[0]?.rawDamage, 10);
-  assert.equal((leftAttacks[1]?.targets[0]?.rawDamage ?? 0) > 10, true);
+  assert.deepEqual(
+    leftAttacks.slice(0, 5).map((event) => event.targets[0]?.rawDamage),
+    [10, 12, 14, 16, 18],
+  );
 });
 
 test("revive passive brings a defeated target back at half health", () => {

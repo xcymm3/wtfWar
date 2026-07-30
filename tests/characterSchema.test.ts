@@ -169,7 +169,7 @@ test("enforces the effect ranges used by AI-generated skills", () => {
       ] as Character["skills"],
     },
     {
-      name: "excessive growth",
+      name: "weak growth",
       skills: [
         baseCharacter.skills[0],
         {
@@ -180,7 +180,7 @@ test("enforces the effect ranges used by AI-generated skills", () => {
           activation: "passive" as const,
           target: "self" as const,
           cooldown: 0,
-          damageMultiplier: 0.6,
+          damageMultiplier: 0.05,
           shieldAmount: undefined,
         },
       ] as Character["skills"],
@@ -194,4 +194,22 @@ test("enforces the effect ranges used by AI-generated skills", () => {
     };
     assert.equal(characterSchema.safeParse(character).success, false, name);
   }
+});
+
+test("caps legacy growth coefficients at the current balance limit", () => {
+  const character = createCharacter();
+  character.skills[1] = {
+    ...character.skills[1],
+    id: "legacy-growth",
+    name: "Legacy growth",
+    type: "growth_passive",
+    activation: "passive",
+    target: "self",
+    cooldown: 0,
+    damageMultiplier: 0.5,
+    shieldAmount: undefined,
+  };
+
+  const parsed = characterSchema.parse(character);
+  assert.equal(parsed.skills[1].damageMultiplier, 0.2);
 });

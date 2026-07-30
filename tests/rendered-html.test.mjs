@@ -233,6 +233,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(observer, /下一次行动|新种子再战|自动播放|暂停播放|重新播放/);
   assert.match(observer, /formatTeamBattleLog/);
   assert.match(observer, /倒下了！/);
+  assert.match(observer, /team-invincible-status/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);
@@ -244,6 +245,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(styles, /\.team-battle-log-list li[\s\S]*width: 100%/);
   assert.match(styles, /\.team-battle-log-list[\s\S]*grid-auto-rows: 64px/);
   assert.match(styles, /\.team-battle-log-list li[\s\S]*height: 64px/);
+  assert.match(styles, /\.battle-log-list::\-webkit-scrollbar/);
   assert.match(library, /character-card-summary/);
   assert.match(library, /阵容选择/);
   assert.match(library, /玩法介绍/);

@@ -117,7 +117,7 @@ const generatedSkillDraftSchema = z.discriminatedUnion("type", [
     usageText: z.string().trim().min(1).max(10),
     type: z.literal("growth_passive"),
     cooldown: z.literal(0),
-    damageMultiplier: z.number().min(0.2).max(0.5),
+    damageMultiplier: z.number().min(0.1).max(0.2),
   }).strict(),
   z.object({
     name: z.string().trim().min(1).max(24),
@@ -325,8 +325,8 @@ export function finalizeGeneratedCharacter(
 
 export function getCharacterGenerationSystemPrompt(): string {
   return `你是“次元竞技场”的角色设计器。调用方已固定职业和两个技能 type；根据用户提供的角色名称、角色描述和指定战斗力阶位补全可用于团队回合制战斗的属性和两个技能，仅输出 JSON 对象，不要 Markdown。
-JSON 顶层只能含 attack、maxHealth、skills，不得输出 name、realm 或 profession。JSON 结构示例（仅展示字段结构，技能 type 必须以调用方指定值为准）：{"attack":18,"maxHealth":120,"skills":[{"name":"示例技能甲","description":"简短描述。","usageText":"凝神施展","type":"调用方指定的第一个 type","cooldown":3},{"name":"示例技能乙","description":"简短描述。","usageText":"蓄力施展","type":"调用方指定的第二个 type","cooldown":3}]}。skills 必须正好两个：第一个和第二个技能都必须保持调用方分别指定的 type。两个被动技能可以合法组合，角色的普通攻击始终可造成伤害。角色设定出现“不死、复活、重生”时优先使用 revive_passive；出现“成长、越战越强、战斗力 Max”时优先使用 growth_passive。每个技能只能含 name、description、usageText、type、cooldown 和该 type 要求的字段，不得包含 id、activation、target 或其他 type 的字段；usageText 是战报中放在技能名前的动作短语，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 的 damageMultiplier 必须为 2；area_damage 的 damageMultiplier 为 0.45-0.9；shield 的 shieldAmount 为 10-45；heal 的 healAmount 为 10-45；area_heal 的 healAmount 为 5-25；control 与 area_control 的 stunChance 必须为 1；area_control 的冷却必须为 5；invincible 冷却 3-5；charge_strike_passive 的 chargeTurns 为 2-5；lifesteal_passive 的 damageMultiplier 为 0.2-0.6；growth_passive 的 damageMultiplier 为 0.2-0.5。所有中文文本简洁，技能名不重复。
-职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 16-25、105-145；ranger 20-30、85-120。主动技能的 cooldown 为 1-5（area_control 固定 5，invincible 为 3-5）；所有被动技能（type 以 _passive 结尾）的 cooldown 必须固定为 0。heal 只能描述为治疗己方前排，不能写成自我治疗；lifesteal_passive 必须描述为造成伤害后恢复自身生命。游戏没有独立的闪避机制，invincible 只能描述为短暂无伤，assassin_passive 不能描述为闪避。所有中文文本简洁，技能名不重复。`;
+JSON 顶层只能含 attack、maxHealth、skills，不得输出 name、realm 或 profession。JSON 结构示例（仅展示字段结构，技能 type 必须以调用方指定值为准）：{"attack":18,"maxHealth":120,"skills":[{"name":"示例技能甲","description":"简短描述。","usageText":"凝神施展","type":"调用方指定的第一个 type","cooldown":3},{"name":"示例技能乙","description":"简短描述。","usageText":"蓄力施展","type":"调用方指定的第二个 type","cooldown":3}]}。skills 必须正好两个：第一个和第二个技能都必须保持调用方分别指定的 type。两个被动技能可以合法组合，角色的普通攻击始终可造成伤害。角色设定出现“不死、复活、重生”时优先使用 revive_passive；出现“成长、越战越强、战斗力 Max”时优先使用 growth_passive。每个技能只能含 name、description、usageText、type、cooldown 和该 type 要求的字段，不得包含 id、activation、target 或其他 type 的字段；usageText 是战报中放在技能名前的动作短语，不重复技能名、不包含目标或伤害结果，中文不超过 10 个字。damage 另含 damageMultiplier（0.8-1.8）；critical 的 damageMultiplier 必须为 2；area_damage 的 damageMultiplier 为 0.45-0.9；shield 的 shieldAmount 为 10-45；heal 的 healAmount 为 10-45；area_heal 的 healAmount 为 5-25；control 与 area_control 的 stunChance 必须为 1；area_control 的冷却必须为 5；invincible 冷却 3-5；charge_strike_passive 的 chargeTurns 为 2-5；lifesteal_passive 的 damageMultiplier 为 0.2-0.6；growth_passive 的 damageMultiplier 为 0.1-0.2。所有中文文本简洁，技能名不重复。
+职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 16-25、105-145；ranger 20-30、85-120。主动技能的 cooldown 为 1-5（area_control 固定 5，invincible 为 3-5）；所有被动技能（type 以 _passive 结尾）的 cooldown 必须固定为 0。heal 只能描述为治疗己方前排，不能写成自我治疗；lifesteal_passive 必须描述为造成伤害后恢复自身生命。游戏没有独立的闪避机制，invincible 必须描述为直到下次行动前短暂无伤，assassin_passive 不能描述为闪避。所有中文文本简洁，技能名不重复。`;
 }
 
 export function getCharacterPlanSystemPrompt(): string {

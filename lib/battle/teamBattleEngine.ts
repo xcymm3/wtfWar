@@ -14,7 +14,7 @@ import { applyDamage } from "./damage";
 import { calculateDamageSkillDamage } from "./damageSkill";
 import { applyHealing } from "./heal";
 import { createSeededRandom, type SeededRandom } from "./random";
-import { scaleSkillAmountByRealm } from "./realm";
+import { getEffectiveCombatStats, scaleSkillAmountByRealm } from "./realm";
 import { applyShield } from "./shield";
 import { getSkillUsageText } from "./skillUsageText";
 import {
@@ -102,7 +102,9 @@ function applyGrowth(state: TeamBattleRuntimeState, side: BattleSide, id: string
   const actor = getCombatant(state, side, id);
   const skill = getPassive(actor, "growth_passive");
   if (!skill?.damageMultiplier) return state;
-  const attack = actor.effectiveStats.attack + Math.floor(actor.effectiveStats.attack * skill.damageMultiplier);
+  const multiplier = Math.min(skill.damageMultiplier, BATTLE_RULES.maxGrowthMultiplier);
+  const baseAttack = getEffectiveCombatStats(actor.character).attack;
+  const attack = actor.effectiveStats.attack + Math.max(1, Math.floor(baseAttack * multiplier));
   return replaceCombatant(state, side, id, { ...actor, effectiveStats: { ...actor.effectiveStats, attack } });
 }
 
@@ -260,19 +262,6 @@ function getSingleTargetEnemy(
     : getFrontCombatant(state, targetSide);
 }
 
-function clearRoundInvincibility(state: TeamBattleRuntimeState): TeamBattleRuntimeState {
-  const clearTeam = (team: CombatantState[]) =>
-    team.map((combatant) => (
-      combatant.isInvincible ? { ...combatant, isInvincible: false } : combatant
-    ));
-
-  return {
-    ...state,
-    left: clearTeam(state.left),
-    right: clearTeam(state.right),
-  };
-}
-
 function replaceCombatant(
   state: TeamBattleRuntimeState,
   side: BattleSide,
@@ -302,6 +291,7 @@ function createCombatantSnapshot(
     shield: combatant.shield,
     cooldowns: { ...combatant.cooldowns },
     isStunned: combatant.isStunned,
+    isInvincible: combatant.isInvincible,
     chargeProgress: combatant.chargeProgress,
   };
 }
@@ -310,7 +300,7 @@ function createTargetResult(
   state: TeamBattleRuntimeState,
   side: BattleSide,
   combatant: CombatantState,
-  resolution: Omit<TeamBattleTargetResult, "side" | "characterId" | "position" | "health" | "shield" | "cooldowns" | "isStunned" | "chargeProgress">,
+  resolution: Omit<TeamBattleTargetResult, "side" | "characterId" | "position" | "health" | "shield" | "cooldowns" | "isStunned" | "isInvincible" | "chargeProgress">,
 ): TeamBattleTargetResult {
   return {
     side,
@@ -1021,7 +1011,7 @@ function resolveInvincibleSkill(
     actorId,
     { id: skill.id, name: skill.name, type: skill.type },
     [],
-    `${formatSkillUse(actor.character.name, skill)}，本回合免疫伤害。`,
+    `${formatSkillUse(actor.character.name, skill)}，直到下次行动前免疫伤害。`,
   );
 }
 
@@ -1185,11 +1175,14 @@ function resolveActionOpportunity(
   random: SeededRandom,
 ): TeamBattleRuntimeState {
   const actor = getCombatant(state, actorSide, actorId);
+  const actorBeforeAction = actor.isInvincible
+    ? { ...actor, isInvincible: false }
+    : actor;
   const stateWithCooldowns = replaceCombatant(
     state,
     actorSide,
     actorId,
-    advanceCooldowns(actor),
+    advanceCooldowns(actorBeforeAction),
   );
   const actorAfterCooldowns = getCombatant(stateWithCooldowns, actorSide, actorId);
   const stunConsumption = consumeStun(actorAfterCooldowns);
@@ -1321,7 +1314,7 @@ export function simulateTeamBattle(
 
   for (let round = 1; round <= BATTLE_RULES.maxRounds; round += 1) {
     const turnOrder: BattleSide[] = ["left", "right"];
-    state = { ...clearRoundInvincibility(state), round, turnOrder, actionIndex: 0 };
+    state = { ...state, round, turnOrder, actionIndex: 0 };
 
     const formationSize = Math.max(state.left.length, state.right.length);
     for (let positionIndex = 0; positionIndex < formationSize; positionIndex += 1) {

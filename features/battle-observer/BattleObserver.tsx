@@ -114,6 +114,7 @@ function createInitialTeamVisualState(
     shield: 0,
     cooldowns: Object.fromEntries(character.skills.map((skill) => [skill.id, 0])),
     isStunned: false,
+    isInvincible: false,
     chargeProgress: 0,
   }));
 
@@ -380,6 +381,7 @@ function TeamFormationPanel({
           >
             <div className="team-observer-member-heading">
               <strong>{character.name}</strong>
+              {snapshot.isInvincible ? <span className="team-invincible-status">无敌</span> : null}
             </div>
             <div className="health-block">
               <div className="health-label">

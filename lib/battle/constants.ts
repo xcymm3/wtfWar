@@ -12,6 +12,8 @@ export const BATTLE_RULES = {
   maxDamageMultiplier: 1.8,
   minAreaDamageMultiplier: 0.45,
   maxAreaDamageMultiplier: 0.9,
+  minGrowthMultiplier: 0.1,
+  maxGrowthMultiplier: 0.2,
   minDamageRandomMultiplier: 0.9,
   maxDamageRandomMultiplier: 1.1,
   maxShield: 60,

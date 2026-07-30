@@ -2431,6 +2431,9 @@ body {
 }
 
 .team-observer-member-heading {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -2440,6 +2443,18 @@ body {
   overflow-wrap: anywhere;
   font-size: clamp(0.68rem, 1vw, 0.86rem);
   line-height: 1.25;
+}
+
+.team-invincible-status {
+  flex: 0 0 auto;
+  border: 1px solid rgba(243, 175, 50, 0.6);
+  border-radius: 999px;
+  background: rgba(243, 175, 50, 0.14);
+  color: var(--accent);
+  padding: 2px 4px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .team-observer-list .health-block {
@@ -2806,9 +2821,32 @@ body {
   gap: 8px;
   max-height: 510px;
   overflow-y: auto;
+  scrollbar-color: rgba(243, 175, 50, 0.68) rgba(16, 16, 16, 0.52);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
   margin: 18px 0 0;
   padding: 0 3px 0 0;
   list-style: none;
+}
+
+.battle-log-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.battle-log-list::-webkit-scrollbar-track {
+  margin: 4px;
+  border-radius: 999px;
+  background: rgba(16, 16, 16, 0.52);
+}
+
+.battle-log-list::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(16, 16, 16, 0.52);
+  border-radius: 999px;
+  background: rgba(243, 175, 50, 0.68);
+}
+
+.battle-log-list::-webkit-scrollbar-thumb:hover {
+  background: #ffc45b;
 }
 
 .team-observer-frame {

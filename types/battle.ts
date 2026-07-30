@@ -39,6 +39,7 @@ export type TeamBattleCombatantSnapshot = {
   shield: number;
   cooldowns: Record<string, number>;
   isStunned: boolean;
+  isInvincible: boolean;
   chargeProgress: number;
 };
 

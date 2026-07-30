@@ -148,7 +148,7 @@ export const PRESET_CHARACTERS: readonly Character[] = [
     realm: "mortal",
     skills: [
       { id: "preset-princess-royal-arrow", name: "王室连矢", description: "以训练有素的射术持续压制敌方前排。", usageText: "搭弓连射", type: "damage", activation: "active", target: "enemy_front", cooldown: 2, damageMultiplier: 1.3 },
-      { id: "preset-princess-rally", name: "远征号令", description: "每次行动后气势更盛，攻击会持续成长。", usageText: "发出号令", type: "growth_passive", activation: "passive", target: "self", cooldown: 0, damageMultiplier: 0.25 },
+      { id: "preset-princess-rally", name: "远征号令", description: "每次行动后气势更盛，攻击会持续成长。", usageText: "发出号令", type: "growth_passive", activation: "passive", target: "self", cooldown: 0, damageMultiplier: 0.2 },
     ],
     createdAt: PRESET_TIMESTAMP,
     updatedAt: PRESET_TIMESTAMP,

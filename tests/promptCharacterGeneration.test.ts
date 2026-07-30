@@ -80,7 +80,7 @@ test("tells the model the legal passive multiplier ranges", () => {
   const prompt = getCharacterGenerationSystemPrompt();
 
   assert.match(prompt, /lifesteal_passive.*0\.2-0\.6/);
-  assert.match(prompt, /growth_passive.*0\.2-0\.5/);
+  assert.match(prompt, /growth_passive.*0\.1-0\.2/);
   assert.match(prompt, /不得包含 id、activation、target/);
   assert.match(prompt, /不得输出 name、realm 或 profession/);
   assert.match(prompt, /JSON 结构示例/);

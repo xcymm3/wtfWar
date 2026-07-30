@@ -41,6 +41,11 @@ function normalizeLegacySkill(value: unknown): unknown {
 
   return {
     ...value,
+    // Older cards used the former 0.2-0.5 growth range. Cap them while
+    // reading so existing libraries remain playable after the balance update.
+    ...(type === "growth_passive" && typeof value.damageMultiplier === "number"
+      ? { damageMultiplier: Math.min(value.damageMultiplier, BATTLE_RULES.maxGrowthMultiplier) }
+      : {}),
     activation: value.activation ?? (isPassive ? "passive" : "active"),
     target: value.target ?? getLegacyTarget(type),
     cooldown: value.cooldown ?? (isPassive ? 0 : 1),
@@ -68,7 +73,7 @@ const normalizedSkillSchema = z.object({
   activation: z.enum(["active", "passive"]),
   target: z.enum(SKILL_TARGETS),
   cooldown: z.number().int().min(0).max(BATTLE_RULES.maxCooldown),
-  damageMultiplier: z.number().min(0.2).max(2).optional(),
+  damageMultiplier: z.number().min(BATTLE_RULES.minGrowthMultiplier).max(2).optional(),
   shieldAmount: z.number().int().positive().max(45).optional(),
   healAmount: z.number().int().positive().max(45).optional(),
   stunChance: z.number().min(0).max(1).optional(),
@@ -142,13 +147,13 @@ const normalizedSkillSchema = z.object({
   if (skill.type === "growth_passive") {
     if (
       skill.damageMultiplier === undefined ||
-      skill.damageMultiplier < 0.2 ||
-      skill.damageMultiplier > 0.5
+      skill.damageMultiplier < BATTLE_RULES.minGrowthMultiplier ||
+      skill.damageMultiplier > BATTLE_RULES.maxGrowthMultiplier
     ) {
       context.addIssue({
         code: "custom",
         path: ["damageMultiplier"],
-        message: "growth_passive requires damageMultiplier between 0.2 and 0.5.",
+        message: "growth_passive requires damageMultiplier between 0.1 and 0.2.",
       });
     }
   }

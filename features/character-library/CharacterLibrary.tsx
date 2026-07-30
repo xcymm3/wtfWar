@@ -62,7 +62,7 @@ function getSkillEffect(skill: Skill): string {
     case "area_control":
       return "眩晕敌方全体";
     case "invincible":
-      return "本回合免疫伤害";
+      return "下次行动前免疫伤害";
     case "cleave_passive":
       return "普通攻击改为横扫，但攻击降低";
     case "charge_strike_passive":
@@ -70,7 +70,7 @@ function getSkillEffect(skill: Skill): string {
     case "lifesteal_passive":
       return `造成伤害后恢复 ${skill.damageMultiplier ?? 0}×攻击`;
     case "growth_passive":
-      return `每次行动后提高 ${skill.damageMultiplier ?? 0}×攻击`;
+      return `每次行动后提高 ${skill.damageMultiplier ?? 0}×初始攻击`;
     case "revive_passive":
       return "首次阵亡时半血复活";
     case "assassin_passive":
