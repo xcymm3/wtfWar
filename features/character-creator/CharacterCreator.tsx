@@ -39,6 +39,13 @@ const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
   buff: "增益",
 };
 
+const ACTIVE_GENERATABLE_SKILLS = GENERATABLE_SKILL_CATALOG.filter(
+  (skill) => skill.activation === "主动",
+);
+const PASSIVE_GENERATABLE_SKILLS = GENERATABLE_SKILL_CATALOG.filter(
+  (skill) => skill.activation === "被动",
+);
+
 function getSkillEffect(skill: Skill): string {
   switch (skill.type) {
     case "damage":
@@ -387,15 +394,30 @@ export function CharacterCreator() {
               <button type="button" className="character-detail-close" aria-label="关闭技能说明" onClick={() => setIsSkillGuideOpen(false)}>×</button>
             </div>
             <p className="creator-skill-guide-intro">AI 只会从以下技能类型中选择。实际效果以战斗规则为准。</p>
-            <ul className="creator-skill-guide-list">
-              {GENERATABLE_SKILL_CATALOG.map((skill) => (
-                <li key={skill.type}>
-                  <strong>{skill.label}</strong>
-                  <span>{skill.activation}</span>
-                  <p>{skill.description}</p>
-                </li>
-              ))}
-            </ul>
+            <section className="creator-skill-guide-group" aria-labelledby="active-skill-guide-title">
+              <h3 id="active-skill-guide-title">主动技能</h3>
+              <p>角色行动时会根据战况选择施放。</p>
+              <ul className="creator-skill-guide-list">
+                {ACTIVE_GENERATABLE_SKILLS.map((skill) => (
+                  <li key={skill.type}>
+                    <strong>{skill.label}</strong>
+                    <p>{skill.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <section className="creator-skill-guide-group" aria-labelledby="passive-skill-guide-title">
+              <h3 id="passive-skill-guide-title">被动技能</h3>
+              <p>无需施放，会在满足条件时自动生效。</p>
+              <ul className="creator-skill-guide-list">
+                {PASSIVE_GENERATABLE_SKILLS.map((skill) => (
+                  <li key={skill.type}>
+                    <strong>{skill.label}</strong>
+                    <p>{skill.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </dialog>
         ) : null}
       </div>
