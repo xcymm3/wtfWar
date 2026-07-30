@@ -173,6 +173,9 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /characterSchema/);
   assert.match(creator, /生成角色属性/);
   assert.match(creator, /自动生成的战斗配置/);
+  assert.match(creator, /技能说明/);
+  assert.match(creator, /可生成技能说明/);
+  assert.match(creator, /GENERATABLE_SKILL_CATALOG/);
   assert.match(creator, /GeneratedSkillCard/);
   assert.match(creator, /disabled=\{!generatedSkills/);
   assert.match(creator, /api\/characters\/generate/);

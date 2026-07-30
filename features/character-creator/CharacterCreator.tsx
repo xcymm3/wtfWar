@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { getEffectiveCombatStats } from "@/lib/battle/realm";
+import { GENERATABLE_SKILL_CATALOG } from "@/lib/characters/skillCatalog";
 import { characterSchema } from "@/lib/schemas/character";
 import { useGameStore } from "@/lib/store/gameStore";
 import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
@@ -103,6 +104,7 @@ export function CharacterCreator() {
   const [isSaving, setIsSaving] = useState(false);
   const [generationNotice, setGenerationNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSkillGuideOpen, setIsSkillGuideOpen] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -273,6 +275,13 @@ export function CharacterCreator() {
           <section className="form-section">
             <div className="section-heading">
               <h2>角色设定</h2>
+              <button
+                type="button"
+                className="creator-skill-guide-button"
+                onClick={() => setIsSkillGuideOpen(true)}
+              >
+                技能说明
+              </button>
             </div>
 
             <div className="realm-heading">
@@ -356,6 +365,39 @@ export function CharacterCreator() {
             </button>
           </footer>
         </form>
+
+        {isSkillGuideOpen ? (
+          <dialog
+            open
+            className="character-detail-dialog creator-skill-guide-dialog"
+            aria-labelledby="creator-skill-guide-title"
+            onCancel={(event) => {
+              event.preventDefault();
+              setIsSkillGuideOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsSkillGuideOpen(false);
+            }}
+          >
+            <div className="character-detail-dialog-header">
+              <div>
+                <span>AI 创角</span>
+                <h2 id="creator-skill-guide-title">可生成技能说明</h2>
+              </div>
+              <button type="button" className="character-detail-close" aria-label="关闭技能说明" onClick={() => setIsSkillGuideOpen(false)}>×</button>
+            </div>
+            <p className="creator-skill-guide-intro">AI 只会从以下技能类型中选择。实际效果以战斗规则为准。</p>
+            <ul className="creator-skill-guide-list">
+              {GENERATABLE_SKILL_CATALOG.map((skill) => (
+                <li key={skill.type}>
+                  <strong>{skill.label}</strong>
+                  <span>{skill.activation}</span>
+                  <p>{skill.description}</p>
+                </li>
+              ))}
+            </ul>
+          </dialog>
+        ) : null}
       </div>
     </main>
   );

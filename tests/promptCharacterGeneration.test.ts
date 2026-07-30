@@ -5,10 +5,12 @@ import {
   characterGenerationRequestSchema,
   finalizeGeneratedCharacter,
   getCharacterGenerationSystemPrompt,
+  getCharacterPlanSystemPrompt,
   getModelCharacterDetailJsonSchema,
   modelCharacterPlanSchema,
   modelGeneratedCharacterDraftSchema,
 } from "../lib/characters/promptCharacterGeneration";
+import { GENERATABLE_SKILL_CATALOG } from "../lib/characters/skillCatalog";
 import { characterSchema } from "../lib/schemas/character";
 
 test("converts a valid AI draft into a storable character", () => {
@@ -85,6 +87,27 @@ test("tells the model the legal passive multiplier ranges", () => {
   assert.match(prompt, /第一个和第二个技能都必须保持调用方分别指定的 type/);
   assert.match(prompt, /两个被动技能可以合法组合/);
   assert.match(prompt, /所有被动技能.*cooldown 必须固定为 0/);
+});
+
+test("distinguishes self-sustain from front-line healing in the skill plan", () => {
+  const planPrompt = getCharacterPlanSystemPrompt();
+  const detailPrompt = getCharacterGenerationSystemPrompt();
+
+  assert.equal(GENERATABLE_SKILL_CATALOG.length, 15);
+  assert.deepEqual(
+    GENERATABLE_SKILL_CATALOG.map((skill) => skill.type),
+    [
+      "damage", "critical", "area_damage", "shield", "heal", "area_heal",
+      "control", "area_control", "invincible", "cleave_passive",
+      "charge_strike_passive", "lifesteal_passive", "growth_passive",
+      "revive_passive", "assassin_passive",
+    ],
+  );
+  assert.match(planPrompt, /必须选择 lifesteal_passive，不能选择 heal/);
+  assert.match(planPrompt, /heal 只治疗己方当前前排/);
+  assert.match(planPrompt, /游戏没有独立的闪避技能/);
+  assert.match(detailPrompt, /heal 只能描述为治疗己方前排/);
+  assert.match(detailPrompt, /assassin_passive 不能描述为闪避/);
 });
 
 test("constrains model output to legal combat fields and distinct skill pairs", () => {
