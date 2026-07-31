@@ -257,7 +257,7 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
             />
             <span>
               <strong>竞技模式</strong>
-              <small>双方必须各选满 5 人，所有角色按菜鸟阶位结算，并计入战斗统计。</small>
+              <small>双方必须各选满 5 人，所有角色按凡人阶位战力折算。</small>
             </span>
           </label>
         </div>
@@ -270,11 +270,6 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
           开始观战
         </button>
       </div>
-      {competitiveMode ? (
-        <p className="competitive-mode-hint" aria-live="polite">
-          竞技模式：{teamMembers.left.length} / 5 v {teamMembers.right.length} / 5。角色原始阶位保留，战斗生命、攻击和技能数值均按菜鸟阶位计算。
-        </p>
-      ) : null}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
     </section>
   );

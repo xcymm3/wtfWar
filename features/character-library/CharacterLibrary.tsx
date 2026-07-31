@@ -263,7 +263,7 @@ export function CharacterLibrary() {
                 >
                   <div className="character-card-summary">
                     <span className="character-summary-profession"><ProfessionIcon profession={character.profession} compact />{PROFESSION_LABELS[character.profession]}</span>
-                    <span className="character-summary-realm">战斗力 {REALM_LABELS[realm]}</span>
+                    <span className="character-summary-realm">战力阶位 {REALM_LABELS[realm]}</span>
                     <strong className="character-summary-name">{character.name}</strong>
                     <span className="character-summary-stat">攻击 <b>{effectiveStats.attack}</b></span>
                     <span className="character-summary-stat">血量 <b>{effectiveStats.maxHealth}</b></span>
@@ -379,11 +379,11 @@ export function CharacterLibrary() {
             <ol className="game-help-list">
               <li>
                 <strong>AI 创建角色</strong>
-                <p>点击“创建角色”，输入名称、角色设定和战斗力；AI 会生成职业、属性和技能。同名角色不能重复保存。</p>
+                <p>点击“创建角色”，输入名称、角色设定和战力阶位；AI 会生成职业、属性和技能。同名角色不能重复保存。</p>
               </li>
               <li>
-                <strong>选择战斗力</strong>
-                <p>战斗力分为菜鸟、凡人、高手、超凡和神灵。阶位越高，最终攻击与血量越高。</p>
+                <strong>选择战力阶位</strong>
+                <p>战力阶位分为凡人、高手、超凡、传奇和神灵。阶位越高，最终攻击与血量越高。</p>
               </li>
               <li>
                 <strong>开始游戏</strong>

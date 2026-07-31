@@ -253,7 +253,7 @@ async function generateModelAttempt(
 
     const planCompletion = await completeJson(
       getCharacterPlanSystemPrompt(),
-      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}`,
+      `角色名称：${name}\n角色描述：${prompt}\n指定战力阶位：${realm}`,
       "character_combat_plan",
       modelCharacterPlanJsonSchema,
       100,
@@ -263,7 +263,7 @@ async function generateModelAttempt(
     );
     const detailCompletion = await completeJson(
       getCharacterGenerationSystemPrompt(),
-      `角色名称：${name}\n角色描述：${prompt}\n指定战斗力阶位：${realm}\n指定职业：${plan.profession}\n第一个技能 type：${plan.primarySkillType}\n第二个技能 type：${plan.secondarySkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
+      `角色名称：${name}\n角色描述：${prompt}\n指定战力阶位：${realm}\n指定职业：${plan.profession}\n第一个技能 type：${plan.primarySkillType}\n第二个技能 type：${plan.secondarySkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,
       "character_combat_detail",
       getModelCharacterDetailJsonSchema(
         plan.profession,

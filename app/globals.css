@@ -2082,16 +2082,10 @@ body {
   font-size: 0.84rem;
 }
 
-.competitive-mode-toggle small,
-.competitive-mode-hint {
+.competitive-mode-toggle small {
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.55;
-}
-
-.competitive-mode-hint {
-  margin: 10px 0 0;
-  padding-left: 2px;
 }
 
 .team-builder-footer > button {

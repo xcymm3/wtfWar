@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { characterSchema } from "../lib/schemas/character";
-import type { Character } from "../types/character";
+import { REALM_LABELS, type Character } from "../types/character";
 
 const TIMESTAMP = "2026-07-23T00:00:00.000Z";
 
@@ -36,6 +36,16 @@ function createCharacter(): Character {
     updatedAt: TIMESTAMP,
   };
 }
+
+test("maps persisted realm codes to the current display names", () => {
+  assert.deepEqual(REALM_LABELS, {
+    mortal: "凡人",
+    martial_master: "高手",
+    superpowered: "超凡",
+    cultivator: "传奇",
+    deity: "神灵",
+  });
+});
 
 test("accepts manual roles only when profession and skill rules are satisfied", () => {
   const migratedLegacyCharacter = characterSchema.parse(createCharacter());

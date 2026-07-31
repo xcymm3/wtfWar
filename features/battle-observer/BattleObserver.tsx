@@ -716,7 +716,7 @@ function TeamBattleObserverPlayer({
         <header className="observer-header">
           <div>
             <p className="library-kicker">战斗界面</p>
-            <p className="team-observer-meta">种子 <code>{seed}</code> · {competitiveMode ? "竞技模式 · 5v5 · 菜鸟平衡" : `${leftTeam.members.length}v${rightTeam.members.length}`} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
+            <p className="team-observer-meta">种子 <code>{seed}</code> · {competitiveMode ? "竞技模式 · 5v5 · 凡人平衡" : `${leftTeam.members.length}v${rightTeam.members.length}`} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">
             <Link href="/" className="back-link">返回角色库</Link>

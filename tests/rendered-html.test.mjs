@@ -216,7 +216,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /api\/characters\/generate/);
   assert.match(creator, /fetch\("\/api\/characters"/);
   assert.match(creator, /正在保存到角色库/);
-  assert.match(creator, /战斗力/);
+  assert.match(creator, /战力阶位/);
   assert.match(creator, /让你想的角色成真/);
   assert.doesNotMatch(creator, /给出设定，其余交给 AI|以下三项由你决定|阶位会放大角色/);
   assert.match(creator, /SkillIcon/);
@@ -273,7 +273,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /team-invincible-status/);
   assert.match(observer, /api\/battles/);
   assert.match(observer, /recordedBattleId/);
-  assert.match(observer, /竞技模式 · 5v5 · 菜鸟平衡/);
+  assert.match(observer, /竞技模式 · 5v5 · 凡人平衡/);
   assert.match(observer, /battle\.competitiveMode/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(battleStats, /战斗统计/);
@@ -303,7 +303,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /玩法介绍/);
   assert.match(library, /游戏玩法/);
   assert.match(library, /AI 创建角色/);
-  assert.match(library, /选择战斗力/);
+  assert.match(library, /选择战力阶位/);
   assert.match(library, /当前角色数：/);
   assert.doesNotMatch(library, /名已保存角色/);
   assert.match(library, /character-more-button/);

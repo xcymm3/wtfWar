@@ -171,7 +171,7 @@ export function CharacterCreator() {
       setAttack(generated.attack);
       setMaxHealth(generated.maxHealth);
       setGeneratedSkills(generated.skills);
-      setGenerationNotice("AI 已根据角色名称、描述和战斗力生成职业、属性和技能。");
+      setGenerationNotice("AI 已根据角色名称、描述和战力阶位生成职业、属性和技能。");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : "角色生成失败。",
@@ -255,7 +255,7 @@ export function CharacterCreator() {
         <header className="creator-header">
           <div>
             <p className="library-kicker">次元竞技场 · 手动创角</p>
-            <p>让你想的角色成真！！你只需要输入名称+设定+战斗力，就可以自动生成一个角色！注意：同名角色只能有一个</p>
+            <p>让你想的角色成真！！你只需要输入名称、设定和战力阶位，就可以自动生成一个角色！注意：同名角色只能有一个</p>
           </div>
           <Link href="/" className="back-link">返回角色库</Link>
         </header>
@@ -274,9 +274,9 @@ export function CharacterCreator() {
             </div>
 
             <div className="realm-heading">
-              <span>战斗力</span>
+              <span>战力阶位</span>
             </div>
-            <div className="realm-picker" aria-label="选择战斗力">
+            <div className="realm-picker" aria-label="选择战力阶位">
               {REALMS.map((item) => (
                 <button
                   key={item}
