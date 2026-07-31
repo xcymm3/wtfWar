@@ -3133,7 +3133,7 @@ body {
 
 .battle-stats-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(160px, 260px);
   gap: 10px;
   margin-top: 32px;
 }
@@ -3145,9 +3145,6 @@ body {
   background: rgba(29, 27, 23, 0.82);
   padding: 14px;
 }
-
-.battle-stats-summary > div.is-left { border-top-color: var(--team-left); }
-.battle-stats-summary > div.is-right { border-top-color: var(--team-right); }
 
 .battle-stats-summary span {
   color: var(--muted);
@@ -3851,10 +3848,6 @@ body {
 
   .observer-arena {
     grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
-  }
-
-  .battle-stats-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .battle-stats-header-actions {

@@ -128,9 +128,6 @@ test("returns persisted battle statistics through the production API route", asy
 
   const payload = await response.json();
   assert.equal(typeof payload.totalBattles, "number");
-  assert.equal(typeof payload.leftWins, "number");
-  assert.equal(typeof payload.rightWins, "number");
-  assert.equal(typeof payload.draws, "number");
   assert.ok(Array.isArray(payload.records));
 });
 

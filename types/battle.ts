@@ -58,9 +58,6 @@ export type BattleRecord = {
 
 export type BattleStatistics = {
   totalBattles: number;
-  leftWins: number;
-  rightWins: number;
-  draws: number;
   records: BattleRecord[];
 };
 

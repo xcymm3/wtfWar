@@ -149,9 +149,6 @@ export function BattleStats() {
           <>
             <section className="battle-stats-summary" aria-label="战斗汇总">
               <div><span>总场次</span><strong>{statistics.totalBattles}</strong></div>
-              <div className="is-left"><span>红方胜场</span><strong>{statistics.leftWins}</strong></div>
-              <div className="is-right"><span>蓝方胜场</span><strong>{statistics.rightWins}</strong></div>
-              <div><span>平局</span><strong>{statistics.draws}</strong></div>
             </section>
 
             <section className="battle-stats-records" aria-label="最近战斗记录">

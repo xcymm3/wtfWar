@@ -71,9 +71,6 @@ export async function getBattleStatistics(): Promise<BattleStatistics> {
   const [summaryRows, records] = await Promise.all([
     db.select({
       totalBattles: sql<number>`count(*)::int`,
-      leftWins: sql<number>`count(*) filter (where ${battleRecords.winner} = 'left')::int`,
-      rightWins: sql<number>`count(*) filter (where ${battleRecords.winner} = 'right')::int`,
-      draws: sql<number>`count(*) filter (where ${battleRecords.winner} = 'draw')::int`,
     }).from(battleRecords).where(fullTeamRecordCondition),
     db.select()
       .from(battleRecords)
@@ -85,9 +82,6 @@ export async function getBattleStatistics(): Promise<BattleStatistics> {
   const summary = summaryRows[0];
   return {
     totalBattles: summary?.totalBattles ?? 0,
-    leftWins: summary?.leftWins ?? 0,
-    rightWins: summary?.rightWins ?? 0,
-    draws: summary?.draws ?? 0,
     records: records.map(toBattleRecord),
   };
 }
