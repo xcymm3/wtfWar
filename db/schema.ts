@@ -57,11 +57,13 @@ export const battleRecords = pgTable(
     seed: text("seed").notNull(),
     leftTeam: jsonb("left_team").$type<BattleRecordTeam>().notNull(),
     rightTeam: jsonb("right_team").$type<BattleRecordTeam>().notNull(),
+    competitiveMode: boolean("competitive_mode").notNull().default(false),
     winner: text("winner").$type<BattleRecordWinner>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("battle_records_created_at_index").on(table.createdAt),
+    index("battle_records_competitive_mode_index").on(table.competitiveMode),
     index("battle_records_winner_index").on(table.winner),
   ],
 );

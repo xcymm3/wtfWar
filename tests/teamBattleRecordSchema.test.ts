@@ -15,6 +15,7 @@ function createBattleRecordRequest() {
   return {
     id: "recorded-battle-1",
     rulesVersion: 2 as const,
+    competitiveMode: true as const,
     seed: "statistics-seed",
     leftTeam: { side: "left" as const, members: leftTeam },
     rightTeam: { side: "right" as const, members: rightTeam },
@@ -39,6 +40,13 @@ test("rejects a character appearing in both recorded teams", () => {
 test("rejects incomplete teams from battle statistics", () => {
   const request = createBattleRecordRequest();
   request.rightTeam.members = request.rightTeam.members.slice(0, 4);
+
+  const parsed = teamBattleRecordRequestSchema.safeParse(request);
+  assert.equal(parsed.success, false);
+});
+
+test("rejects non-competitive battles from battle statistics", () => {
+  const request = { ...createBattleRecordRequest(), competitiveMode: false };
 
   const parsed = teamBattleRecordRequestSchema.safeParse(request);
   assert.equal(parsed.success, false);

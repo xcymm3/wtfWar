@@ -201,6 +201,7 @@ test("builds teams in a mutable front-to-back order", () => {
     assert.equal(typeof preparedTeam?.id, "string");
     assert.equal(preparedTeam?.rulesVersion, 2);
     assert.equal(preparedTeam?.seed, "five-a-side-seed");
+    assert.equal(preparedTeam?.competitiveMode, false);
     assert.deepEqual(
       preparedTeam?.leftTeam.members.map((character) => character.id),
       [leftOne.id, leftThree.id, leftTwo.id],
@@ -231,6 +232,23 @@ test("prepares teams with different member counts", () => {
 
     assert.equal(store.getState().preparedTeamBattle?.leftTeam.members.length, 2);
     assert.equal(store.getState().preparedTeamBattle?.rightTeam.members.length, 1);
+  });
+});
+
+test("requires complete teams when preparing a competitive battle", () => {
+  withMemoryStorage(() => {
+    const store = createGameStore();
+    const left = createCharacter("competitive-left");
+    const right = createCharacter("competitive-right");
+    store.getState().hydrate();
+    [left, right].forEach((character) => store.getState().addCharacter(character));
+    store.getState().addCharacterToTeam("left", left.id);
+    store.getState().addCharacterToTeam("right", right.id);
+
+    assert.throws(
+      () => store.getState().prepareTeamBattle("competitive-seed", true),
+      /竞技模式要求红蓝双方各选满 5 名角色/,
+    );
   });
 });
 

@@ -11,6 +11,7 @@ const teamFormationSchema = z.object({
 export const teamBattleRecordRequestSchema = z.object({
   id: z.string().min(1).max(64),
   rulesVersion: z.literal(2),
+  competitiveMode: z.literal(true),
   seed: z.string().trim().min(1).max(160),
   leftTeam: teamFormationSchema,
   rightTeam: teamFormationSchema,

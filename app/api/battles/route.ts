@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       seed: parsedBattle.data.seed,
       leftTeam: parsedBattle.data.leftTeam,
       rightTeam: parsedBattle.data.rightTeam,
+      competitiveMode: parsedBattle.data.competitiveMode,
       winner,
     });
     return Response.json({ winner }, { status: 201 });

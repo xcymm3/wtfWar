@@ -2051,6 +2051,49 @@ body {
   margin-top: 14px;
 }
 
+.team-battle-settings {
+  display: grid;
+  gap: 10px;
+}
+
+.competitive-mode-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  max-width: 430px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.competitive-mode-toggle input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  margin: 3px 0 0;
+}
+
+.competitive-mode-toggle span {
+  display: grid;
+  gap: 2px;
+}
+
+.competitive-mode-toggle strong {
+  color: var(--accent);
+  font-size: 0.84rem;
+}
+
+.competitive-mode-toggle small,
+.competitive-mode-hint {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.competitive-mode-hint {
+  margin: 10px 0 0;
+  padding-left: 2px;
+}
+
 .team-builder-footer > button {
   min-height: 42px;
   cursor: pointer;

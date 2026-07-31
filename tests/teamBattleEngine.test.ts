@@ -79,6 +79,23 @@ test("creates realm-adjusted team states without mutating team snapshots", () =>
   assert.deepEqual(preparation, before);
 });
 
+test("normalizes every realm to mortal for competitive team battles", () => {
+  const preparation = createPreparation();
+  preparation.competitiveMode = true;
+  preparation.leftTeam.members[0]!.realm = "deity";
+  preparation.rightTeam.members[0]!.realm = "cultivator";
+  const before = structuredClone(preparation);
+
+  const state = createInitialTeamBattleState(preparation);
+
+  assert.equal(state.left[0]?.effectiveStats.attack, 30);
+  assert.equal(state.left[0]?.health, 100);
+  assert.equal(state.right[0]?.effectiveStats.attack, 5);
+  assert.equal(state.right[0]?.health, 10);
+  assert.equal(state.left[0]?.character.realm, "mortal");
+  assert.deepEqual(preparation, before);
+});
+
 test("alternates team turns by formation position and only targets the current front", () => {
   const preparation = createPreparation();
   preparation.rightTeam.members[0]!.maxHealth = 100;

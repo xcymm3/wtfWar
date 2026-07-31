@@ -49,7 +49,7 @@ export type GameStoreState = GameStore & {
   ) => void;
   setTeamCharacterIds: (teamCharacterIds: TeamCharacterIds) => void;
   clearTeam: (side: BattleSide) => void;
-  prepareTeamBattle: (seed: string) => void;
+  prepareTeamBattle: (seed: string, competitiveMode?: boolean) => void;
   rematchBattle: (
     seed: string,
     leftCharacter: Character,
@@ -150,6 +150,7 @@ function createTeamBattlePreparation(
   characters: Character[],
   leftMemberIds: string[],
   rightMemberIds: string[],
+  competitiveMode = false,
 ): TeamBattlePreparation {
   const normalizedSeed = seed.trim();
   if (normalizedSeed.length === 0) {
@@ -160,12 +161,19 @@ function createTeamBattlePreparation(
   if (new Set(allMemberIds).size !== allMemberIds.length) {
     throw new Error("A character cannot appear on both teams.");
   }
+  if (
+    competitiveMode &&
+    (leftMemberIds.length !== MAX_TEAM_SIZE || rightMemberIds.length !== MAX_TEAM_SIZE)
+  ) {
+    throw new Error("竞技模式要求红蓝双方各选满 5 名角色。");
+  }
 
   const leftTeam = createTeamFormation("left", characters, leftMemberIds);
   const rightTeam = createTeamFormation("right", characters, rightMemberIds);
   return {
     id: nanoid(),
     rulesVersion: 2,
+    competitiveMode,
     seed: normalizedSeed,
     leftTeam,
     rightTeam,
@@ -460,7 +468,7 @@ export function createGameStore() {
       }));
     },
 
-    prepareTeamBattle: (seed) => {
+    prepareTeamBattle: (seed, competitiveMode = false) => {
       set((state) => ({
         ...state,
         preparedTeamBattle: createTeamBattlePreparation(
@@ -468,6 +476,7 @@ export function createGameStore() {
           state.characters,
           state.teamCharacterIds.left,
           state.teamCharacterIds.right,
+          competitiveMode,
         ),
         preparedBattle: null,
         activeReplayBattleId: null,

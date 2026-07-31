@@ -1,0 +1,2 @@
+ALTER TABLE "battle_records" ADD COLUMN "competitive_mode" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX "battle_records_competitive_mode_index" ON "battle_records" USING btree ("competitive_mode");

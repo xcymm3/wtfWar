@@ -16,6 +16,8 @@ const RECENT_RECORD_LIMIT = 100;
 const LEADERBOARD_LIMIT = 10;
 
 const fullTeamRecordCondition = sql`
+  ${battleRecords.competitiveMode} = true
+  AND
   jsonb_array_length(${battleRecords.leftTeam} -> 'members') = 5
   AND jsonb_array_length(${battleRecords.rightTeam} -> 'members') = 5
 `;
@@ -48,10 +50,11 @@ export async function createBattleRecord(input: {
   seed: string;
   leftTeam: TeamFormation;
   rightTeam: TeamFormation;
+  competitiveMode: boolean;
   winner: BattleRecordWinner;
 }): Promise<void> {
-  if (input.leftTeam.members.length !== 5 || input.rightTeam.members.length !== 5) {
-    throw new RangeError("Only complete five-person teams can be recorded.");
+  if (!input.competitiveMode || input.leftTeam.members.length !== 5 || input.rightTeam.members.length !== 5) {
+    throw new RangeError("Only complete competitive five-person teams can be recorded.");
   }
 
   const db = getDb();
@@ -61,6 +64,7 @@ export async function createBattleRecord(input: {
       seed: input.seed,
       leftTeam: toBattleRecordTeam(input.leftTeam),
       rightTeam: toBattleRecordTeam(input.rightTeam),
+      competitiveMode: true,
       winner: input.winner,
     })
     .onConflictDoNothing({ target: battleRecords.id });

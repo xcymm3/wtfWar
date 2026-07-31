@@ -14,7 +14,11 @@ import { applyDamage } from "./damage";
 import { calculateDamageSkillDamage } from "./damageSkill";
 import { applyHealing } from "./heal";
 import { createSeededRandom, type SeededRandom } from "./random";
-import { getEffectiveCombatStats, scaleSkillAmountByRealm } from "./realm";
+import {
+  getCombatCharacter,
+  getEffectiveCombatStats,
+  scaleSkillAmountByRealm,
+} from "./realm";
 import { applyShield } from "./shield";
 import { getSkillUsageText } from "./skillUsageText";
 import {
@@ -163,8 +167,12 @@ export function createInitialTeamBattleState(
     round: 0,
     turnOrder: [],
     actionIndex: 0,
-    left: input.leftTeam.members.map(createTeamCombatantState),
-    right: input.rightTeam.members.map(createTeamCombatantState),
+    left: input.leftTeam.members.map((character) =>
+      createTeamCombatantState(character, input.competitiveMode),
+    ),
+    right: input.rightTeam.members.map((character) =>
+      createTeamCombatantState(character, input.competitiveMode),
+    ),
     winner: null,
     events: [],
   };
@@ -192,8 +200,11 @@ function getChargeStrikePassive(
   return skill as ChargeStrikePassiveSkill;
 }
 
-function createTeamCombatantState(character: CombatantState["character"]): CombatantState {
-  const combatant = createCombatantState(character);
+function createTeamCombatantState(
+  character: CombatantState["character"],
+  competitiveMode = false,
+): CombatantState {
+  const combatant = createCombatantState(getCombatCharacter(character, competitiveMode));
   const multiplier = getCleavePassive(combatant) ? 0.65 : getPassive(combatant, "assassin_passive") ? 0.8 : 1;
   if (multiplier === 1) return combatant;
 

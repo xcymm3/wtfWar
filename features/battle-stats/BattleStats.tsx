@@ -135,7 +135,7 @@ export function BattleStats() {
           <div>
             <p className="library-kicker">全站对局数据</p>
             <h1>战斗统计</h1>
-            <p>仅保存阵容、种子与胜负结果。战斗过程不会入库，也不支持回放。</p>
+            <p>仅保存竞技模式的完整五人阵容、种子与胜负结果。战斗过程不会入库，也不支持回放。</p>
           </div>
           <div className="battle-stats-header-actions">
             <button type="button" className="battle-leaderboard-button" onClick={openLeaderboard}>排行榜</button>
@@ -203,7 +203,7 @@ export function BattleStats() {
               </div>
               <button type="button" className="character-detail-close" aria-label="关闭排行榜" onClick={() => setIsLeaderboardOpen(false)}>×</button>
             </div>
-            <p className="battle-leaderboard-intro">仅统计双方均选满 5 名角色的对局。同一角色与站位完全相同的阵容会累计为同一队伍。</p>
+            <p className="battle-leaderboard-intro">仅统计竞技模式下双方均选满 5 名角色的对局。同一角色与站位完全相同的阵容会累计为同一队伍。</p>
             <div className="battle-leaderboard-filters" role="group" aria-label="排行榜排序方式">
               <button type="button" className={leaderboardSort === "wins" ? "is-active" : ""} onClick={() => changeLeaderboardSort("wins")} aria-pressed={leaderboardSort === "wins"}>胜场</button>
               <button type="button" className={leaderboardSort === "winRate" ? "is-active" : ""} onClick={() => changeLeaderboardSort("winRate")} aria-pressed={leaderboardSort === "winRate"}>胜率</button>
@@ -227,7 +227,7 @@ export function BattleStats() {
                     </li>
                   ))}
                 </ol>
-              ) : <p className="battle-stats-empty">还没有完整五人阵容的对局记录。</p>
+              ) : <p className="battle-stats-empty">还没有竞技模式的完整五人阵容对局记录。</p>
             ) : !leaderboardError ? <p className="battle-stats-loading" aria-live="polite">正在计算排行榜…</p> : null}
           </dialog>
         ) : null}

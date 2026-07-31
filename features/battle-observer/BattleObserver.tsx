@@ -13,7 +13,7 @@ import {
 
 import { simulateBattle } from "@/lib/battle/battleEngine";
 import { BATTLE_RULES } from "@/lib/battle/constants";
-import { getEffectiveCombatStats } from "@/lib/battle/realm";
+import { getCombatCharacter, getEffectiveCombatStats } from "@/lib/battle/realm";
 import { simulateTeamBattle } from "@/lib/battle/teamBattleEngine";
 import { getSkillUsageText } from "@/lib/battle/skillUsageText";
 import { useGameStore } from "@/lib/store/gameStore";
@@ -63,10 +63,13 @@ type ObservedTeamBattle = {
   rounds: number;
   events: TeamBattleEvent[];
   preparedAt: string;
+  competitiveMode: boolean;
 };
 
-function getTeamEffectiveStats(character: Character) {
-  const effectiveStats = getEffectiveCombatStats(character);
+function getTeamEffectiveStats(character: Character, competitiveMode = false) {
+  const effectiveStats = getEffectiveCombatStats(
+    getCombatCharacter(character, competitiveMode),
+  );
   if (!character.skills.some((skill) => skill.type === "cleave_passive")) {
     return effectiveStats;
   }
@@ -89,11 +92,12 @@ function createInitialVisualCombatant(character: Character): VisualCombatant {
 function createInitialTeamVisualState(
   leftTeam: TeamFormation,
   rightTeam: TeamFormation,
+  competitiveMode: boolean,
 ): TeamVisualState {
   const toSnapshots = (team: TeamFormation) => team.members.map((character, index) => ({
     characterId: character.id,
     position: index + 1,
-    health: getTeamEffectiveStats(character).maxHealth,
+    health: getTeamEffectiveStats(character, competitiveMode).maxHealth,
     shield: 0,
     cooldowns: Object.fromEntries(character.skills.map((skill) => [skill.id, 0])),
     isStunned: false,
@@ -135,10 +139,14 @@ function getHealthPercentage(character: Character, health: number): number {
   );
 }
 
-function getTeamHealthPercentage(character: Character, health: number): number {
+function getTeamHealthPercentage(
+  character: Character,
+  health: number,
+  competitiveMode = false,
+): number {
   return Math.max(
     0,
-    Math.min(100, (health / getTeamEffectiveStats(character).maxHealth) * 100),
+    Math.min(100, (health / getTeamEffectiveStats(character, competitiveMode).maxHealth) * 100),
   );
 }
 
@@ -332,10 +340,12 @@ function TeamFormationPanel({
   side,
   formation,
   snapshots,
+  competitiveMode,
 }: {
   side: BattleSide;
   formation: TeamFormation;
   snapshots: TeamBattleCombatantSnapshot[];
+  competitiveMode: boolean;
 }) {
   const isLeft = side === "left";
   const currentFrontId = snapshots.find((member) => member.health > 0)?.characterId;
@@ -352,8 +362,8 @@ function TeamFormationPanel({
         );
         if (!snapshot) return null;
 
-        const effectiveStats = getTeamEffectiveStats(character);
-        const healthPercentage = getTeamHealthPercentage(character, snapshot.health);
+        const effectiveStats = getTeamEffectiveStats(character, competitiveMode);
+        const healthPercentage = getTeamHealthPercentage(character, snapshot.health, competitiveMode);
         const isDefeated = snapshot.health === 0;
         const isFront = snapshot.characterId === currentFrontId;
 
@@ -609,7 +619,7 @@ function TeamBattleObserverPlayer({
 }: {
   battle: ObservedTeamBattle;
 }) {
-  const { events, leftTeam, rightTeam, rounds, seed, winner } = battle;
+  const { events, leftTeam, rightTeam, rounds, seed, winner, competitiveMode } = battle;
   const [visibleEventCount, setVisibleEventCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1);
@@ -621,8 +631,8 @@ function TeamBattleObserverPlayer({
   const { handleLogScroll, logRef } = useBattleLogAutoFollow(visibleEventCount);
   const visualState = useMemo<TeamVisualState>(() => {
     const latestEvent = visibleEvents.at(-1);
-    return latestEvent?.formations ?? createInitialTeamVisualState(leftTeam, rightTeam);
-  }, [leftTeam, rightTeam, visibleEvents]);
+    return latestEvent?.formations ?? createInitialTeamVisualState(leftTeam, rightTeam, competitiveMode);
+  }, [competitiveMode, leftTeam, rightTeam, visibleEvents]);
   const charactersById = useMemo(
     () => new Map(
       [...leftTeam.members, ...rightTeam.members].map((character) => [character.id, character]),
@@ -631,7 +641,7 @@ function TeamBattleObserverPlayer({
   );
 
   useEffect(() => {
-    if (!battle.id || recordedBattleId.current === battle.id) return;
+    if (!battle.competitiveMode || !battle.id || recordedBattleId.current === battle.id) return;
 
     recordedBattleId.current = battle.id;
     let isCurrent = true;
@@ -641,6 +651,7 @@ function TeamBattleObserverPlayer({
       body: JSON.stringify({
         id: battle.id,
         rulesVersion: 2,
+        competitiveMode: true,
         seed: battle.seed,
         leftTeam: battle.leftTeam,
         rightTeam: battle.rightTeam,
@@ -705,7 +716,7 @@ function TeamBattleObserverPlayer({
         <header className="observer-header">
           <div>
             <p className="library-kicker">战斗界面</p>
-            <p className="team-observer-meta">种子 <code>{seed}</code> · {leftTeam.members.length}v{rightTeam.members.length} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
+            <p className="team-observer-meta">种子 <code>{seed}</code> · {competitiveMode ? "竞技模式 · 5v5 · 菜鸟平衡" : `${leftTeam.members.length}v${rightTeam.members.length}`} · 已展示 {visibleEventCount} / {events.length} 个行动</p>
           </div>
           <div className="observer-header-actions">
             <Link href="/" className="back-link">返回角色库</Link>
@@ -713,13 +724,13 @@ function TeamBattleObserverPlayer({
         </header>
 
         <section className="team-observer-arena" aria-label="团队战斗状态">
-          <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} />
+          <TeamFormationPanel side="left" formation={leftTeam} snapshots={visualState.left} competitiveMode={competitiveMode} />
           <div className="team-observer-divider">
             <div className="team-observer-round">
               <strong>ROUND {currentRound || "—"}</strong>
             </div>
           </div>
-          <TeamFormationPanel side="right" formation={rightTeam} snapshots={visualState.right} />
+          <TeamFormationPanel side="right" formation={rightTeam} snapshots={visualState.right} competitiveMode={competitiveMode} />
         </section>
 
         <ObserverControls
@@ -803,6 +814,7 @@ export function BattleObserver() {
       rounds: result.round,
       events: result.events,
       preparedAt: preparedTeamBattle.preparedAt,
+      competitiveMode: preparedTeamBattle.competitiveMode === true,
     };
   }, [preparedTeamBattle]);
 

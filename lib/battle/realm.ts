@@ -21,6 +21,14 @@ export function getCharacterRealm(
   return character.realm ?? "mortal";
 }
 
+/** Competitive battles retain the card but resolve every realm as mortal. */
+export function getCombatCharacter(
+  character: Character,
+  competitiveMode = false,
+): Character {
+  return competitiveMode ? { ...character, realm: "mortal" } : character;
+}
+
 export function getRealmMultiplier(realm: Realm): number {
   return REALM_MULTIPLIERS[realm];
 }

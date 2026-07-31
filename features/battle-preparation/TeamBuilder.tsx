@@ -127,6 +127,7 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
   const setTeamCharacterIds = useGameStore((state) => state.setTeamCharacterIds);
   const prepareTeamBattle = useGameStore((state) => state.prepareTeamBattle);
   const [seed, setSeed] = useState(createSeed);
+  const [competitiveMode, setCompetitiveMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{ side: BattleSide; index: number } | null>(null);
 
@@ -143,7 +144,9 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
     }),
     [characters, teamCharacterIds],
   );
-  const hasCompleteTeams = teamMembers.left.length > 0 && teamMembers.right.length > 0;
+  const hasCompleteTeams = competitiveMode
+    ? teamMembers.left.length === 5 && teamMembers.right.length === 5
+    : teamMembers.left.length > 0 && teamMembers.right.length > 0;
 
   function handleAction(action: () => void): void {
     setError(null);
@@ -195,7 +198,7 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
   function handleStartBattle(): void {
     setError(null);
     try {
-      prepareTeamBattle(seed);
+      prepareTeamBattle(seed, competitiveMode);
       router.push("/battle");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "无法开始观战。");
@@ -233,22 +236,45 @@ export function TeamBuilder({ characters }: { characters: Character[] }) {
         />
       </div>
       <div className="team-builder-footer">
-        <div className="seed-input-row">
-          <label>
-            <span className="sr-only">战斗种子</span>
+        <div className="team-battle-settings">
+          <div className="seed-input-row">
+            <label>
+              <span className="sr-only">战斗种子</span>
+              <input
+                required
+                value={seed}
+                onChange={(event) => setSeed(event.target.value)}
+                placeholder="战斗种子"
+              />
+            </label>
+            <button type="button" onClick={() => setSeed(createSeed())}>换一个</button>
+          </div>
+          <label className="competitive-mode-toggle">
             <input
-              required
-              value={seed}
-              onChange={(event) => setSeed(event.target.value)}
-              placeholder="战斗种子"
+              type="checkbox"
+              checked={competitiveMode}
+              onChange={(event) => setCompetitiveMode(event.target.checked)}
             />
+            <span>
+              <strong>竞技模式</strong>
+              <small>双方必须各选满 5 人，所有角色按菜鸟阶位结算，并计入战斗统计。</small>
+            </span>
           </label>
-          <button type="button" onClick={() => setSeed(createSeed())}>换一个</button>
         </div>
-        <button type="button" onClick={handleStartBattle} disabled={!hasCompleteTeams}>
+        <button
+          type="button"
+          onClick={handleStartBattle}
+          disabled={!hasCompleteTeams}
+          title={competitiveMode && !hasCompleteTeams ? "竞技模式要求双方各选满 5 名角色" : undefined}
+        >
           开始观战
         </button>
       </div>
+      {competitiveMode ? (
+        <p className="competitive-mode-hint" aria-live="polite">
+          竞技模式：{teamMembers.left.length} / 5 v {teamMembers.right.length} / 5。角色原始阶位保留，战斗生命、攻击和技能数值均按菜鸟阶位计算。
+        </p>
+      ) : null}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
     </section>
   );

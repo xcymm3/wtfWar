@@ -28,6 +28,8 @@ export type TeamBattlePreparation = {
   /** A client-generated ID makes recording a prepared battle idempotent. */
   id?: string;
   rulesVersion: 2;
+  /** Competitive battles require two complete teams and normalize every realm to mortal. */
+  competitiveMode?: boolean;
   seed: string;
   leftTeam: TeamFormation;
   rightTeam: TeamFormation;

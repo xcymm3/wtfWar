@@ -246,6 +246,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(preparation, /onDrop/);
   assert.match(preparation, /setTeamCharacterIds/);
   assert.match(preparation, /开始观战/);
+  assert.match(preparation, /竞技模式/);
+  assert.match(preparation, /competitiveMode/);
   assert.doesNotMatch(preparation, /向前|向后/);
   assert.match(observer, /simulateBattle/);
   assert.match(observer, /simulateTeamBattle/);
@@ -271,6 +273,8 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /team-invincible-status/);
   assert.match(observer, /api\/battles/);
   assert.match(observer, /recordedBattleId/);
+  assert.match(observer, /竞技模式 · 5v5 · 菜鸟平衡/);
+  assert.match(observer, /battle\.competitiveMode/);
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(battleStats, /战斗统计/);
   assert.match(battleStats, /最近记录/);
@@ -281,6 +285,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(battlesRoute, /simulateTeamBattle/);
   assert.match(battlesRoute, /teamBattleRecordRequestSchema/);
   assert.match(battlesRoute, /createBattleRecord/);
+  assert.match(battlesRoute, /competitiveMode/);
   assert.doesNotMatch(battlesRoute, /events/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);
