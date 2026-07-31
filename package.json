@@ -13,6 +13,7 @@
     "simulate:balance": "tsx scripts/simulateBalance.ts",
     "test": "pnpm run test:unit && pnpm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "balance:check": "tsx scripts/checkBalance.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push"
   },

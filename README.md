@@ -136,6 +136,7 @@ docs/                 架构与战斗规则文档
 | `pnpm test` | 运行单元测试、生产构建和页面渲染验证 |
 | `pnpm lint` | 运行 ESLint |
 | `pnpm simulate:balance` | 执行五职业基准角色平衡模拟 |
+| `pnpm balance:check` | 执行职业平衡发布门禁，输出违规职业与对局数据 |
 | `pnpm db:push` | 同步 Drizzle 表结构到 Neon |
 
 ## 文档
