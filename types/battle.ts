@@ -1,4 +1,4 @@
-import type { Character, Skill } from "./character";
+import type { Character, Profession, Realm, Skill } from "./character";
 
 export type BattleSide = "left" | "right";
 
@@ -25,11 +25,43 @@ export type TeamFormation = {
 
 /** A validated v2 setup with immutable, front-to-back team snapshots. */
 export type TeamBattlePreparation = {
+  /** A client-generated ID makes recording a prepared battle idempotent. */
+  id?: string;
   rulesVersion: 2;
   seed: string;
   leftTeam: TeamFormation;
   rightTeam: TeamFormation;
   preparedAt: string;
+};
+
+/** Compact formation snapshot persisted for global battle statistics. */
+export type BattleRecordTeam = {
+  side: BattleSide;
+  members: Array<{
+    id: string;
+    name: string;
+    profession: Profession;
+    realm: Realm;
+  }>;
+};
+
+export type BattleRecordWinner = BattleSide | "draw";
+
+export type BattleRecord = {
+  id: string;
+  seed: string;
+  leftTeam: BattleRecordTeam;
+  rightTeam: BattleRecordTeam;
+  winner: BattleRecordWinner;
+  createdAt: string;
+};
+
+export type BattleStatistics = {
+  totalBattles: number;
+  leftWins: number;
+  rightWins: number;
+  draws: number;
+  records: BattleRecord[];
 };
 
 export type TeamBattleCombatantSnapshot = {

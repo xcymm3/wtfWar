@@ -98,6 +98,14 @@ test("server-renders the battle observer loading boundary", async () => {
   assert.match(html, /正在加载战斗配置/);
 });
 
+test("server-renders the battle statistics loading boundary", async () => {
+  const response = await render("/battle-stats");
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /正在读取战斗统计/);
+});
+
 test("requires configured AI service through the production API route", async () => {
   const response = await render("/api/characters/generate", {
     method: "POST",
@@ -114,8 +122,20 @@ test("requires configured AI service through the production API route", async ()
   assert.match(payload.error, /尚未配置/);
 });
 
+test("returns persisted battle statistics through the production API route", async () => {
+  const response = await render("/api/battles");
+  assert.equal(response.status, 200);
+
+  const payload = await response.json();
+  assert.equal(typeof payload.totalBattles, "number");
+  assert.equal(typeof payload.leftWins, "number");
+  assert.equal(typeof payload.rightWins, "number");
+  assert.equal(typeof payload.draws, "number");
+  assert.ok(Array.isArray(payload.records));
+});
+
 test("keeps the character library wired to the local game store", async () => {
-  const [page, library, presets, creator, skillIcon, generator, generationRoute, charactersRoute, repository, preparation, observer, storage, layout, packageJson, styles] = await Promise.all([
+  const [page, library, presets, creator, skillIcon, generator, generationRoute, charactersRoute, repository, preparation, observer, battleStats, battlesRoute, storage, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../features/character-library/CharacterLibrary.tsx", import.meta.url),
@@ -151,6 +171,8 @@ test("keeps the character library wired to the local game store", async () => {
       new URL("../features/battle-observer/BattleObserver.tsx", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../features/battle-stats/BattleStats.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/battles/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/storage/gameStorage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
@@ -165,6 +187,7 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(library, /addPresetCharacters/);
   assert.match(library, /TeamBuilder/);
   assert.match(library, /beginTeamCharacterDrag/);
+  assert.match(library, /battle-stats/);
   assert.doesNotMatch(library, /删除角色/);
   assert.match(library, /创建角色/);
   assert.match(presets, /护卫/);
@@ -237,7 +260,16 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(observer, /formatTeamBattleLog/);
   assert.match(observer, /倒下了！/);
   assert.match(observer, /team-invincible-status/);
+  assert.match(observer, /api\/battles/);
+  assert.match(observer, /recordedBattleId/);
   assert.doesNotMatch(observer, /team-observer-skills/);
+  assert.match(battleStats, /战斗统计/);
+  assert.match(battleStats, /最近记录/);
+  assert.doesNotMatch(battleStats, /重新对战|开始观战/);
+  assert.match(battlesRoute, /simulateTeamBattle/);
+  assert.match(battlesRoute, /teamBattleRecordRequestSchema/);
+  assert.match(battlesRoute, /createBattleRecord/);
+  assert.doesNotMatch(battlesRoute, /events/);
   assert.match(storage, /migrateLegacyGameStore/);
   assert.doesNotMatch(storage, /teamBattles:/);
   assert.match(layout, /title:\s*"次元竞技场"/);

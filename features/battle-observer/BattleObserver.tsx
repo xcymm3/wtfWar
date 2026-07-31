@@ -55,12 +55,14 @@ type ObservedBattle = {
 };
 
 type ObservedTeamBattle = {
+  id?: string;
   seed: string;
   leftTeam: TeamFormation;
   rightTeam: TeamFormation;
   winner: BattleSide | "draw";
   rounds: number;
   events: TeamBattleEvent[];
+  preparedAt: string;
 };
 
 function getTeamEffectiveStats(character: Character) {
@@ -611,6 +613,8 @@ function TeamBattleObserverPlayer({
   const [visibleEventCount, setVisibleEventCount] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(1);
+  const [battleRecordError, setBattleRecordError] = useState<string | null>(null);
+  const recordedBattleId = useRef<string | null>(null);
   const visibleEvents = events.slice(0, visibleEventCount);
   const currentRound = visibleEvents.at(-1)?.round ?? 0;
   const hasFinishedReplay = visibleEventCount === events.length;
@@ -625,6 +629,41 @@ function TeamBattleObserverPlayer({
     ),
     [leftTeam, rightTeam],
   );
+
+  useEffect(() => {
+    if (!battle.id || recordedBattleId.current === battle.id) return;
+
+    recordedBattleId.current = battle.id;
+    let isCurrent = true;
+    void fetch("/api/battles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: battle.id,
+        rulesVersion: 2,
+        seed: battle.seed,
+        leftTeam: battle.leftTeam,
+        rightTeam: battle.rightTeam,
+        preparedAt: battle.preparedAt,
+      }),
+    }).then(async (response) => {
+      if (response.ok) return;
+      const payload = await response.json().catch(() => null) as { error?: unknown } | null;
+      const message = typeof payload?.error === "string"
+        ? payload.error
+        : "战斗统计记录保存失败。";
+      throw new Error(message);
+    }).catch((error: unknown) => {
+      if (!isCurrent) return;
+      setBattleRecordError(
+        error instanceof Error ? error.message : "战斗统计记录保存失败。",
+      );
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [battle]);
 
   useEffect(() => {
     if (!isPlaying || hasFinishedReplay) return;
@@ -693,6 +732,8 @@ function TeamBattleObserverPlayer({
           onPlaybackSpeedChange={setPlaybackSpeed}
         />
 
+        {battleRecordError ? <p className="battle-record-notice" role="status">{battleRecordError}</p> : null}
+
         {hasFinishedReplay ? (
           <section className="observer-result" aria-live="polite">
             <span>{winner === "draw" ? "战斗结束" : "胜者"}</span>
@@ -754,12 +795,14 @@ export function BattleObserver() {
 
     const result = simulateTeamBattle(preparedTeamBattle);
     return {
+      id: preparedTeamBattle.id,
       seed: preparedTeamBattle.seed,
       leftTeam: preparedTeamBattle.leftTeam,
       rightTeam: preparedTeamBattle.rightTeam,
       winner: result.winner ?? "draw",
       rounds: result.round,
       events: result.events,
+      preparedAt: preparedTeamBattle.preparedAt,
     };
   }, [preparedTeamBattle]);
 

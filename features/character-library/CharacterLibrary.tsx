@@ -190,6 +190,7 @@ export function CharacterLibrary() {
           <div className="library-toolbar">
             <span className="library-count" aria-label={`当前角色数：${characters.length}`}>当前角色数：{characters.length}</span>
             <div className="library-toolbar-actions">
+              <Link href="/battle-stats" className="battle-stats-link">战斗统计</Link>
               <button type="button" className="library-help-button" onClick={() => setIsHelpOpen(true)}>玩法介绍</button>
               <Link href="/create" className="create-character-link">创建角色</Link>
             </div>

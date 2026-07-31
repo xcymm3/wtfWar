@@ -1,5 +1,6 @@
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
+import { nanoid } from "nanoid";
 
 import { characterSchema } from "@/lib/schemas/character";
 import { getPresetCharacters } from "@/lib/characters/presetCharacters";
@@ -163,6 +164,7 @@ function createTeamBattlePreparation(
   const leftTeam = createTeamFormation("left", characters, leftMemberIds);
   const rightTeam = createTeamFormation("right", characters, rightMemberIds);
   return {
+    id: nanoid(),
     rulesVersion: 2,
     seed: normalizedSeed,
     leftTeam,

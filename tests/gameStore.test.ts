@@ -198,6 +198,7 @@ test("builds teams in a mutable front-to-back order", () => {
     store.getState().prepareTeamBattle("five-a-side-seed");
 
     const preparedTeam = store.getState().preparedTeamBattle;
+    assert.equal(typeof preparedTeam?.id, "string");
     assert.equal(preparedTeam?.rulesVersion, 2);
     assert.equal(preparedTeam?.seed, "five-a-side-seed");
     assert.deepEqual(

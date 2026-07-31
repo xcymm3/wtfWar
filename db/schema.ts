@@ -9,6 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+import type { BattleRecordTeam, BattleRecordWinner } from "@/types/battle";
 import type { Character } from "@/types/character";
 
 export const characters = pgTable(
@@ -46,5 +47,21 @@ export const modelGenerationEvents = pgTable(
   (table) => [
     index("model_generation_events_created_at_index").on(table.createdAt),
     index("model_generation_events_request_id_index").on(table.requestId),
+  ],
+);
+
+export const battleRecords = pgTable(
+  "battle_records",
+  {
+    id: text("id").primaryKey(),
+    seed: text("seed").notNull(),
+    leftTeam: jsonb("left_team").$type<BattleRecordTeam>().notNull(),
+    rightTeam: jsonb("right_team").$type<BattleRecordTeam>().notNull(),
+    winner: text("winner").$type<BattleRecordWinner>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("battle_records_created_at_index").on(table.createdAt),
+    index("battle_records_winner_index").on(table.winner),
   ],
 );

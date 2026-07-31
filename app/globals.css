@@ -196,6 +196,26 @@ body {
   color: #e4effd;
 }
 
+.battle-stats-link {
+  min-height: 34px;
+  border: 1px solid rgba(111, 194, 149, 0.54);
+  border-radius: 9px;
+  background: rgba(111, 194, 149, 0.1);
+  color: #c3ebd4;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 32px;
+  text-decoration: none;
+}
+
+.battle-stats-link:hover {
+  border-color: #82d3a5;
+  background: rgba(111, 194, 149, 0.18);
+  color: #e0f7e9;
+}
+
 .preset-characters-button {
   min-height: 38px;
   cursor: pointer;
@@ -3045,6 +3065,228 @@ body {
   text-align: center;
 }
 
+.battle-record-notice {
+  margin: 10px 0 0;
+  color: #f7b5ad;
+  font-size: 0.78rem;
+}
+
+.battle-stats-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 5% 2%, rgba(111, 194, 149, 0.14), transparent 28rem),
+    radial-gradient(circle at 96% 4%, rgba(103, 158, 216, 0.14), transparent 30rem),
+    linear-gradient(135deg, #121411, var(--background));
+}
+
+.battle-stats-frame {
+  width: min(1060px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 54px 0 80px;
+}
+
+.battle-stats-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.battle-stats-header h1 {
+  margin: 0.55rem 0 0;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  letter-spacing: -0.065em;
+}
+
+.battle-stats-header > div > p:not(.library-kicker) {
+  max-width: 620px;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.battle-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.battle-stats-summary > div {
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 13px;
+  background: rgba(29, 27, 23, 0.82);
+  padding: 14px;
+}
+
+.battle-stats-summary > div.is-left { border-top-color: var(--team-left); }
+.battle-stats-summary > div.is-right { border-top-color: var(--team-right); }
+
+.battle-stats-summary span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.battle-stats-summary strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 1.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.battle-stats-records {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(29, 27, 23, 0.86);
+  padding: 21px;
+}
+
+.battle-stats-records-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.battle-stats-records-heading h2,
+.battle-stats-records-heading p {
+  margin: 0;
+}
+
+.battle-stats-records-heading h2 {
+  margin-top: 5px;
+  font-size: 1.2rem;
+}
+
+.battle-stats-records-heading > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.battle-stats-records > ol {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.battle-stats-record {
+  border: 1px solid rgba(189, 177, 160, 0.22);
+  border-radius: 13px;
+  background: rgba(16, 16, 16, 0.26);
+  padding: 14px;
+}
+
+.battle-stats-record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.battle-stats-record-meta code {
+  overflow: hidden;
+  max-width: 100%;
+  border-radius: 5px;
+  background: rgba(16, 16, 16, 0.48);
+  padding: 2px 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-stats-winner {
+  font-size: 0.8rem;
+}
+
+.battle-stats-winner.is-left { color: var(--team-left-soft); }
+.battle-stats-winner.is-right { color: var(--team-right-soft); }
+.battle-stats-winner.is-draw { color: var(--accent); }
+
+.battle-stats-rosters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.battle-stats-versus {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.battle-stats-team {
+  min-width: 0;
+  border-left: 2px solid var(--team-left);
+  padding-left: 9px;
+}
+
+.battle-stats-team-right {
+  border-left-color: var(--team-right);
+}
+
+.battle-stats-team > span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.battle-stats-team ol {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.battle-stats-team li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.battle-stats-team em {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.battle-stats-team strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-stats-team small {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.battle-stats-empty,
+.battle-stats-loading {
+  margin: 18px 0 0;
+  border: 1px dashed rgba(189, 177, 160, 0.28);
+  border-radius: 12px;
+  color: var(--muted);
+  padding: 20px;
+  text-align: center;
+}
+
 .team-event-targets {
   display: grid;
   gap: 4px;
@@ -3368,6 +3610,7 @@ body {
   .preparation-actions,
   .seed-panel,
   .observer-header,
+  .battle-stats-header,
   .history-header,
   .history-record,
   .ai-generator-actions {
@@ -3452,6 +3695,10 @@ body {
     grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
   }
 
+  .battle-stats-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
 }
 
 @media (max-width: 620px) {
@@ -3475,6 +3722,11 @@ body {
     padding-top: 32px;
   }
 
+  .battle-stats-frame {
+    width: min(100% - 28px, 1060px);
+    padding-top: 32px;
+  }
+
   .history-frame {
     width: min(100% - 28px, 1060px);
     padding-top: 32px;
@@ -3482,6 +3734,24 @@ body {
 
   .library-header h1 {
     font-size: clamp(2.55rem, 15vw, 4.2rem);
+  }
+
+  .battle-stats-records {
+    padding: 14px;
+  }
+
+  .battle-stats-records-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .battle-stats-rosters {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+
+  .battle-stats-versus {
+    min-height: 16px;
   }
 
   .battle-seats {

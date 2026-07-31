@@ -15,6 +15,13 @@
       "when": 1785310737317,
       "tag": "0001_married_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785465486722,
+      "tag": "0002_damp_mojo",
+      "breakpoints": true
     }
   ]
 }
