@@ -9,6 +9,8 @@ import {
   REALM_LABELS,
 } from "@/types/character";
 import type {
+  BattleLeaderboardEntry,
+  BattleLeaderboardSort,
   BattleRecord,
   BattleRecordTeam,
   BattleStatistics,
@@ -43,9 +45,31 @@ function TeamRoster({ team }: { team: BattleRecordTeam }) {
   );
 }
 
+function LeaderboardRoster({ team }: { team: BattleRecordTeam }) {
+  return (
+    <ol className="battle-leaderboard-roster">
+      {team.members.map((member, index) => (
+        <li key={`${member.id}-${index}`}>
+          <em>{index + 1}</em>
+          <ProfessionIcon profession={member.profession} compact />
+          <strong>{member.name}</strong>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function formatWinRate(winRate: number): string {
+  return `${Math.round(winRate * 100)}%`;
+}
+
 export function BattleStats() {
   const [statistics, setStatistics] = useState<BattleStatistics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [leaderboardSort, setLeaderboardSort] = useState<BattleLeaderboardSort>("wins");
+  const [leaderboard, setLeaderboard] = useState<BattleLeaderboardEntry[] | null>(null);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
   useEffect(() => {
     let isCurrent = true;
@@ -70,6 +94,40 @@ export function BattleStats() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isLeaderboardOpen) return;
+
+    const controller = new AbortController();
+    void fetch(`/api/battles/leaderboard?sort=${leaderboardSort}`, { signal: controller.signal })
+      .then(async (response) => {
+        const payload = await response.json() as { entries?: BattleLeaderboardEntry[]; error?: unknown };
+        if (!response.ok) {
+          throw new Error(typeof payload.error === "string" ? payload.error : "无法读取排行榜。");
+        }
+        return payload.entries ?? [];
+      })
+      .then((entries) => setLeaderboard(entries))
+      .catch((caughtError: unknown) => {
+        if (controller.signal.aborted) return;
+        setLeaderboardError(caughtError instanceof Error ? caughtError.message : "无法读取排行榜。");
+      });
+
+    return () => controller.abort();
+  }, [isLeaderboardOpen, leaderboardSort]);
+
+  function openLeaderboard(): void {
+    setLeaderboard(null);
+    setLeaderboardError(null);
+    setIsLeaderboardOpen(true);
+  }
+
+  function changeLeaderboardSort(sort: BattleLeaderboardSort): void {
+    if (sort === leaderboardSort) return;
+    setLeaderboard(null);
+    setLeaderboardError(null);
+    setLeaderboardSort(sort);
+  }
+
   return (
     <main className="battle-stats-shell">
       <div className="battle-stats-frame">
@@ -79,7 +137,10 @@ export function BattleStats() {
             <h1>战斗统计</h1>
             <p>仅保存阵容、种子与胜负结果。战斗过程不会入库，也不支持回放。</p>
           </div>
-          <Link href="/" className="back-link">返回角色库</Link>
+          <div className="battle-stats-header-actions">
+            <button type="button" className="battle-leaderboard-button" onClick={openLeaderboard}>排行榜</button>
+            <Link href="/" className="back-link">返回角色库</Link>
+          </div>
         </header>
 
         {error ? <p className="form-error" role="alert">{error}</p> : null}
@@ -124,6 +185,55 @@ export function BattleStats() {
             </section>
           </>
         ) : !error ? <p className="battle-stats-loading" aria-live="polite">正在读取战斗统计…</p> : null}
+
+        {isLeaderboardOpen ? (
+          <dialog
+            open
+            className="character-detail-dialog battle-leaderboard-dialog"
+            aria-labelledby="battle-leaderboard-title"
+            onCancel={(event) => {
+              event.preventDefault();
+              setIsLeaderboardOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsLeaderboardOpen(false);
+            }}
+          >
+            <div className="character-detail-dialog-header">
+              <div>
+                <span>完整五人阵容</span>
+                <h2 id="battle-leaderboard-title">队伍排行榜</h2>
+              </div>
+              <button type="button" className="character-detail-close" aria-label="关闭排行榜" onClick={() => setIsLeaderboardOpen(false)}>×</button>
+            </div>
+            <p className="battle-leaderboard-intro">仅统计双方均选满 5 名角色的对局。同一角色与站位完全相同的阵容会累计为同一队伍。</p>
+            <div className="battle-leaderboard-filters" role="group" aria-label="排行榜排序方式">
+              <button type="button" className={leaderboardSort === "wins" ? "is-active" : ""} onClick={() => changeLeaderboardSort("wins")} aria-pressed={leaderboardSort === "wins"}>胜场</button>
+              <button type="button" className={leaderboardSort === "winRate" ? "is-active" : ""} onClick={() => changeLeaderboardSort("winRate")} aria-pressed={leaderboardSort === "winRate"}>胜率</button>
+            </div>
+            {leaderboardError ? <p className="form-error" role="alert">{leaderboardError}</p> : null}
+            {leaderboard ? (
+              leaderboard.length > 0 ? (
+                <ol className="battle-leaderboard-list">
+                  {leaderboard.map((entry, index) => (
+                    <li key={entry.team.members.map((member) => member.id).join(":")}>
+                      <span className="battle-leaderboard-rank">#{index + 1}</span>
+                      <div>
+                        <strong>{entry.team.members.map((member) => member.name).join(" · ")}</strong>
+                        <LeaderboardRoster team={entry.team} />
+                      </div>
+                      <dl>
+                        <div><dt>胜场</dt><dd>{entry.wins}</dd></div>
+                        <div><dt>胜率</dt><dd>{formatWinRate(entry.winRate)}</dd></div>
+                        <div><dt>场次</dt><dd>{entry.games}</dd></div>
+                      </dl>
+                    </li>
+                  ))}
+                </ol>
+              ) : <p className="battle-stats-empty">还没有完整五人阵容的对局记录。</p>
+            ) : !leaderboardError ? <p className="battle-stats-loading" aria-live="polite">正在计算排行榜…</p> : null}
+          </dialog>
+        ) : null}
       </div>
     </main>
   );

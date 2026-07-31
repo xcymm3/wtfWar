@@ -64,6 +64,15 @@ export type BattleStatistics = {
   records: BattleRecord[];
 };
 
+export type BattleLeaderboardSort = "wins" | "winRate";
+
+export type BattleLeaderboardEntry = {
+  team: BattleRecordTeam;
+  games: number;
+  wins: number;
+  winRate: number;
+};
+
 export type TeamBattleCombatantSnapshot = {
   characterId: string;
   position: number;

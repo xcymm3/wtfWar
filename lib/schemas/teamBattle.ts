@@ -4,7 +4,7 @@ import { characterSchema } from "./character";
 
 const teamFormationSchema = z.object({
   side: z.enum(["left", "right"]),
-  members: z.array(characterSchema).min(1).max(5),
+  members: z.array(characterSchema).length(5),
 });
 
 /** Validates the complete input before the server re-simulates a team battle. */

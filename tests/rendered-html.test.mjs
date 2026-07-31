@@ -134,6 +134,18 @@ test("returns persisted battle statistics through the production API route", asy
   assert.ok(Array.isArray(payload.records));
 });
 
+test("returns at most ten complete-team leaderboard entries", async () => {
+  const response = await render("/api/battles/leaderboard?sort=winRate");
+  assert.equal(response.status, 200);
+
+  const payload = await response.json();
+  assert.ok(Array.isArray(payload.entries));
+  assert.ok(payload.entries.length <= 10);
+  payload.entries.forEach((entry) => {
+    assert.equal(entry.team.members.length, 5);
+  });
+});
+
 test("keeps the character library wired to the local game store", async () => {
   const [page, library, presets, creator, skillIcon, generator, generationRoute, charactersRoute, repository, preparation, observer, battleStats, battlesRoute, storage, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
@@ -265,6 +277,9 @@ test("keeps the character library wired to the local game store", async () => {
   assert.doesNotMatch(observer, /team-observer-skills/);
   assert.match(battleStats, /战斗统计/);
   assert.match(battleStats, /最近记录/);
+  assert.match(battleStats, /排行榜/);
+  assert.match(battleStats, /胜场/);
+  assert.match(battleStats, /胜率/);
   assert.doesNotMatch(battleStats, /重新对战|开始观战/);
   assert.match(battlesRoute, /simulateTeamBattle/);
   assert.match(battlesRoute, /teamBattleRecordRequestSchema/);
