@@ -16,6 +16,30 @@ const generatedSkillTypeSchema = z.enum(SKILL_TYPES).exclude(["buff"]);
 
 export type PlannedSkillType = z.infer<typeof generatedSkillTypeSchema>;
 
+const GROUP_TARGET_SKILL_TYPES = [
+  "area_damage",
+  "area_heal",
+  "area_control",
+  "cleave_passive",
+] as const satisfies readonly PlannedSkillType[];
+
+function requiresSingleTargetOnlySkills(prompt: string): boolean {
+  const normalized = prompt.replaceAll(/\s+/g, "").toLowerCase();
+  return /(?:不(?:擅长|善于|会|使用|打)?(?:群体|群攻|群伤|范围|aoe)|(?:只|仅|专注).{0,6}(?:单体|单个目标)|(?:单体|单个目标).{0,8}(?:不(?:擅长|善于|会|使用|打)?(?:群体|群攻|群伤|范围|aoe)))/.test(normalized);
+}
+
+export function getDisallowedPlannedSkillTypes(prompt: string): readonly PlannedSkillType[] {
+  return requiresSingleTargetOnlySkills(prompt) ? GROUP_TARGET_SKILL_TYPES : [];
+}
+
+export function planUsesDisallowedSkillType(
+  plan: { primarySkillType: PlannedSkillType; secondarySkillType: PlannedSkillType },
+  prompt: string,
+): boolean {
+  const disallowedTypes = getDisallowedPlannedSkillTypes(prompt);
+  return disallowedTypes.includes(plan.primarySkillType) || disallowedTypes.includes(plan.secondarySkillType);
+}
+
 const generatedSkillDraftSchema = z.discriminatedUnion("type", [
   z.object({
     name: z.string().trim().min(1).max(24),
@@ -329,6 +353,9 @@ JSON 顶层只能含 attack、maxHealth、skills，不得输出 name、realm 或
 职业范围：tank 攻击 5-15、生命 145-180；warrior 14-22、120-160；mage 13-23、95-130；assassin 16-25、105-145；ranger 20-30、85-120。主动技能的 cooldown 为 1-5（area_control 固定 5，invincible 为 3-5）；所有被动技能（type 以 _passive 结尾）的 cooldown 必须固定为 0。heal 只能描述为治疗己方前排，不能写成自我治疗；lifesteal_passive 必须描述为造成伤害后恢复自身生命。游戏没有独立的闪避机制，invincible 必须描述为直到下次行动前短暂无伤，assassin_passive 不能描述为闪避。所有中文文本简洁，技能名不重复。`;
 }
 
-export function getCharacterPlanSystemPrompt(): string {
-  return `你是“次元竞技场”的角色规划器。根据角色名称、角色描述和指定战力阶位，只选择 profession、primarySkillType、secondarySkillType，不要生成属性或技能文本。JSON 示例：{"profession":"warrior","primarySkillType":"damage","secondarySkillType":"shield"}。profession 仅可为 tank、warrior、mage、assassin、ranger。skillType 必须严格从以下英文标识中选择，不得自造 speed、attack 等值：${generatedSkillTypeSchema.options.join("、")}。技能实际效果：${getGeneratableSkillPlanningGuide()}。两个 skillType 必须不同。普通攻击天然提供伤害，因此双被动合法；“不死、复活、重生”优先 revive_passive，“成长、越战越强、战斗力 Max”优先 growth_passive。heal 只治疗己方当前前排，绝不是自我治疗；只要设定表达“吸血、汲取、攻击后恢复自身生命”，或同时表达“闪避/战斗”和“恢复自身生命”等以自身续航为目的的描述，必须选择 lifesteal_passive，不能选择 heal。游戏没有独立的闪避技能；如设定明确要求短暂无伤，可选择 invincible，但不得把 assassin_passive 描述为闪避。若设定同时出现“战斗力 Max”和“不会死”，必须选择 primarySkillType 为 growth_passive、secondarySkillType 为 revive_passive。选择应符合角色设定；仅输出 JSON 对象，不要 Markdown。`;
+export function getCharacterPlanSystemPrompt(prompt = ""): string {
+  const singleTargetConstraint = requiresSingleTargetOnlySkills(prompt)
+    ? "用户明确要求只擅长单体、或不擅长群体：严禁选择 area_damage、area_heal、area_control、cleave_passive；这四类都会影响多个目标。"
+    : "";
+  return `你是“次元竞技场”的角色规划器。根据角色名称、角色描述和指定战力阶位，只选择 profession、primarySkillType、secondarySkillType，不要生成属性或技能文本。JSON 示例：{"profession":"warrior","primarySkillType":"damage","secondarySkillType":"shield"}。profession 仅可为 tank、warrior、mage、assassin、ranger。skillType 必须严格从以下英文标识中选择，不得自造 speed、attack 等值：${generatedSkillTypeSchema.options.join("、")}。技能实际效果：${getGeneratableSkillPlanningGuide()}。两个 skillType 必须不同。普通攻击天然提供伤害，因此双被动合法；“不死、复活、重生”优先 revive_passive，“成长、越战越强、战斗力 Max”优先 growth_passive。heal 只治疗己方当前前排，绝不是自我治疗；只要设定表达“吸血、汲取、攻击后恢复自身生命”，或同时表达“闪避/战斗”和“恢复自身生命”等以自身续航为目的的描述，必须选择 lifesteal_passive，不能选择 heal。游戏没有独立的闪避技能；如设定明确要求短暂无伤，可选择 invincible，但不得把 assassin_passive 描述为闪避。若设定同时出现“战斗力 Max”和“不会死”，必须选择 primarySkillType 为 growth_passive、secondarySkillType 为 revive_passive。${singleTargetConstraint}选择应符合角色设定；仅输出 JSON 对象，不要 Markdown。`;
 }

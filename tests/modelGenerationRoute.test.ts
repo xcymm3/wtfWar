@@ -23,12 +23,16 @@ function setEnvironment(name: string, value: string): () => void {
 }
 
 function createRequest(): Request {
+  return createRequestWithPrompt("使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。");
+}
+
+function createRequestWithPrompt(prompt: string): Request {
   return new Request("http://localhost/api/characters/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: "霜语",
-      prompt: "使用冰霜法术牵制敌人的年轻法师，外表冷静但出手果断。",
+      prompt,
       realm: "cultivator",
     }),
   });
@@ -126,6 +130,90 @@ test("returns a request ID and logs a successful model attempt", async () => {
   } finally {
     globalThis.fetch = originalFetch;
     captured.restore();
+    restoreTimeout();
+    restoreModel();
+    restoreBaseUrl();
+    restoreApiKey();
+  }
+});
+
+test("retries a group skill plan for an explicitly single-target character", async () => {
+  const restoreApiKey = setEnvironment("OPENAI_API_KEY", "test-key");
+  const restoreBaseUrl = setEnvironment("OPENAI_BASE_URL", "https://model.test/v1");
+  const restoreModel = setEnvironment("OPENAI_MODEL", "test-model");
+  const restoreTimeout = setEnvironment("MODEL_REQUEST_TIMEOUT_MS", "1000");
+  const systemMessages: string[] = [];
+  const userMessages: string[] = [];
+  let callCount = 0;
+  globalThis.fetch = async (_input, init) => {
+    callCount += 1;
+    const body = JSON.parse(String(init?.body)) as {
+      messages: Array<{ content: string }>;
+    };
+    systemMessages.push(body.messages[0]!.content);
+    userMessages.push(body.messages[1]!.content);
+
+    if (callCount === 1) {
+      return Response.json({
+        choices: [{ message: { content: JSON.stringify({
+          profession: "warrior",
+          primarySkillType: "damage",
+          secondarySkillType: "cleave_passive",
+        }) } }],
+      });
+    }
+    if (callCount === 2) {
+      return Response.json({
+        choices: [{ message: { content: JSON.stringify({
+          profession: "warrior",
+          primarySkillType: "damage",
+          secondarySkillType: "control",
+        }) } }],
+      });
+    }
+    return Response.json({
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            attack: 18,
+            maxHealth: 140,
+            skills: [
+              {
+                name: "降妖杖",
+                description: "挥杖攻击敌方前排。",
+                usageText: "挥杖猛击",
+                type: "damage",
+                cooldown: 2,
+                damageMultiplier: 1.5,
+              },
+              {
+                name: "定身咒",
+                description: "使敌方前排跳过下一次行动。",
+                usageText: "低声念咒",
+                type: "control",
+                cooldown: 3,
+                stunChance: 1,
+              },
+            ],
+          }),
+        },
+      }],
+    });
+  };
+
+  try {
+    const response = await POST(createRequestWithPrompt("力量比较大，擅长打击单体目标，不擅长群体"));
+    const payload = await response.json() as {
+      character?: { skills?: Array<{ type?: unknown }> };
+    };
+
+    assert.equal(response.status, 200);
+    assert.equal(callCount, 3);
+    assert.match(systemMessages[0]!, /严禁选择 area_damage、area_heal、area_control、cleave_passive/);
+    assert.match(userMessages[1]!, /重试要求：用户明确要求单体且不擅长群体/);
+    assert.deepEqual(payload.character?.skills?.map((skill) => skill.type), ["damage", "control"]);
+  } finally {
+    globalThis.fetch = originalFetch;
     restoreTimeout();
     restoreModel();
     restoreBaseUrl();

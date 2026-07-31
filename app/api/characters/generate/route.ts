@@ -8,6 +8,7 @@ import {
   modelCharacterPlanJsonSchema,
   modelCharacterPlanSchema,
   modelGeneratedCharacterDetailSchema,
+  planUsesDisallowedSkillType,
 } from "@/lib/characters/promptCharacterGeneration";
 import {
   logModelGenerationAttempt,
@@ -252,8 +253,8 @@ async function generateModelAttempt(
     };
 
     const planCompletion = await completeJson(
-      getCharacterPlanSystemPrompt(),
-      `角色名称：${name}\n角色描述：${prompt}\n指定战力阶位：${realm}`,
+      getCharacterPlanSystemPrompt(prompt),
+      `角色名称：${name}\n角色描述：${prompt}\n指定战力阶位：${realm}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}`,
       "character_combat_plan",
       modelCharacterPlanJsonSchema,
       100,
@@ -261,6 +262,15 @@ async function generateModelAttempt(
     const plan = modelCharacterPlanSchema.parse(
       JSON.parse(extractJsonContent(planCompletion.content)),
     );
+    if (planUsesDisallowedSkillType(plan, prompt)) {
+      throw new ModelGenerationError(
+        "model_invalid_response",
+        true,
+        planCompletion.upstreamStatus,
+        "用户明确要求单体且不擅长群体。技能规划不得选择 area_damage、area_heal、area_control 或 cleave_passive。",
+        planCompletion.content,
+      );
+    }
     const detailCompletion = await completeJson(
       getCharacterGenerationSystemPrompt(),
       `角色名称：${name}\n角色描述：${prompt}\n指定战力阶位：${realm}\n指定职业：${plan.profession}\n第一个技能 type：${plan.primarySkillType}\n第二个技能 type：${plan.secondarySkillType}${retryInstruction ? `\n重试要求：${retryInstruction}` : ""}${retryDraft ? `\n上一次不合规 JSON（仅用于修正，不能原样复制）：${retryDraft}` : ""}`,

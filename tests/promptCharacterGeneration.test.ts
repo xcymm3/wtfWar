@@ -7,8 +7,10 @@ import {
   getCharacterGenerationSystemPrompt,
   getCharacterPlanSystemPrompt,
   getModelCharacterDetailJsonSchema,
+  getDisallowedPlannedSkillTypes,
   modelCharacterPlanSchema,
   modelGeneratedCharacterDraftSchema,
+  planUsesDisallowedSkillType,
 } from "../lib/characters/promptCharacterGeneration";
 import { GENERATABLE_SKILL_CATALOG } from "../lib/characters/skillCatalog";
 import { characterSchema } from "../lib/schemas/character";
@@ -108,6 +110,27 @@ test("distinguishes self-sustain from front-line healing in the skill plan", () 
   assert.match(planPrompt, /游戏没有独立的闪避技能/);
   assert.match(detailPrompt, /heal 只能描述为治疗己方前排/);
   assert.match(detailPrompt, /assassin_passive 不能描述为闪避/);
+});
+
+test("forbids group-targeting skills for an explicitly single-target character", () => {
+  const prompt = "力量比较大，擅长打击单体目标，不擅长群体";
+  const planPrompt = getCharacterPlanSystemPrompt(prompt);
+
+  assert.deepEqual(getDisallowedPlannedSkillTypes(prompt), [
+    "area_damage",
+    "area_heal",
+    "area_control",
+    "cleave_passive",
+  ]);
+  assert.match(planPrompt, /严禁选择 area_damage、area_heal、area_control、cleave_passive/);
+  assert.equal(planUsesDisallowedSkillType({
+    primarySkillType: "damage",
+    secondarySkillType: "cleave_passive",
+  }, prompt), true);
+  assert.equal(planUsesDisallowedSkillType({
+    primarySkillType: "damage",
+    secondarySkillType: "control",
+  }, prompt), false);
 });
 
 test("constrains model output to legal combat fields and distinct skill pairs", () => {
