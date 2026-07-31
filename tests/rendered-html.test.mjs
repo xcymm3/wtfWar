@@ -115,7 +115,7 @@ test("requires configured AI service through the production API route", async ()
 });
 
 test("keeps the character library wired to the local game store", async () => {
-  const [page, library, presets, creator, generator, generationRoute, charactersRoute, repository, preparation, observer, storage, layout, packageJson, styles] = await Promise.all([
+  const [page, library, presets, creator, skillIcon, generator, generationRoute, charactersRoute, repository, preparation, observer, storage, layout, packageJson, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../features/character-library/CharacterLibrary.tsx", import.meta.url),
@@ -129,6 +129,7 @@ test("keeps the character library wired to the local game store", async () => {
       new URL("../features/character-creator/CharacterCreator.tsx", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../features/skill/SkillIcon.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../lib/characters/promptCharacterGeneration.ts", import.meta.url),
       "utf8",
@@ -186,10 +187,12 @@ test("keeps the character library wired to the local game store", async () => {
   assert.match(creator, /战斗力/);
   assert.match(creator, /让你想的角色成真/);
   assert.doesNotMatch(creator, /给出设定，其余交给 AI|以下三项由你决定|阶位会放大角色/);
-  assert.match(creator, /群体伤害/);
-  assert.match(creator, /群体治疗/);
-  assert.match(creator, /横扫被动/);
-  assert.match(creator, /蓄力一击被动/);
+  assert.match(creator, /SkillIcon/);
+  assert.match(skillIcon, /群体伤害/);
+  assert.match(skillIcon, /群体治疗/);
+  assert.match(skillIcon, /横扫被动/);
+  assert.match(skillIcon, /蓄力被动/);
+  assert.match(skillIcon, /SKILL_ICON_TONES/);
   assert.doesNotMatch(creator, /SkillEditor/);
   assert.match(library, /<dt>攻击<\/dt>/);
   assert.match(library, /ProfessionIcon/);

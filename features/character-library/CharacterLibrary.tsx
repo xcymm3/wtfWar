@@ -11,6 +11,7 @@ import {
   TeamBuilder,
 } from "@/features/battle-preparation/TeamBuilder";
 import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
+import { SkillIcon, SKILL_TYPE_LABELS } from "@/features/skill/SkillIcon";
 import {
   PROFESSIONS,
   PROFESSION_LABELS,
@@ -19,25 +20,6 @@ import {
   type Profession,
   type Skill,
 } from "@/types/character";
-
-const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
-  damage: "伤害",
-  shield: "护盾",
-  heal: "治疗",
-  control: "控制",
-  area_damage: "群体伤害",
-  area_heal: "群体治疗",
-  critical: "暴击",
-  area_control: "群体控制",
-  invincible: "无敌",
-  cleave_passive: "横扫被动",
-  charge_strike_passive: "蓄力被动",
-  lifesteal_passive: "吸血被动",
-  growth_passive: "成长被动",
-  revive_passive: "复活被动",
-  assassin_passive: "刺客被动",
-  buff: "增益",
-};
 
 type ProfessionFilter = Profession | "all";
 type SortKey = "profession" | "updatedAt" | "name";
@@ -362,7 +344,7 @@ export function CharacterLibrary() {
               <div className="skill-list" aria-label={`${selectedCharacter.name} 的技能`}>
                 {selectedCharacter.skills.map((skill) => (
                   <section key={skill.id} className="skill-item">
-                    <div><span>{SKILL_TYPE_LABELS[skill.type]}</span><strong>{skill.name}</strong></div>
+                    <div><span className="skill-type-label"><SkillIcon type={skill.type} compact />{SKILL_TYPE_LABELS[skill.type]}</span><strong>{skill.name}</strong></div>
                     <p>{getSkillEffect(skill)} · 冷却 {skill.cooldown} 回合</p>
                   </section>
                 ))}

@@ -742,6 +742,12 @@ body {
   padding: 10px 11px;
 }
 
+.creator-skill-guide-item-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .creator-skill-guide-list strong {
   font-size: 0.88rem;
 }
@@ -818,11 +824,53 @@ body {
   font-size: 0.64rem;
 }
 
+.profession-icon svg,
+.skill-icon svg {
+  width: 74%;
+  height: 74%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .profession-icon-tank { color: #8fc7a3; }
 .profession-icon-warrior { color: #ef9775; }
 .profession-icon-mage { color: #b5a9ff; }
 .profession-icon-assassin { color: #ef8297; }
 .profession-icon-ranger { color: #ead07c; }
+
+.skill-icon {
+  display: inline-grid;
+  width: 1.42rem;
+  height: 1.42rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.045);
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.skill-icon.is-compact {
+  width: 1.08rem;
+  height: 1.08rem;
+  border-radius: 4px;
+}
+
+.skill-icon-offense { color: #f18b73; }
+.skill-icon-protection { color: #86c8b3; }
+.skill-icon-control { color: #b7a4ef; }
+.skill-icon-passive { color: #e5c56f; }
+
+.skill-type-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
 
 .character-card-topline time {
   font-variant-numeric: tabular-nums;
@@ -883,11 +931,11 @@ body {
 
 .skill-item div {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 7px;
 }
 
-.skill-item span {
+.skill-item > div > .skill-type-label {
   color: var(--accent);
   font-size: 0.69rem;
   font-weight: 800;
@@ -1370,6 +1418,10 @@ body {
 .generated-skill-card small {
   color: #9f978a;
   font-size: 0.74rem;
+}
+
+.generated-skill-card > .skill-type-label {
+  display: flex;
 }
 
 .generated-attribute-grid strong,
@@ -2595,6 +2647,12 @@ body {
   font-weight: 800;
 }
 
+.cooldown-list .skill-type-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .cooldown-list strong {
   font-size: 0.82rem;
 }
@@ -2960,6 +3018,12 @@ body {
 
 .battle-log-list strong {
   font-size: 0.85rem;
+}
+
+.battle-log-list strong .skill-icon,
+.team-battle-log-summary .skill-icon {
+  margin-right: 5px;
+  transform: translateY(-1px);
 }
 
 .battle-log-list p {

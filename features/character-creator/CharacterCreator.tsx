@@ -10,6 +10,7 @@ import { GENERATABLE_SKILL_CATALOG } from "@/lib/characters/skillCatalog";
 import { characterSchema } from "@/lib/schemas/character";
 import { useGameStore } from "@/lib/store/gameStore";
 import { ProfessionIcon } from "@/features/profession/ProfessionIcon";
+import { SkillIcon, SKILL_TYPE_LABELS } from "@/features/skill/SkillIcon";
 import {
   PROFESSION_LABELS,
   REALMS,
@@ -19,25 +20,6 @@ import {
   type Realm,
   type Skill,
 } from "@/types/character";
-
-const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
-  damage: "伤害",
-  shield: "护盾",
-  heal: "治疗",
-  control: "控制",
-  area_damage: "群体伤害",
-  area_heal: "群体治疗",
-  critical: "暴击",
-  area_control: "群体控制",
-  invincible: "无敌",
-  cleave_passive: "横扫被动",
-  charge_strike_passive: "蓄力一击被动",
-  lifesteal_passive: "吸血被动",
-  growth_passive: "成长被动",
-  revive_passive: "复活被动",
-  assassin_passive: "刺客被动",
-  buff: "增益",
-};
 
 const ACTIVE_GENERATABLE_SKILLS = GENERATABLE_SKILL_CATALOG.filter(
   (skill) => skill.activation === "主动",
@@ -87,7 +69,7 @@ function getSkillEffect(skill: Skill): string {
 function GeneratedSkillCard({ skill, index }: { skill: Skill; index: number }) {
   return (
     <article className="generated-skill-card">
-      <span>技能 {index} · {SKILL_TYPE_LABELS[skill.type]}</span>
+      <span className="skill-type-label"><SkillIcon type={skill.type} compact />技能 {index} · {SKILL_TYPE_LABELS[skill.type]}</span>
       <strong>{skill.name}</strong>
       <p>{skill.description}</p>
       <small>{skill.activation === "passive" ? "被动生效" : `冷却 ${skill.cooldown} 回合`} · {getSkillEffect(skill)}</small>
@@ -400,7 +382,7 @@ export function CharacterCreator() {
               <ul className="creator-skill-guide-list">
                 {ACTIVE_GENERATABLE_SKILLS.map((skill) => (
                   <li key={skill.type}>
-                    <strong>{skill.label}</strong>
+                    <div className="creator-skill-guide-item-heading"><SkillIcon type={skill.type} /><strong>{skill.label}</strong></div>
                     <p>{skill.description}</p>
                   </li>
                 ))}
@@ -412,7 +394,7 @@ export function CharacterCreator() {
               <ul className="creator-skill-guide-list">
                 {PASSIVE_GENERATABLE_SKILLS.map((skill) => (
                   <li key={skill.type}>
-                    <strong>{skill.label}</strong>
+                    <div className="creator-skill-guide-item-heading"><SkillIcon type={skill.type} /><strong>{skill.label}</strong></div>
                     <p>{skill.description}</p>
                   </li>
                 ))}

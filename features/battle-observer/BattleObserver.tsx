@@ -17,6 +17,7 @@ import { getEffectiveCombatStats } from "@/lib/battle/realm";
 import { simulateTeamBattle } from "@/lib/battle/teamBattleEngine";
 import { getSkillUsageText } from "@/lib/battle/skillUsageText";
 import { useGameStore } from "@/lib/store/gameStore";
+import { SkillIcon, SKILL_TYPE_LABELS } from "@/features/skill/SkillIcon";
 import type {
   BattleEvent,
   BattleSide,
@@ -28,27 +29,7 @@ import {
   PROFESSION_LABELS,
   REALM_LABELS,
   type Character,
-  type Skill,
 } from "@/types/character";
-
-const SKILL_TYPE_LABELS: Record<Skill["type"], string> = {
-  damage: "伤害",
-  shield: "护盾",
-  heal: "治疗",
-  control: "控制",
-  area_damage: "群体伤害",
-  area_heal: "群体治疗",
-  critical: "暴击",
-  area_control: "群体控制",
-  invincible: "无敌",
-  cleave_passive: "横扫被动",
-  charge_strike_passive: "蓄力被动",
-  lifesteal_passive: "吸血被动",
-  growth_passive: "成长被动",
-  revive_passive: "复活被动",
-  assassin_passive: "刺客被动",
-  buff: "增益",
-};
 
 const PLAYBACK_SPEEDS = [0.5, 1, 2, 4] as const;
 const BASE_ACTION_INTERVAL_MS = 1000;
@@ -245,7 +226,7 @@ function formatTeamBattleLog(
     ? actorCharacter?.skills.find((skill) => skill.id === event.skill?.id) ?? event.skill
     : null;
   const action = sourceSkill
-    ? `${getSkillUsageText(sourceSkill)} ${sourceSkill.name}`
+    ? <><SkillIcon type={sourceSkill.type} compact />{getSkillUsageText(sourceSkill)} {sourceSkill.name}</>
     : "发动普通攻击";
 
   if (event.targets.length > 1) {
@@ -334,7 +315,7 @@ function FighterPanel({
 
           return (
             <div key={skill.id} className={cooldown > 0 ? "is-cooling" : ""}>
-              <span>{SKILL_TYPE_LABELS[skill.type]}</span>
+              <span className="skill-type-label"><SkillIcon type={skill.type} compact />{SKILL_TYPE_LABELS[skill.type]}</span>
               <strong>{skill.name}</strong>
               <em>{cooldown > 0 ? `${cooldown} 回合` : "可用"}</em>
             </div>
@@ -595,7 +576,7 @@ function BattleObserverPlayer({
                     <div>
                       <strong>
                         {event.skill
-                          ? `${event.skill.name} · ${SKILL_TYPE_LABELS[event.skill.type]}`
+                          ? <><SkillIcon type={event.skill.type} compact />{event.skill.name} · {SKILL_TYPE_LABELS[event.skill.type]}</>
                           : skip
                             ? "眩晕跳过"
                             : "普通攻击"}
