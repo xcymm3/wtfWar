@@ -10,31 +10,6 @@ import {
 
 export const DEFAULT_MATCHES_PER_PAIR = 200;
 
-export type BalanceGuardrails = {
-  minMatchesPerPair: number;
-  minProfessionWinRate: number;
-  maxProfessionWinRate: number;
-  maxProfessionDrawRate: number;
-  minMatchupWinRate: number;
-  maxMatchupWinRate: number;
-  maxMirrorSeatBias: number;
-  minAverageRounds: number;
-  maxAverageRounds: number;
-};
-
-/** Release gates for the fixed five-profession baseline simulation. */
-export const BALANCE_GUARDRAILS = {
-  minMatchesPerPair: 400,
-  minProfessionWinRate: 0.38,
-  maxProfessionWinRate: 0.62,
-  maxProfessionDrawRate: 0.1,
-  minMatchupWinRate: 0.25,
-  maxMatchupWinRate: 0.75,
-  maxMirrorSeatBias: 0.08,
-  minAverageRounds: 6,
-  maxAverageRounds: 30,
-} as const satisfies BalanceGuardrails;
-
 type ProfessionProfile = {
   profession: Profession;
   character: Character;
@@ -81,13 +56,6 @@ export type BalanceSimulationResult = {
   matchupStats: MatchupBalanceStats[];
 };
 
-export type BalanceViolation = {
-  metric: string;
-  subject: string;
-  actual: number;
-  minimum?: number;
-  maximum?: number;
-};
 
 const TIMESTAMP = "2026-07-23T00:00:00.000Z";
 
@@ -293,8 +261,8 @@ function assertMatchesPerPair(matchesPerPair: number): void {
 }
 
 /**
- * Simulates every ordered profession pairing with deterministic seed values.
- * Ordered pairings remove left/right-seat bias from the profession summaries.
+ * A 1v1 diagnostic report for reading baseline card behaviour. It intentionally
+ * has no release threshold; team-balance checks live in teamBalanceSimulation.
  */
 export function simulateProfessionBalance(
   matchesPerPair = DEFAULT_MATCHES_PER_PAIR,
@@ -380,159 +348,6 @@ export function simulateProfessionBalance(
     skillStats: [...skillStats.values()],
     matchupStats: [...matchupStats.values()],
   };
-}
-
-function getRate(numerator: number, denominator: number): number {
-  return denominator === 0 ? 0 : numerator / denominator;
-}
-
-function getMatchupStats(
-  result: BalanceSimulationResult,
-  leftProfession: Profession,
-  rightProfession: Profession,
-): MatchupBalanceStats {
-  const matchup = result.matchupStats.find(
-    (stats) =>
-      stats.leftProfession === leftProfession &&
-      stats.rightProfession === rightProfession,
-  );
-  if (!matchup) {
-    throw new Error(`Missing matchup statistics for ${leftProfession} and ${rightProfession}.`);
-  }
-  return matchup;
-}
-
-/**
- * Evaluates the deterministic baseline against release thresholds. The checks
- * deliberately use both seating directions, so a profession is not rewarded
- * simply for acting first.
- */
-export function evaluateProfessionBalance(
-  result: BalanceSimulationResult,
-  guardrails: BalanceGuardrails = BALANCE_GUARDRAILS,
-): BalanceViolation[] {
-  const violations: BalanceViolation[] = [];
-
-  if (result.matchesPerPair < guardrails.minMatchesPerPair) {
-    violations.push({
-      metric: "sample_size",
-      subject: "每个有序职业对局",
-      actual: result.matchesPerPair,
-      minimum: guardrails.minMatchesPerPair,
-    });
-  }
-
-  for (const stats of result.professionStats) {
-    const winRate = getRate(stats.wins, stats.games);
-    const drawRate = getRate(stats.draws, stats.games);
-    const averageRounds = getRate(stats.totalRounds, stats.games);
-
-    if (winRate < guardrails.minProfessionWinRate || winRate > guardrails.maxProfessionWinRate) {
-      violations.push({
-        metric: "profession_win_rate",
-        subject: PROFESSIONS.includes(stats.profession) ? PROFESSION_LABELS[stats.profession] : stats.profession,
-        actual: winRate,
-        minimum: guardrails.minProfessionWinRate,
-        maximum: guardrails.maxProfessionWinRate,
-      });
-    }
-    if (drawRate > guardrails.maxProfessionDrawRate) {
-      violations.push({
-        metric: "profession_draw_rate",
-        subject: PROFESSION_LABELS[stats.profession],
-        actual: drawRate,
-        maximum: guardrails.maxProfessionDrawRate,
-      });
-    }
-    if (averageRounds < guardrails.minAverageRounds || averageRounds > guardrails.maxAverageRounds) {
-      violations.push({
-        metric: "average_rounds",
-        subject: PROFESSION_LABELS[stats.profession],
-        actual: averageRounds,
-        minimum: guardrails.minAverageRounds,
-        maximum: guardrails.maxAverageRounds,
-      });
-    }
-  }
-
-  for (let leftIndex = 0; leftIndex < PROFESSIONS.length; leftIndex += 1) {
-    const leftProfession = PROFESSIONS[leftIndex]!;
-    const mirror = getMatchupStats(result, leftProfession, leftProfession);
-    const mirrorDecisiveGames = mirror.leftWins + mirror.rightWins;
-    if (mirrorDecisiveGames > 0) {
-      const seatBias = Math.abs(mirror.leftWins - mirror.rightWins) / mirrorDecisiveGames;
-      if (seatBias > guardrails.maxMirrorSeatBias) {
-        violations.push({
-          metric: "mirror_seat_bias",
-          subject: PROFESSION_LABELS[leftProfession],
-          actual: seatBias,
-          maximum: guardrails.maxMirrorSeatBias,
-        });
-      }
-    }
-
-    for (let rightIndex = leftIndex + 1; rightIndex < PROFESSIONS.length; rightIndex += 1) {
-      const rightProfession = PROFESSIONS[rightIndex]!;
-      const forward = getMatchupStats(result, leftProfession, rightProfession);
-      const reverse = getMatchupStats(result, rightProfession, leftProfession);
-      const leftWins = forward.leftWins + reverse.rightWins;
-      const rightWins = forward.rightWins + reverse.leftWins;
-      const decisiveGames = leftWins + rightWins;
-      const leftWinRate = getRate(leftWins, decisiveGames);
-
-      if (
-        decisiveGames === 0 ||
-        leftWinRate < guardrails.minMatchupWinRate ||
-        leftWinRate > guardrails.maxMatchupWinRate
-      ) {
-        violations.push({
-          metric: "pair_matchup_win_rate",
-          subject: `${PROFESSION_LABELS[leftProfession]} vs ${PROFESSION_LABELS[rightProfession]}`,
-          actual: leftWinRate,
-          minimum: guardrails.minMatchupWinRate,
-          maximum: guardrails.maxMatchupWinRate,
-        });
-      }
-    }
-  }
-
-  for (const stats of result.skillStats) {
-    if (stats.uses === 0) {
-      violations.push({
-        metric: "skill_usage",
-        subject: `${PROFESSION_LABELS[stats.profession]} · ${stats.skillName}`,
-        actual: 0,
-        minimum: 1,
-      });
-    }
-  }
-
-  return violations;
-}
-
-export function formatBalanceViolations(violations: BalanceViolation[]): string {
-  return violations.map((violation) => {
-    const bounds = [
-      violation.minimum === undefined ? null : `最低 ${formatPercentage(violation.minimum)}`,
-      violation.maximum === undefined ? null : `最高 ${formatPercentage(violation.maximum)}`,
-    ].filter((value): value is string => value !== null).join("，");
-    const actual = violation.metric === "average_rounds" || violation.metric === "sample_size"
-      ? formatAverage(violation.actual)
-      : formatPercentage(violation.actual);
-    return `- ${violation.metric}：${violation.subject} 为 ${actual}${bounds ? `（${bounds}）` : ""}`;
-  }).join("\n");
-}
-
-export function assertProfessionBalance(
-  result: BalanceSimulationResult,
-  guardrails: BalanceGuardrails = BALANCE_GUARDRAILS,
-): void {
-  const violations = evaluateProfessionBalance(result, guardrails);
-  if (violations.length === 0) return;
-
-  throw new Error(
-    `职业平衡检查未通过：\n${formatBalanceViolations(violations)}\n\n${formatProfessionBalanceReport(result)}`,
-  );
 }
 
 function formatPercentage(value: number): string {

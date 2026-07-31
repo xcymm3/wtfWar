@@ -1,10 +1,9 @@
 import {
-  BALANCE_GUARDRAILS,
-  assertProfessionBalance,
-  formatProfessionBalanceReport,
-  simulateProfessionBalance,
-} from "@/lib/balance/balanceSimulation";
+  assertTeamBalance,
+  simulateTeamBalance,
+  TEAM_BALANCE_GUARDRAILS,
+} from "@/lib/balance/teamBalanceSimulation";
 
-const result = simulateProfessionBalance(BALANCE_GUARDRAILS.minMatchesPerPair);
-assertProfessionBalance(result);
-console.log(formatProfessionBalanceReport(result));
+const result = simulateTeamBalance(TEAM_BALANCE_GUARDRAILS.matchesPerScenario);
+assertTeamBalance(result);
+console.log("5v5 职业属性与技能平衡检查通过。");

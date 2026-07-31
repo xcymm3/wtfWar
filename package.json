@@ -9,7 +9,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:unit": "tsx --test tests/battleEngine.test.ts tests/teamBattleEngine.test.ts tests/balanceSimulation.test.ts tests/gameStore.test.ts tests/characterSchema.test.ts tests/teamBattleRecordSchema.test.ts tests/promptCharacterGeneration.test.ts tests/modelGenerationRoute.test.ts tests/presetCharacters.test.ts tests/characterName.test.ts",
+    "test:unit": "tsx --test tests/battleEngine.test.ts tests/teamBattleEngine.test.ts tests/balanceSimulation.test.ts tests/teamBalanceSimulation.test.ts tests/gameStore.test.ts tests/characterSchema.test.ts tests/teamBattleRecordSchema.test.ts tests/promptCharacterGeneration.test.ts tests/modelGenerationRoute.test.ts tests/presetCharacters.test.ts tests/characterName.test.ts",
     "simulate:balance": "tsx scripts/simulateBalance.ts",
     "test": "pnpm run test:unit && pnpm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
